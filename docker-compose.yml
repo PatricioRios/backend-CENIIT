@@ -1,5 +1,5 @@
 # docker-compose.yml
-version: '3.8' # Especifica la versión de Docker Compose
+version: "3.8" # Especifica la versión de Docker Compose
 
 services:
   # Servicio para la base de datos PostgreSQL
@@ -12,7 +12,7 @@ services:
       POSTGRES_USER: keycloak # Usuario de la base de datos
       POSTGRES_PASSWORD: mysecretpassword # Contraseña del usuario
     volumes: # Monta un volumen persistente para los datos de la base de datos
-      - keycloak_db_data:/var/lib/postgresql/data
+      - trabajo_final_keycloak_db_data:/var/lib/postgresql/data
     ports: # Mapea el puerto del host al puerto del contenedor
       - "127.0.0.1:5432:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
     networks: # Conecta el servicio a la red definida
@@ -31,12 +31,16 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin # Nombre de usuario del administrador inicial de Keycloak
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin # Contraseña del administrador inicial de Keycloak
     ports: # Mapea el puerto del host al puerto del contenedor
-      - "127.0.0.1:8080:8080" # El puerto 8080 del host se mapea al puerto 8080 del contenedor
+      - "127.0.0.1:3030:8080"
     depends_on: # Asegura que keycloak-postgres se inicie antes que keycloak
       - keycloak-postgres
     networks: # Conecta el servicio a la red definida
       - keycloak-net
-    command: start-dev # Comando para iniciar Keycloak en modo de desarrollo
+    command:
+      - start-dev # Comando para iniciar Keycloak en modo de desarrollo
+      - --import-realm
+    volumes:
+      - ./config/develop-config.json:/opt/keycloak/data/import/develop-config.json
 
 networks:
   # Define la red personalizada para los contenedores
@@ -45,5 +49,4 @@ networks:
 
 volumes:
   # Define el volumen persistente para los datos de PostgreSQL
-  keycloak_db_data: # Nombre del volumen
-
+  trabajo_final_keycloak_db_data: # Nombre del volumen
