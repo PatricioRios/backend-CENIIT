@@ -1,0 +1,3 @@
+spring client credentials:
+Client ID: My-Client-ID-For-Spring-App
+Name: Spring-Boot-Client-SPRINT-CODE-API
