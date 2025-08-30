@@ -11,7 +11,6 @@ public class TestController {
     public String helloAdmin() {
         return "Hello, World! admin (keycloak)";
     }
-
     @GetMapping("/hello-user")
     @PreAuthorize("hasRole('backend-user') or hasRole('backend-admin')")
     public String helloUser() {

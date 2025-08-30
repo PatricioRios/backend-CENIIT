@@ -1,5 +1,6 @@
 package ar.edu.ceniit.demo.user.aplication.usecases;
 
+import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.*;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
 import ar.edu.ceniit.demo.user.aplication.ports.input.UserUseCases;
 import ar.edu.ceniit.demo.user.aplication.ports.output.CreateUserOutput;
@@ -13,29 +14,38 @@ public class UserUseCasesImpl implements UserUseCases {
         this.userOutputs = userOutputs;
     }
     @Override
-    public User createUser(User user) {
+    public User createUser(User user) throws UserBaseException {
+        if(!user.verifyPassword()){
+            throw new BadRequest("Password and confirm password do not match");
+        }
         return userOutputs.createUser(user);
     }
 
     @Override
-    public void deleteUser(UUID uuid) {
-        try {
-            if (uuid == null) {
-                throw new IllegalArgumentException("UUID no puede ser nulo");
-            }
-            userOutputs.deleteUserByUUID(uuid);
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error: " + e.getMessage());
-            return;
+    public void deleteUser(UUID uuid) throws IdCannotBeNull, UserNotFoundException {
+
+        if (uuid == null) {
+            throw new IdCannotBeNull();
         }
+        userOutputs.deleteUserByUUID(uuid);
     }
     @Override
-    public User updateUser(User user) {
-
+    public User updateUser(User user) throws UserBaseException {
+        this.userOutputs.updateUser(user);
+        return user;
     }
 
     @Override
-    public User getByUUID(String uuid) {
-        return null;
+    public User getByUUID(UUID authUserId, UUID requestedUserId) throws UserBaseException {
+        if (requestedUserId == null) {
+            throw new UserNotFoundException();
+        }
+        User user = userOutputs.getUserByUUID(authUserId);
+        if(user == null){
+            throw new UserNotFoundException();
+        }
+        // For security reasons, do not return the password
+        user.setPassword("");
+        return user;
     }
 }
