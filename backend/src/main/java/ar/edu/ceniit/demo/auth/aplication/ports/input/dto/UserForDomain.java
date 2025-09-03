@@ -1,4 +1,4 @@
-package ar.edu.ceniit.demo.user.aplication.entitys.objects;
+package ar.edu.ceniit.demo.auth.aplication.ports.input.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,11 +6,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.UUID;
-
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class UserForDomain {
     //Propiedades del sistema
     private UUID uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
     private Integer id ;

@@ -3,20 +3,25 @@ package ar.edu.ceniit.demo.user.aplication.usecases;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.*;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
 import ar.edu.ceniit.demo.user.aplication.ports.input.UserUseCases;
-import ar.edu.ceniit.demo.user.aplication.ports.output.CreateUserOutput;
-import ar.edu.ceniit.demo.user.aplication.ports.output.UserOutputs;
+import ar.edu.ceniit.demo.user.aplication.ports.output.OutputsUser;
 
 import java.util.UUID;
 
 public class UserUseCasesImpl implements UserUseCases {
-    private final UserOutputs userOutputs;
-    public UserUseCasesImpl(UserOutputs userOutputs) {
+    private final OutputsUser userOutputs;
+    public UserUseCasesImpl(OutputsUser userOutputs) {
         this.userOutputs = userOutputs;
     }
     @Override
     public User createUser(User user) throws UserBaseException {
+        if(user.getUsername() == null || user.getUsername().isEmpty()){
+            throw new BadRequest("Username cannot be null or empty");
+        }
+        if(user.getPassword() == null || user.getPassword().isEmpty()){
+            throw new BadRequest("Password cannot be null or empty");
+        }
         if(!user.verifyPassword()){
-            throw new BadRequest("Password and confirm password do not match");
+            throw new BadRequest("Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, and one digit");
         }
         return userOutputs.createUser(user);
     }
@@ -31,7 +36,7 @@ public class UserUseCasesImpl implements UserUseCases {
     }
     @Override
     public User updateUser(User user) throws UserBaseException {
-        this.userOutputs.updateUser(user);
+        userOutputs.updateUser(user);
         return user;
     }
 

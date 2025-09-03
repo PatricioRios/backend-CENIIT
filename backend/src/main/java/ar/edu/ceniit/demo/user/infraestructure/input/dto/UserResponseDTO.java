@@ -1,38 +1,40 @@
 package ar.edu.ceniit.demo.user.infraestructure.input.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import java.util.UUID;
 
-public class CreateUserDTO {
+public class UserResponseDTO {
 
-    //@NotBlank
-    //@Size(min = 4, max = 20)
+    private UUID uuid;
     private String username;
-    //@Email
     private String email;
-    //@NotBlank
-    //@Size(min = 8, max = 20)
-    private String password;
-    //app properties
-    //@NotBlank
     private String firstName;
     private String secondName;
-    //@NotBlank
     private String surname;
     private String secondSurname;
-    //@NotNull
     private Integer dni;
 
-    public CreateUserDTO() {
+    public UserResponseDTO() {
     }
 
-    public CreateUserDTO(String username, String email, String password, String confirmPassword) {
+    public UserResponseDTO(UUID uuid, String username, String email, String firstName, String secondName, String surname, String secondSurname, Integer dni) {
+        this.uuid = uuid;
         this.username = username;
         this.email = email;
-        this.password = password;
+        this.firstName = firstName;
+        this.secondName = secondName;
+        this.surname = surname;
+        this.secondSurname = secondSurname;
+        this.dni = dni;
     }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
+
     public String getUsername() {
         return username;
     }
@@ -47,14 +49,6 @@ public class CreateUserDTO {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getFirstName() {
