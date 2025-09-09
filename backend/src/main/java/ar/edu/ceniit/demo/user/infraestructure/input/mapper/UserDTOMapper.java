@@ -1,9 +1,16 @@
 package ar.edu.ceniit.demo.user.infraestructure.input.mapper;
 
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
-import ar.edu.ceniit.demo.user.infraestructure.input.dto.CreateUserDTO;
-import ar.edu.ceniit.demo.user.infraestructure.input.dto.UpdateUserDTO;
-import ar.edu.ceniit.demo.user.infraestructure.input.dto.UserResponseDTO;
+import ar.edu.ceniit.demo.user.aplication.entitys.objects.criteria.*;
+import ar.edu.ceniit.demo.user.aplication.entitys.objects.criteria.field.*;
+import ar.edu.ceniit.demo.user.aplication.ports.input.dtos.GetUserByUUIDResponse;
+import ar.edu.ceniit.demo.user.infraestructure.input.dto.*;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class UserDTOMapper {
 
@@ -11,21 +18,10 @@ public class UserDTOMapper {
         return User.builder()
                 .username(dto.getUsername())
                 .email(dto.getEmail())
-                .password(dto.getPassword())
                 .firstName(dto.getFirstName())
-                .secondName(dto.getSecondName())
+                .secondName(Optional.ofNullable(dto.getSecondName()))
                 .lastName(dto.getSurname())
-                .secondLastName(dto.getSecondSurname())
-                .dni(dto.getDni())
-                .build();
-    }
-
-    public User toDomain(UpdateUserDTO dto) {
-        return User.builder()
-                .firstName(dto.getFirstName())
-                .secondName(dto.getSecondName())
-                .lastName(dto.getSurname())
-                .secondLastName(dto.getSecondSurname())
+                .secondLastName(Optional.ofNullable(dto.getSecondSurname()))
                 .dni(dto.getDni())
                 .build();
     }
@@ -36,10 +32,79 @@ public class UserDTOMapper {
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
         dto.setFirstName(user.getFirstName());
-        dto.setSecondName(user.getSecondName());
+        dto.setSecondName(user.getSecondName().orElse(null));
         dto.setSurname(user.getLastName());
-        dto.setSecondSurname(user.getSecondLastName());
+        dto.setSecondSurname(user.getSecondLastName().orElse(null));
         dto.setDni(user.getDni());
         return dto;
+    }
+
+    public UserResponseDTO toResponse(GetUserByUUIDResponse userRecord) {
+        UserResponseDTO dto = new UserResponseDTO();
+        dto.setUuid(userRecord.uuid());
+        dto.setUsername(userRecord.username());
+        dto.setEmail(userRecord.email());
+        dto.setFirstName(userRecord.firstName());
+        dto.setSecondName(userRecord.secondName());
+        dto.setSurname(userRecord.lastName());
+        dto.setSecondSurname(userRecord.secondLastName());
+        dto.setDni(userRecord.dni());
+        return dto;
+    }
+
+    public Criteria toDomain(GetAllUsersRequest request) {
+        if (request == null || request.getFilter() == null) {
+            return null; // No filter applied
+        }
+        return toDomain(request.getFilter());
+    }
+
+    private Criteria toDomain(FilterDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+
+        if (dto instanceof AndFilterDTO) {
+            List<Criteria> criteria = ((AndFilterDTO) dto).getFilters().stream()
+                    .map(this::toDomain)
+                    .collect(Collectors.toList());
+            return new AndCriteria(criteria.toArray(new Criteria[0]));
+        }
+
+        if (dto instanceof OrFilterDTO) {
+            List<Criteria> criteria = ((OrFilterDTO) dto).getFilters().stream()
+                    .map(this::toDomain)
+                    .collect(Collectors.toList());
+            return new OrCriteria(criteria.toArray(new Criteria[0]));
+        }
+
+        if (dto instanceof FieldFilterDTO) {
+            FieldFilterDTO fieldDto = (FieldFilterDTO) dto;
+            String value = fieldDto.getValue();
+            String op = fieldDto.getOperator().toUpperCase();
+
+            switch (fieldDto.getField()) {
+                case UUID:
+                    return new UserUUIDCriteria(StringOperator.valueOf(op), value);
+                case USERNAME:
+                    return new UserNameCriteria(StringOperator.valueOf(op), value);
+                case EMAIL:
+                    return new UserEmailCriteria(StringOperator.valueOf(op), value);
+                case FIRST_NAME:
+                    return new UserFirstNameCriteria(StringOperator.valueOf(op), value);
+                case LAST_NAME:
+                    return new UserLastNameCriteria(StringOperator.valueOf(op), value);
+                case DNI:
+                    return new UserDNICriteria(StringOperator.valueOf(op), value);
+                case CREATED_AT:
+                    return new UserCreatedAtCriteria(ComparableOperator.valueOf(op), OffsetDateTime.parse(value));
+                case UPDATED_AT:
+                    return new UserUpdatedAtCriteria(ComparableOperator.valueOf(op), OffsetDateTime.parse(value));
+                default:
+                    throw new IllegalArgumentException("Unsupported field for filtering: " + fieldDto.getField());
+            }
+        }
+
+        throw new IllegalArgumentException("Unknown FilterDTO type: " + dto.getClass().getName());
     }
 }

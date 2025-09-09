@@ -1,155 +1,191 @@
 package ar.edu.ceniit.demo.user.aplication.usecases;
 
-import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.BadRequest;
-import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.IdCannotBeNull;
-import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserBaseException;
+import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.BadRequestOnCreateUserException;
+import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.BadRequestOnUpdateUserException;
+import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserBadRequestException;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserNotFoundException;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
+import ar.edu.ceniit.demo.user.aplication.ports.input.dtos.GetUserByUUIDResponse;
+import ar.edu.ceniit.demo.user.aplication.ports.input.dtos.UpdateUserDTO;
 import ar.edu.ceniit.demo.user.aplication.ports.output.OutputsUser;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.Instant;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class UserUseCasesImplTest {
+
     @Mock
     private OutputsUser userOutputs;
 
-    @InjectMocks
     private UserUseCasesImpl userUseCases;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        userUseCases = new UserUseCasesImpl(userOutputs);
     }
 
-    /**
-     * Prueba la creación exitosa de un usuario.
-     * @throws UserBaseException si ocurre un error base de usuario.
-     */
+    private User createValidUser() {
+        return User.builder()
+                .username("testuser")
+                .email("test@example.com")
+                .firstName("Test")
+                .lastName("User")
+                .dni(12345678)
+                .secondName(Optional.empty())
+                .secondLastName(Optional.empty())
+                .build();
+    }
+
+    // Tests para createUser
     @Test
-    void createUser_Success() throws UserBaseException {
-        User user = User.builder().username("testuser").password("Password123").build();
-        when(userOutputs.createUser(any(User.class))).thenReturn(user);
+    @DisplayName("createUser_whenUserIsValid_shouldReturnCreatedUser")
+    void createUser_whenUserIsValid_shouldReturnCreatedUser() throws Exception {
+        // Given
+        User userToCreate = createValidUser();
+        when(userOutputs.createUser(userToCreate)).thenReturn(userToCreate);
 
-        User createdUser = userUseCases.createUser(user);
+        // When
+        User createdUser = userUseCases.createUser(userToCreate);
 
+        // Then
         assertNotNull(createdUser);
         assertEquals("testuser", createdUser.getUsername());
-        verify(userOutputs, times(1)).createUser(user);
+        verify(userOutputs, times(1)).createUser(userToCreate);
     }
 
-    /**
-     * Prueba que se lance una excepción BadRequest cuando el nombre de usuario es nulo.
-     */
     @Test
-    void createUser_NullUsername_ThrowsBadRequest() {
-        User user = User.builder().password("Password123").build();
-        assertThrows(BadRequest.class, () -> userUseCases.createUser(user));
+    @DisplayName("createUser_whenUsernameIsNull_shouldThrowBadRequestException")
+    void createUser_whenUsernameIsNull_shouldThrowBadRequestException() throws Exception {
+        // Given
+        User userWithNullUsername = User.builder().email("test@example.com").firstName("Test").lastName("User").build();
+
+        // When & Then
+        BadRequestOnCreateUserException exception = assertThrows(BadRequestOnCreateUserException.class, () -> {
+            userUseCases.createUser(userWithNullUsername);
+        });
+        assertEquals(BadRequestOnCreateUserException.Reason.INVALID_USERNAME, exception.getReason());
+        verify(userOutputs, never()).createUser(any());
     }
 
-    /**
-     * Prueba que se lance una excepción BadRequest cuando el nombre de usuario está vacío.
-     */
     @Test
-    void createUser_EmptyUsername_ThrowsBadRequest() {
-        User user = User.builder().username("").password("Password123").build();
-        assertThrows(BadRequest.class, () -> userUseCases.createUser(user));
+    @DisplayName("createUser_whenEmailIsInvalid_shouldThrowBadRequestException")
+    void createUser_whenEmailIsInvalid_shouldThrowBadRequestException() throws Exception {
+        // Given
+        User userWithInvalidEmail = User.builder()
+                .username("testuser")
+                .email("invalid-email")
+                .firstName("Test")
+                .lastName("User")
+                .build();
+
+        // When & Then
+        BadRequestOnCreateUserException exception = assertThrows(BadRequestOnCreateUserException.class, () -> {
+            userUseCases.createUser(userWithInvalidEmail);
+        });
+        assertEquals(BadRequestOnCreateUserException.Reason.INVALID_EMAIL, exception.getReason());
+        verify(userOutputs, never()).createUser(any());
     }
 
-    /**
-     * Prueba que se lance una excepción BadRequest cuando la contraseña es nula.
-     */
+    // Tests para deleteUser
     @Test
-    void createUser_NullPassword_ThrowsBadRequest() {
-        User user = User.builder().username("testuser").build();
-        assertThrows(BadRequest.class, () -> userUseCases.createUser(user));
-    }
-
-    /**
-     * Prueba que se lance una excepción BadRequest cuando la contraseña es inválida.
-     */
-    @Test
-    void createUser_InvalidPassword_ThrowsBadRequest() {
-        User user = User.builder().username("testuser").password("pass").build();
-        assertThrows(BadRequest.class, () -> userUseCases.createUser(user));
-    }
-
-    /**
-     * Prueba la eliminación exitosa de un usuario.
-     * @throws IdCannotBeNull si el ID es nulo.
-     * @throws UserNotFoundException si el usuario no se encuentra.
-     */
-    @Test
-    void deleteUser_Success() throws IdCannotBeNull, UserNotFoundException {
+    @DisplayName("deleteUser_whenUuidIsValid_shouldCallOutput")
+    void deleteUser_whenUuidIsValid_shouldCallOutput() throws Exception {
+        // Given
         UUID userId = UUID.randomUUID();
         doNothing().when(userOutputs).deleteUserByUUID(userId);
-        userUseCases.deleteUser(userId);
+
+        // When
+        assertDoesNotThrow(() -> userUseCases.deleteUser(userId));
+
+        // Then
         verify(userOutputs, times(1)).deleteUserByUUID(userId);
     }
 
-    /**
-     * Prueba que se lance una excepción IdCannotBeNull cuando se intenta eliminar un usuario con un ID nulo.
-     */
     @Test
-    void deleteUser_NullId_ThrowsIdCannotBeNull() {
-        assertThrows(IdCannotBeNull.class, () -> userUseCases.deleteUser(null));
+    @DisplayName("deleteUser_whenUuidIsNull_shouldThrowBadRequestException")
+    void deleteUser_whenUuidIsNull_shouldThrowBadRequestException() throws Exception {
+        // When & Then
+        assertThrows(UserBadRequestException.class, () -> userUseCases.deleteUser(null));
+        verify(userOutputs, never()).deleteUserByUUID(any());
     }
 
-    /**
-     * Prueba la actualización exitosa de un usuario.
-     * @throws UserBaseException si ocurre un error base de usuario.
-     */
+    // Tests para updateUser
     @Test
-    void updateUser_Success() throws UserBaseException {
+    @DisplayName("updateUser_whenDtoIsValid_shouldReturnUpdatedDto")
+    void updateUser_whenDtoIsValid_shouldReturnUpdatedDto() throws Exception {
+        // Given
         UUID userId = UUID.randomUUID();
-        User user = User.builder().uuid(userId).username("testuser").password("Password123").build();
-        doNothing().when(userOutputs).updateUser(any(User.class));
+        UpdateUserDTO updateDto = new UpdateUserDTO(userId, Optional.of("new@example.com"), Optional.of("NewName"), Optional.empty(), Optional.of("NewLastName"), Optional.empty());
+        when(userOutputs.updateUser(updateDto)).thenReturn(updateDto);
 
-        User updatedUser = userUseCases.updateUser(user);
+        // When
+        UpdateUserDTO updatedDto = userUseCases.updateUser(updateDto);
 
-        assertNotNull(updatedUser);
-        verify(userOutputs, times(1)).updateUser(user);
+        // Then
+        assertNotNull(updatedDto);
+        assertEquals("new@example.com", updatedDto.getEmail().orElse(null));
+        verify(userOutputs, times(1)).updateUser(updateDto);
     }
 
-    /**
-     * Prueba la obtención exitosa de un usuario por su UUID.
-     * @throws UserBaseException si ocurre un error base de usuario.
-     */
     @Test
-    void getByUUID_Success() throws UserBaseException {
+    @DisplayName("updateUser_whenDtoIsInvalid_shouldThrowBadRequestException")
+    void updateUser_whenDtoIsInvalid_shouldThrowBadRequestException() throws Exception {
+        // Given
+        UpdateUserDTO invalidDto = new UpdateUserDTO(UUID.randomUUID(), Optional.of(" "), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+
+        // When & Then
+        assertThrows(BadRequestOnUpdateUserException.class, () -> userUseCases.updateUser(invalidDto));
+        verify(userOutputs, never()).updateUser(any());
+    }
+
+    // Tests para getByUUID
+    @Test
+    @DisplayName("getByUUID_whenUserExists_shouldReturnUserResponse")
+    void getByUUID_whenUserExists_shouldReturnUserResponse() throws Exception {
+        // Given
         UUID userId = UUID.randomUUID();
-        User user = User.builder().uuid(userId).username("testuser").password("Password123").build();
-        when(userOutputs.getUserByUUID(userId)).thenReturn(user);
+        GetUserByUUIDResponse response = new GetUserByUUIDResponse(userId, 1, "testuser", "test@example.com", "Test", null, "User", null, 12345678, Instant.now(), Instant.now(), Set.of("user"));
+        when(userOutputs.getUserByUUID(userId)).thenReturn(response);
 
-        User foundUser = userUseCases.getByUUID(userId, userId);
+        // When
+        GetUserByUUIDResponse foundUser = userUseCases.getByUUID(userId);
 
+        // Then
         assertNotNull(foundUser);
-        assertEquals("", foundUser.getPassword()); // Password should be cleared
+        assertEquals(userId, foundUser.uuid());
+        assertEquals("testuser", foundUser.username());
         verify(userOutputs, times(1)).getUserByUUID(userId);
     }
 
-    /**
-     * Prueba que se lance una excepción UserNotFoundException cuando se busca un usuario con un ID nulo.
-     */
     @Test
-    void getByUUID_NullId_ThrowsUserNotFoundException() {
-        assertThrows(UserNotFoundException.class, () -> userUseCases.getByUUID(UUID.randomUUID(), null));
-    }
-
-    /**
-     * Prueba que se lance una excepción UserNotFoundException cuando no se encuentra un usuario.
-     */
-    @Test
-    void getByUUID_UserNotFound_ThrowsUserNotFoundException() {
+    @DisplayName("getByUUID_whenUserDoesNotExist_shouldThrowNotFoundException")
+    void getByUUID_whenUserDoesNotExist_shouldThrowNotFoundException() throws Exception {
+        // Given
         UUID userId = UUID.randomUUID();
         when(userOutputs.getUserByUUID(userId)).thenReturn(null);
-        assertThrows(UserNotFoundException.class, () -> userUseCases.getByUUID(userId, userId));
+
+        // When & Then
+        assertThrows(UserNotFoundException.class, () -> userUseCases.getByUUID(userId));
+        verify(userOutputs, times(1)).getUserByUUID(userId);
+    }
+
+    @Test
+    @DisplayName("getByUUID_whenUuidIsNull_shouldThrowBadRequestException")
+    void getByUUID_whenUuidIsNull_shouldThrowBadRequestException() throws Exception {
+        // When & Then
+        assertThrows(UserBadRequestException.class, () -> userUseCases.getByUUID(null));
+        verify(userOutputs, never()).getUserByUUID(any());
     }
 }

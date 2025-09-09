@@ -15,18 +15,21 @@ import jakarta.ws.rs.core.Response;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
 public class AuthOutputsImpl implements AuthOutputs/*, CreateUserOnDomainOutput */{
-
+    private final String CLIENT_ID = "ceniit-backend-develop";
     private static final Logger logger = LoggerFactory.getLogger(AuthOutputsImpl.class);
     private final Keycloak keycloakClient;
     private final RealmResource realmResource;
@@ -97,23 +100,80 @@ public class AuthOutputsImpl implements AuthOutputs/*, CreateUserOnDomainOutput 
             throw new IdentityProviderException("Error creating user in Keycloak. Status: " + response.getStatus());
         }
     }
-/*
-    @Override
-    public void createUser(UserForDomain user) throws AuthException {
-        User userToCreate = new User();
-        userToCreate.setUuid(user.getUuid());
-        userToCreate.setUsername(user.getUsername());
-        userToCreate.setEmail(user.getEmail());
-        userToCreate.setFirstName(user.getFirstName());
-        userToCreate.setLastName(user.getLastName());
-        userToCreate.setPassword(user.getPassword());
 
-        try {
-            createUserUseCase.createUser(userToCreate);
-        } catch (Exception e) {
-            throw new AuthException("Error creating user in local database", e);
-        }
+    @Override
+    public Set<String> getAllRoles() throws Exception {
+        ClientRepresentation client = realmResource.clients().findByClientId(this.CLIENT_ID).get(0);
+        Set<String> roles = realmResource.clients().get(client.getId()).roles().list()
+                .stream()
+                .map(r -> {
+                    System.out.println("================================");
+                    System.out.println("Role found: " + r);
+                    System.out.println("Clien Role: " + r.getClientRole());
+
+                    return r.getName();
+                })
+                .collect(java.util.stream.Collectors.toSet());
+        return roles;
     }
 
- */
+    @Override
+    public void putRolesToUser(UUID userId, Set<String> roles) throws Exception {
+        System.out.println("--- Starting putRolesToUser ---");
+        System.out.println("userId: " + userId);
+        System.out.println("roles to assign: " + roles);
+
+        UsersResource usersResource = realmResource.users();
+        org.keycloak.representations.idm.UserRepresentation userRepresentation;
+        try {
+            userRepresentation = usersResource.get(userId.toString()).toRepresentation();
+            System.out.println("User found in Keycloak: " + userRepresentation.getUsername());
+        } catch (NotFoundException e) {
+            System.out.println("Error: User not found in Keycloak.");
+            throw new UserNotFoundInProviderException("User with ID " + userId + " not found in the identity provider.");
+        }
+
+        System.out.println("Client ID to search for: " + this.CLIENT_ID);
+        ClientRepresentation client = realmResource.clients().findByClientId(this.CLIENT_ID).stream()
+                .findFirst()
+                .orElseThrow(() -> new IdentityProviderException("Client with ID " + this.CLIENT_ID + " not found."));
+        System.out.println("Client found: " + client.getClientId() + " (internal ID: " + client.getId() + ")");
+
+
+        var roleRepresentations = roles.stream()
+                .map(roleName -> {
+                    System.out.println("Searching for role: " + roleName);
+                    try {
+                        var roleRep = realmResource.clients().get(client.getId()).roles().get(roleName).toRepresentation();
+                        System.out.println("Found role: " + roleRep.getName());
+                        return roleRep;
+                    } catch (NotFoundException e) {
+                        logger.warn("Role '{}' not found for client '{}'", roleName, this.CLIENT_ID);
+                        System.out.println("Warning: Role '" + roleName + "' not found for client '" + this.CLIENT_ID + "'");
+                        return null;
+                    }
+                })
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toList());
+
+        System.out.println("Found " + roleRepresentations.size() + " role representations out of " + roles.size() + " requested roles.");
+        roleRepresentations.forEach(r -> System.out.println("Role to be assigned: " + r.getName()));
+
+
+        if (roleRepresentations.isEmpty() && !roles.isEmpty()) {
+            logger.warn("None of the specified roles {} were found for client {}", roles, this.CLIENT_ID);
+            System.out.println("Warning: None of the specified roles were found. Aborting role assignment.");
+            return;
+        }
+
+        if (!roleRepresentations.isEmpty()) {
+            System.out.println("Assigning roles to user...");
+            usersResource.get(userId.toString()).roles().clientLevel(client.getId()).add(roleRepresentations);
+            System.out.println("Role assignment call finished.");
+            logger.info("Assigned client roles {} to user ID {} for client {} in Keycloak",
+                    roleRepresentations.stream().map(r -> r.getName()).collect(java.util.stream.Collectors.toSet()),
+                    userId, this.CLIENT_ID);
+        }
+        System.out.println("--- Finished putRolesToUser ---");
+    }
 }

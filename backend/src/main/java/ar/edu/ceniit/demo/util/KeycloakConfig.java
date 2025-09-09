@@ -51,4 +51,6 @@ public class KeycloakConfig {
     public UsersResource usersResource(RealmResource realmResource) {
         return realmResource.users();
     }
+
+
 }

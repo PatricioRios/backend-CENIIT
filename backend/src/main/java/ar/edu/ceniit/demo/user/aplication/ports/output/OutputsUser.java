@@ -4,5 +4,6 @@ public interface OutputsUser extends
         CreateUserOutput,
         DeleteUserByUUIDOutput,
         UpdateUserOutput,
-        GetUserByUUIDOutput
+        GetUserByUUIDOutput,
+        GetAllUsersOutPut
 { }

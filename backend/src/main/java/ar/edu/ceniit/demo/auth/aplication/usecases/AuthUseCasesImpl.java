@@ -1,5 +1,6 @@
 package ar.edu.ceniit.demo.auth.aplication.usecases;
 
+import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.BadRequest;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.AuthUseCases;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.RegisterUserCommand;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.UserForDomain;
@@ -7,6 +8,9 @@ import ar.edu.ceniit.demo.auth.aplication.ports.output.AuthOutputs;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.CreateUserOnDomainOutput;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.dto.AuthUserResponse;
 import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.AuthException;
+
+import java.util.Set;
+import java.util.UUID;
 
 public class AuthUseCasesImpl implements AuthUseCases {
     private final AuthOutputs authOutputs;
@@ -52,5 +56,18 @@ public class AuthUseCasesImpl implements AuthUseCases {
             //throw new AuthException("Error al registrar el usuario en la base de datos local.", e);
             throw e;
         }
+    }
+
+    @Override
+    public void putRolesToUser(UUID uuid, Set<String> roles) throws Exception {
+        if(uuid == null) {
+            throw new BadRequest("El UUID no puede ser nulo.");
+        }
+        authOutputs.putRolesToUser(uuid, roles);
+    }
+
+    @Override
+    public Set<String> getAllRoles() throws Exception {
+        return authOutputs.getAllRoles();
     }
 }
