@@ -5,7 +5,7 @@ public record SortOrder(User.Field fieldName, Order direction) {
     /**
      * Enum que define la dirección del ordenamiento.
      */
-    public enum Order {
+    public enum     Order {
         /** Ordenar de menor a mayor. */
         ASCENDENTE,
         /** Ordenar de mayor a menor. */

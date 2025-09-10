@@ -1,0 +1,1035 @@
+{
+	"info": {
+		"_postman_id": "d6eb06b3-0557-4ce4-9e18-18e073767726",
+		"name": "TP_Final",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29606029"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "roles",
+					"item": [
+						{
+							"name": "list roles",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"",
+											"",
+											"// 1. Revisa si el código de respuesta es 401 (No autorizado)",
+											"if (pm.response.code === 401) {",
+											"    console.log(\"Respuesta 401 detectada. Solicitando un nuevo token...\");",
+											"    // 2. Define la petición para obtener un nuevo token",
+											"    pm.sendRequest({",
+											"        url: 'http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token',",
+											"        method: 'POST',",
+											"        header: {",
+											"            'Content-Type': 'application/x-www-form-urlencoded'",
+											"        },",
+											"        body: {",
+											"            mode: 'urlencoded',",
+											"            urlencoded: [",
+											"                {key: \"grant_type\", value: \"password\"},",
+											"                {key: \"client_id\", value: \"ceniit-backend-develop\"},",
+											"                {key: \"client_secret\", value: \"Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy\"},",
+											"                {key: \"username\", value: \"patriciorios\"},",
+											"                {key: \"password\", value: \"1234\"}",
+											"            ]",
+											"        }",
+											"    }, (err, response) => {",
+											"        console.log(err);",
+											"        console.log(response.body);",
+											"        if (err) {",
+											"            console.error(\"Error al solicitar el nuevo token:\", err);",
+											"            return;",
+											"        }",
+											"        console.log(\"Nuevo token recibido exitosamente.\");",
+											"        // 3. Extrae el nuevo token de la respuesta",
+											"        const responseJson = response.json();",
+											"        const newToken = responseJson.access_token;",
+											"        // 4. Guarda el nuevo token en una variable de la colección",
+											"        // Asegúrate de tener una variable llamada 'accessToken' en tu colección",
+											"        pm.environment.set(\"JWT\", newToken);",
+											"        console.log(\"Variable 'accessToken' actualizada.\");",
+											"        // 5. (Opcional) Reintenta la petición original que falló",
+											"        // Esto ejecutará la misma petición nuevamente, pero esta vez con el nuevo token",
+											"        //console.log(\"Reintentando la petición original...\");",
+											"        //postman.setNextRequest(pm.info.requestName);",
+											"    });",
+											"} "
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "client_id",
+											"value": "My-Client-ID-For-Spring-App-API",
+											"type": "text"
+										},
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "patriciorios",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "12345",
+											"type": "text"
+										},
+										{
+											"key": "client_secret",
+											"value": "36QScesLbB1IE7M2JJbGKnZuXnE58T8k",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "http://localhost:8080/auth/roles",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"auth",
+										"roles"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "put roles",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"",
+											"",
+											"// 1. Revisa si el código de respuesta es 401 (No autorizado)",
+											"if (pm.response.code === 401) {",
+											"    console.log(\"Respuesta 401 detectada. Solicitando un nuevo token...\");",
+											"    // 2. Define la petición para obtener un nuevo token",
+											"    pm.sendRequest({",
+											"        url: 'http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token',",
+											"        method: 'POST',",
+											"        header: {",
+											"            'Content-Type': 'application/x-www-form-urlencoded'",
+											"        },",
+											"        body: {",
+											"            mode: 'urlencoded',",
+											"            urlencoded: [",
+											"                {key: \"grant_type\", value: \"password\"},",
+											"                {key: \"client_id\", value: \"ceniit-backend-develop\"},",
+											"                {key: \"client_secret\", value: \"Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy\"},",
+											"                {key: \"username\", value: \"patriciorios\"},",
+											"                {key: \"password\", value: \"1234\"}",
+											"            ]",
+											"        }",
+											"    }, (err, response) => {",
+											"        console.log(err);",
+											"        console.log(response.body);",
+											"        if (err) {",
+											"            console.error(\"Error al solicitar el nuevo token:\", err);",
+											"            return;",
+											"        }",
+											"        console.log(\"Nuevo token recibido exitosamente.\");",
+											"        // 3. Extrae el nuevo token de la respuesta",
+											"        const responseJson = response.json();",
+											"        const newToken = responseJson.access_token;",
+											"        // 4. Guarda el nuevo token en una variable de la colección",
+											"        // Asegúrate de tener una variable llamada 'accessToken' en tu colección",
+											"        pm.environment.set(\"JWT\", newToken);",
+											"        console.log(\"Variable 'accessToken' actualizada.\");",
+											"        // 5. (Opcional) Reintenta la petición original que falló",
+											"        // Esto ejecutará la misma petición nuevamente, pero esta vez con el nuevo token",
+											"        //console.log(\"Reintentando la petición original...\");",
+											"        //postman.setNextRequest(pm.info.requestName);",
+											"    });",
+											"} "
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{JWT}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"uuid\":\"c2694d94-fe6a-4b45-accf-532c840dc643\",\n    \"roles\":[\n        \"backend-user\",\n        \"list-roles\",\n        \"put-roles-on-use\"\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:8080/auth/roles",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "8080",
+									"path": [
+										"auth",
+										"roles"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"",
+									"",
+									"// 1. Revisa si el código de respuesta es 401 (No autorizado)",
+									"if (pm.response.code === 401) {",
+									"    console.log(\"Respuesta 401 detectada. Solicitando un nuevo token...\");",
+									"    // 2. Define la petición para obtener un nuevo token",
+									"    pm.sendRequest({",
+									"        url: 'http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token',",
+									"        method: 'POST',",
+									"        header: {",
+									"            'Content-Type': 'application/x-www-form-urlencoded'",
+									"        },",
+									"        body: {",
+									"            mode: 'urlencoded',",
+									"            urlencoded: [",
+									"                {key: \"grant_type\", value: \"password\"},",
+									"                {key: \"client_id\", value: \"ceniit-backend-develop\"},",
+									"                {key: \"client_secret\", value: \"Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy\"},",
+									"                {key: \"username\", value: \"patriciorios\"},",
+									"                {key: \"password\", value: \"1234\"}",
+									"            ]",
+									"        }",
+									"    }, (err, response) => {",
+									"        console.log(err);",
+									"        console.log(response.body);",
+									"        if (err) {",
+									"            console.error(\"Error al solicitar el nuevo token:\", err);",
+									"            return;",
+									"        }",
+									"        console.log(\"Nuevo token recibido exitosamente.\");",
+									"        // 3. Extrae el nuevo token de la respuesta",
+									"        const responseJson = response.json();",
+									"        const newToken = responseJson.access_token;",
+									"        // 4. Guarda el nuevo token en una variable de la colección",
+									"        // Asegúrate de tener una variable llamada 'accessToken' en tu colección",
+									"        pm.environment.set(\"JWT\", newToken);",
+									"        console.log(\"Variable 'accessToken' actualizada.\");",
+									"        // 5. (Opcional) Reintenta la petición original que falló",
+									"        // Esto ejecutará la misma petición nuevamente, pero esta vez con el nuevo token",
+									"        //console.log(\"Reintentando la petición original...\");",
+									"        //postman.setNextRequest(pm.info.requestName);",
+									"    });",
+									"} "
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"maria\",\n  \"password\": \"123456789\",\n  \"email\": \"maria@ejemplo.com\",\n  \"firstName\": \"maria\",\n  \"lastName\": \"perez\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{HOST}}:8080/auth/register",
+							"host": [
+								"{{HOST}}"
+							],
+							"port": "8080",
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "token_endpoint",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Guardar JWT en variable de entorno\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"JWT\", jsonData.access_token);",
+									"});",
+									"pm.test(\"Guardar el refresh Token\",",
+									"function(){",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"RefreshToken\",jsonData.refresh_token)",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "client_id",
+									"value": "ceniit-backend-develop",
+									"type": "text"
+								},
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "patriciorios",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "1234",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3030",
+							"path": [
+								"realms",
+								"develop-spring-realm",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "token_endpoint Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Guardar JWT en variable de entorno\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"JWT_user\", jsonData.access_token);",
+									"});",
+									"pm.test(\"Guardar el refresh Token\",",
+									"function(){",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"RefreshToken\",jsonData.refresh_token)",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "client_id",
+									"value": "ceniit-backend-develop",
+									"type": "text"
+								},
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "ejemplo_usuario",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "1234",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3030",
+							"path": [
+								"realms",
+								"develop-spring-realm",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "token_endpoint Copy 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Guardar JWT en variable de entorno\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"JWT_user1\", jsonData.access_token);",
+									"});",
+									"pm.test(\"Guardar el refresh Token\",",
+									"function(){",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"RefreshToken\",jsonData.refresh_token)",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "client_id",
+									"value": "ceniit-backend-develop",
+									"type": "text"
+								},
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "braiancito",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "1234",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3030",
+							"path": [
+								"realms",
+								"develop-spring-realm",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "refresh_token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Guardar JWT en variable de entorno\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"JWT\", jsonData.access_token);",
+									"});",
+									"pm.test(\"Guardar el refresh Token\",",
+									"function(){",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"RefreshToken\",jsonData.refresh_token)",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "client_id",
+									"value": "ceniit-backend-develop",
+									"type": "text"
+								},
+								{
+									"key": "grant_type",
+									"value": "refresh_token",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "patriciorios",
+									"type": "text"
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{RefreshToken}}",
+									"type": "text"
+								},
+								{
+									"key": "client_secret",
+									"value": "Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3030",
+							"path": [
+								"realms",
+								"develop-spring-realm",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "users",
+			"item": [
+				{
+					"name": "update",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"",
+									"",
+									"// 1. Revisa si el código de respuesta es 401 (No autorizado)",
+									"if (pm.response.code === 401) {",
+									"    console.log(\"Respuesta 401 detectada. Solicitando un nuevo token...\");",
+									"    // 2. Define la petición para obtener un nuevo token",
+									"    pm.sendRequest({",
+									"        url: 'http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token',",
+									"        method: 'POST',",
+									"        header: {",
+									"            'Content-Type': 'application/x-www-form-urlencoded'",
+									"        },",
+									"        body: {",
+									"            mode: 'urlencoded',",
+									"            urlencoded: [",
+									"                {key: \"grant_type\", value: \"password\"},",
+									"                {key: \"client_id\", value: \"ceniit-backend-develop\"},",
+									"                {key: \"client_secret\", value: \"Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy\"},",
+									"                {key: \"username\", value: \"patriciorios\"},",
+									"                {key: \"password\", value: \"1234\"}",
+									"            ]",
+									"        }",
+									"    }, (err, response) => {",
+									"        console.log(err);",
+									"        console.log(response.body);",
+									"        if (err) {",
+									"            console.error(\"Error al solicitar el nuevo token:\", err);",
+									"            return;",
+									"        }",
+									"        console.log(\"Nuevo token recibido exitosamente.\");",
+									"        // 3. Extrae el nuevo token de la respuesta",
+									"        const responseJson = response.json();",
+									"        const newToken = responseJson.access_token;",
+									"        // 4. Guarda el nuevo token en una variable de la colección",
+									"        // Asegúrate de tener una variable llamada 'accessToken' en tu colección",
+									"        pm.environment.set(\"JWT\", newToken);",
+									"        console.log(\"Variable 'accessToken' actualizada.\");",
+									"        // 5. (Opcional) Reintenta la petición original que falló",
+									"        // Esto ejecutará la misma petición nuevamente, pero esta vez con el nuevo token",
+									"        //console.log(\"Reintentando la petición original...\");",
+									"        //postman.setNextRequest(pm.info.requestName);",
+									"    });",
+									"} "
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"uuid\": \"c96a3d97-9ef8-4f06-94eb-3c1648b67137\",\n  //\"email\":\"pato@gmail.com\",\n  \"firstName\": \"Juan\",\n  \"secondName\": \"Piripiri\"//,\n  //\"surname\": \"Rios\",\n  //\"secondSurname\": \"Reynoso\",\n  //\"dni\": 44329343\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/users",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update by admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"",
+									"",
+									"// 1. Revisa si el código de respuesta es 401 (No autorizado)",
+									"if (pm.response.code === 401) {",
+									"    console.log(\"Respuesta 401 detectada. Solicitando un nuevo token...\");",
+									"    // 2. Define la petición para obtener un nuevo token",
+									"    pm.sendRequest({",
+									"        url: 'http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token',",
+									"        method: 'POST',",
+									"        header: {",
+									"            'Content-Type': 'application/x-www-form-urlencoded'",
+									"        },",
+									"        body: {",
+									"            mode: 'urlencoded',",
+									"            urlencoded: [",
+									"                {key: \"grant_type\", value: \"password\"},",
+									"                {key: \"client_id\", value: \"ceniit-backend-develop\"},",
+									"                {key: \"client_secret\", value: \"Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy\"},",
+									"                {key: \"username\", value: \"patriciorios\"},",
+									"                {key: \"password\", value: \"1234\"}",
+									"            ]",
+									"        }",
+									"    }, (err, response) => {",
+									"        console.log(err);",
+									"        console.log(response.body);",
+									"        if (err) {",
+									"            console.error(\"Error al solicitar el nuevo token:\", err);",
+									"            return;",
+									"        }",
+									"        console.log(\"Nuevo token recibido exitosamente.\");",
+									"        // 3. Extrae el nuevo token de la respuesta",
+									"        const responseJson = response.json();",
+									"        const newToken = responseJson.access_token;",
+									"        // 4. Guarda el nuevo token en una variable de la colección",
+									"        // Asegúrate de tener una variable llamada 'accessToken' en tu colección",
+									"        pm.environment.set(\"JWT\", newToken);",
+									"        console.log(\"Variable 'accessToken' actualizada.\");",
+									"        // 5. (Opcional) Reintenta la petición original que falló",
+									"        // Esto ejecutará la misma petición nuevamente, pero esta vez con el nuevo token",
+									"        //console.log(\"Reintentando la petición original...\");",
+									"        //postman.setNextRequest(pm.info.requestName);",
+									"    });",
+									"} "
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"uuid\": \"2f562cd4-d660-4249-bb9a-218e1b74f5ae\",\n  \"email\":\"maria.angela@gmail.com\",\n  \"firstName\": \"marta\",\n  \"secondName\": \"Angela\",\n  \"surname\": \"Rios\",\n  \"secondSurname\": \"Reynoso\",\n  \"dni\": 44329343\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/users/admin",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"users",
+								"admin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getByUUID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"",
+									"",
+									"// 1. Revisa si el código de respuesta es 401 (No autorizado)",
+									"if (pm.response.code === 401) {",
+									"    console.log(\"Respuesta 401 detectada. Solicitando un nuevo token...\");",
+									"    // 2. Define la petición para obtener un nuevo token",
+									"    pm.sendRequest({",
+									"        url: 'http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token',",
+									"        method: 'POST',",
+									"        header: {",
+									"            'Content-Type': 'application/x-www-form-urlencoded'",
+									"        },",
+									"        body: {",
+									"            mode: 'urlencoded',",
+									"            urlencoded: [",
+									"                {key: \"grant_type\", value: \"password\"},",
+									"                {key: \"client_id\", value: \"ceniit-backend-develop\"},",
+									"                {key: \"client_secret\", value: \"Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy\"},",
+									"                {key: \"username\", value: \"patriciorios\"},",
+									"                {key: \"password\", value: \"1234\"}",
+									"            ]",
+									"        }",
+									"    }, (err, response) => {",
+									"        console.log(err);",
+									"        console.log(response.body);",
+									"        if (err) {",
+									"            console.error(\"Error al solicitar el nuevo token:\", err);",
+									"            return;",
+									"        }",
+									"        console.log(\"Nuevo token recibido exitosamente.\");",
+									"        // 3. Extrae el nuevo token de la respuesta",
+									"        const responseJson = response.json();",
+									"        const newToken = responseJson.access_token;",
+									"        // 4. Guarda el nuevo token en una variable de la colección",
+									"        // Asegúrate de tener una variable llamada 'accessToken' en tu colección",
+									"        pm.environment.set(\"JWT\", newToken);",
+									"        console.log(\"Variable 'accessToken' actualizada.\");",
+									"        // 5. (Opcional) Reintenta la petición original que falló",
+									"        // Esto ejecutará la misma petición nuevamente, pero esta vez con el nuevo token",
+									"        //console.log(\"Reintentando la petición original...\");",
+									"        //postman.setNextRequest(pm.info.requestName);",
+									"    });",
+									"} "
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/users/c96a3d97-9ef8-4f06-94eb-3c1648b67137",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"users",
+								"c96a3d97-9ef8-4f06-94eb-3c1648b67137"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"uuid\": \"c96a3d97-9ef8-4f06-94eb-3c1648b67137\",\n  //\"email\":\"pato@gmail.com\",\n  \"firstName\": \"Juan\",\n  \"secondName\": \"Piripiri\"//,\n  //\"surname\": \"Rios\",\n  //\"secondSurname\": \"Reynoso\",\n  //\"dni\": 44329343\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/users/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"users",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "all",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"",
+									"",
+									"// 1. Revisa si el código de respuesta es 401 (No autorizado)",
+									"if (pm.response.code === 401) {",
+									"    console.log(\"Respuesta 401 detectada. Solicitando un nuevo token...\");",
+									"    // 2. Define la petición para obtener un nuevo token",
+									"    pm.sendRequest({",
+									"        url: 'http://localhost:3030/realms/develop-spring-realm/protocol/openid-connect/token',",
+									"        method: 'POST',",
+									"        header: {",
+									"            'Content-Type': 'application/x-www-form-urlencoded'",
+									"        },",
+									"        body: {",
+									"            mode: 'urlencoded',",
+									"            urlencoded: [",
+									"                {key: \"grant_type\", value: \"password\"},",
+									"                {key: \"client_id\", value: \"ceniit-backend-develop\"},",
+									"                {key: \"client_secret\", value: \"Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy\"},",
+									"                {key: \"username\", value: \"patriciorios\"},",
+									"                {key: \"password\", value: \"1234\"}",
+									"            ]",
+									"        }",
+									"    }, (err, response) => {",
+									"        console.log(err);",
+									"        console.log(response.body);",
+									"        if (err) {",
+									"            console.error(\"Error al solicitar el nuevo token:\", err);",
+									"            return;",
+									"        }",
+									"        console.log(\"Nuevo token recibido exitosamente.\");",
+									"        // 3. Extrae el nuevo token de la respuesta",
+									"        const responseJson = response.json();",
+									"        const newToken = responseJson.access_token;",
+									"        // 4. Guarda el nuevo token en una variable de la colección",
+									"        // Asegúrate de tener una variable llamada 'accessToken' en tu colección",
+									"        pm.environment.set(\"JWT\", newToken);",
+									"        console.log(\"Variable 'accessToken' actualizada.\");",
+									"        // 5. (Opcional) Reintenta la petición original que falló",
+									"        // Esto ejecutará la misma petición nuevamente, pero esta vez con el nuevo token",
+									"        //console.log(\"Reintentando la petición original...\");",
+									"        //postman.setNextRequest(pm.info.requestName);",
+									"    });",
+									"} "
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{JWT}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "//{\n//  \"filter\": {\n//    \"type\": \"FIELD\",\n//    \"field\": \"USERNAME\",\n//    \"operator\": \"CONTAINS\",\n//    \"value\": \"p\"\n//  }\n//}\n{\n    \"filter\" : {\n        \"type\" : \"OR\",\n        \"filters\" : [\n            {\n                \"type\" : \"FIELD\",\n                \"field\" : \"USERNAME\",\n                \"operator\" : \"CONTAINS\",\n                \"value\" : \"p\"\n            },\n            {\n                \"type\" : \"FIELD\",\n                \"field\" : \"EMAIL\",\n                \"operator\" : \"STARTS_WITH\",\n                \"value\" : \"m\"\n            },{\n                \"type\" : \"FIELD\",\n                \"field\" : \"EMAIL\",\n                \"operator\" : \"STARTS_WITH\",\n                \"value\" : \"s\"\n            },{\n                \"type\" : \"FIELD\",\n                \"field\" : \"USERNAME\",\n                \"operator\" : \"NOT_EQUAL\",\n                \"value\" : \"diego.rodriguez\"\n            }\n        ]\n    }\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/users?offset=0&limit=20&sortBy=USERNAME&sortOrder=ASC",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "sortBy",
+									"value": "USERNAME"
+								},
+								{
+									"key": "sortOrder",
+									"value": "ASC"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

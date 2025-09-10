@@ -14,8 +14,13 @@ import ar.edu.ceniit.demo.user.aplication.ports.output.UserOutputs;
 import ar.edu.ceniit.demo.user.infraestructure.output.mapper.UsuarioMapper;
 import ar.edu.ceniit.demo.user.infraestructure.output.repository.UsuarioRepository;
 import ar.edu.ceniit.demo.user.infraestructure.output.schema.UserEntityTable;
+import ar.edu.ceniit.demo.user.infraestructure.output.visitor.UserSpecificationVisitor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -91,8 +96,18 @@ public class UsuarioPersistenceAdapter implements UserOutputs, CreateUserOnDomai
 
     @Override
     public Set<User> getAllUsers(Criteria criteria, SortOrder sortOrder, int limit, int offset) {
-        // TODO: Implement criteria-based filtering, sorting, and pagination
-        return usuarioRepository.findAll().stream()
+        Specification<UserEntityTable> spec = (root, query, cb) -> cb.conjunction();
+        if (criteria != null) {
+            spec = criteria.accept(new UserSpecificationVisitor());
+        }
+
+        Pageable pageable = PageRequest.of(offset / limit, limit);
+        if (sortOrder != null && sortOrder.direction() != SortOrder.Order.UNSORTED) {
+            Sort.Direction direction = sortOrder.direction() == SortOrder.Order.ASCENDENTE ? Sort.Direction.ASC : Sort.Direction.DESC;
+            pageable = PageRequest.of(offset / limit, limit, Sort.by(direction, sortOrder.fieldName().name().toLowerCase()));
+        }
+
+        return usuarioRepository.findAll(spec, pageable).stream()
                 .map(usuarioMapper::toDomain)
                 .collect(Collectors.toSet());
     }

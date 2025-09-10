@@ -186,17 +186,45 @@ public class UserController {
     public ResponseEntity<List<UserResponseDTO>> getAllUsers(
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             @RequestParam(required = false, defaultValue = "10") Integer limit,
-            @RequestParam(required = false, defaultValue = "USERNAME") User.Field sortBy,
-            @RequestParam(required = false, defaultValue = "ASC") SortOrder sortOrder,
+            @RequestParam(required = false, defaultValue = "USERNAME") String sortBy,
+            @RequestParam(required = false, defaultValue = "ASC") String sortOrder,
             @org.springframework.web.bind.annotation.RequestBody(required = false) GetAllUsersRequest filterRequest
     ) {
+        System.out.println("Criteria: " + filterRequest);
+        System.out.println("SortBy: " + sortBy);
+        System.out.println("SortOrder: " + sortOrder);
+        System.out.println("Limit: " + limit);
+        System.out.println("Offset: " + offset);
         Criteria criteria = userDTOMapper.toDomain(filterRequest);
 
-        List<UserResponseDTO> users = userUseCases.getAllUsers(criteria, sortOrder, limit, offset)
+
+
+
+        List<UserResponseDTO> users = userUseCases.getAllUsers(criteria, new SortOrder(stringToField(sortBy), stringToOrder(sortOrder)), limit, offset)
                 .stream()
                 .map(userDTOMapper::toResponse)
                 .toList();
 
         return ResponseEntity.ok(users);
+    }
+    private SortOrder.Order stringToOrder(String order) {
+        try {
+            switch (order.toUpperCase()) {
+                case "ASC", "ASCENDENTE" -> order = "ASCENDENTE";
+                case "DESC", "DESCENDENTE" -> order = "DESCENDENTE";
+                case "UNSORTED", "UNSORT" -> order = "UNSORTED";
+                default -> throw new IllegalArgumentException("Invalid sort order: " + order);
+            }
+            return SortOrder.Order.valueOf(order.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid sort order: " + order);
+        }
+    }
+    private User.Field stringToField(String fieldName) {
+        try {
+            return User.Field.valueOf(fieldName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid field name: " + fieldName);
+        }
     }
 }

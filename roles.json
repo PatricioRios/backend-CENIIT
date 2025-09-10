@@ -1,0 +1,42 @@
+{
+  "user-manager" : {
+    "descripcion" : "este grupo de usuarios esta dedicado a gestionar los usuarios del sistema",
+    "roles" : [
+      "create-user",
+      "delete-user",
+      "update-user"
+    ]
+  },
+  "role-manager" : {
+    "descripcion" : "este grupo de usuarios esta dedicado a gestionar los roles de los usuarios del sitema",
+    "roles" : [
+      "put-roles-on-user"
+    ]
+  },
+  "user-resource" : {
+    "descripcion" : "este grupo de usuarios esta dedicado a gestionar los recursos del sistema",
+    "roles" : [
+    ],
+    "normal-user" : {
+      "descripcion" : "este grupo de usuarios sera un usuario normal del sistema (docentes, investigadores)",
+      "roles" : [
+        "list-resources",
+        "find-resource",
+        "get-resource",
+        ""
+      ]
+  }
+}
+user-manager,Usuario
+Crear usuario
+Modificar Usuario
+Modificar Roles de usuario
+Eliminar usuario
+
+Recursos
+Aceptar Recurso
+Crear recurso
+Modificar recurso (Modificar estado "Mantenimiento", "activo", etc)
+
+Reportes
+Crear reporte

@@ -1,0 +1,10 @@
+sab 6 de septiembre (6/9/2025)
+
+enpoints:
+    registrar usuario
+
+    ver usuario
+    ver todos los usuarios
+
+    ver todos los roles
+    poner roles a usuario
