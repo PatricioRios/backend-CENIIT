@@ -34,12 +34,10 @@ public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDo
     private static final Logger logger = LoggerFactory.getLogger(AuthOutputsImpl.class);
     private final Keycloak keycloakClient;
     private final RealmResource realmResource;
-    private final CreateUserUseCase createUserUseCase;
 
-    public AuthOutputsImpl(Keycloak keycloakClient, RealmResource realmResource, CreateUserUseCase createUserUseCase) {
+    public AuthOutputsImpl(Keycloak keycloakClient, RealmResource realmResource) {
         this.keycloakClient = keycloakClient;
         this.realmResource = realmResource;
-        this.createUserUseCase = createUserUseCase;
     }
 
     @Override

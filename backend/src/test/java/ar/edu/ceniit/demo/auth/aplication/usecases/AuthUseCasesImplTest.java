@@ -1,6 +1,7 @@
 package ar.edu.ceniit.demo.auth.aplication.usecases;
 
 import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.AuthException;
+import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.UserNotFoundInProviderException;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.RegisterUserCommand;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.UserForDomain;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.AuthOutputs;
@@ -101,7 +102,7 @@ class AuthUseCasesImplTest {
 
         when(authOutputs.registerUserOnIdentityProvider(any(AuthUserResponse.class))).thenReturn(authUserResponse);
         doThrow(new AuthException("DB error")).when(createUserOnDomainOutput).createUser(any(UserForDomain.class));
-        doThrow(new AuthException("IdP delete error")).when(authOutputs).deleteUserOnIdentityProvider(any(UUID.class));
+        doThrow(new UserNotFoundInProviderException("IdP delete error")).when(authOutputs).deleteUserOnIdentityProvider(any(UUID.class));
 
         // When & Then
         Exception exception = assertThrows(Exception.class, () -> authUseCases.register(command));
