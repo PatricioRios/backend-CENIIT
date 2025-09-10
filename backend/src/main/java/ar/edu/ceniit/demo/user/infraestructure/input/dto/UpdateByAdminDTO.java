@@ -1,26 +1,43 @@
 package ar.edu.ceniit.demo.user.infraestructure.input.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 
-public class UpdateUserDTO {
-    @NotBlank
+public class UpdateByAdminDTO {
+    private String uuid;
     private String firstName;
     private String secondName;
-    @NotBlank
     private String surname;
     private String secondSurname;
-    @NotNull
+    private String email;
     private Integer dni;
 
-    public UpdateUserDTO() {
+
+    public UpdateByAdminDTO() {
     }
 
-    public UpdateUserDTO(String firstName, String secondName, String surname, String secondSurname, Integer dni) {
+    public UpdateByAdminDTO(String firstName, String secondName, String surname, String secondSurname, Integer dni) {
         this.firstName = firstName;
         this.secondName = secondName;
         this.surname = surname;
         this.secondSurname = secondSurname;
+        this.dni = dni;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Integer getDni() {
+        return dni;
+    }
+
+    public void setDni(Integer dni) {
         this.dni = dni;
     }
 
@@ -56,11 +73,11 @@ public class UpdateUserDTO {
         this.secondSurname = secondSurname;
     }
 
-    public Integer getDni() {
-        return dni;
+    public String getUuid() {
+        return uuid;
     }
 
-    public void setDni(Integer dni) {
-        this.dni = dni;
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }

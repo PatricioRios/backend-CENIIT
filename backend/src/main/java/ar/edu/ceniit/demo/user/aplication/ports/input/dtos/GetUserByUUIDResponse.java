@@ -7,7 +7,7 @@ import java.util.UUID;
 public record GetUserByUUIDResponse (
     //Propiedades del sistema
     UUID uuid,//-> Existe en DB del dominio
-    Integer id,//-> Existe en DB del dominio
+    Long id,//-> Existe en DB del dominio
     String username,//-> Existe en DB del dominio
     String email, //-> Existe en DB del dominio
     //private String password; //-> NO Existe en DB del dominio

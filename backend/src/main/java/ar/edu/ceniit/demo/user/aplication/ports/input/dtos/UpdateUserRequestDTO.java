@@ -5,7 +5,7 @@ import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.BadRequestOnUpdateU
 import java.util.Optional;
 import java.util.UUID;
 
-public class UpdateUserDTO {
+public class UpdateUserRequestDTO {
     ////Propiedades del sistema
     private UUID uuid; //UUID.fromString("00000000-0000-0000-0000-000000000000");//-> No Updatable (pero necesario)
     // String username;-> No Updatable
@@ -16,20 +16,22 @@ public class UpdateUserDTO {
     private Optional<String> secondName;//-> Opcional
     private Optional<String> lastName;
     private Optional<String> secondLastName;//-> Opcional
-    // Integer dni;-> No Updatable
-    public UpdateUserDTO(
+    private Optional<Integer> dni;
+    public UpdateUserRequestDTO(
             UUID uuid,
             Optional<String> email,
             Optional<String> firstName,
             Optional<String> secondName,
             Optional<String> lastName,
-            Optional<String> secondLastName) {
+            Optional<String> secondLastName,
+            Optional<Integer> dni){
         this.uuid = uuid;
         this.email = email;
         this.firstName = firstName;
         this.secondName = secondName;
         this.lastName = lastName;
         this.secondLastName = secondLastName;
+        this.dni = dni;
     }
 
     public void validateUser() throws BadRequestOnUpdateUserException{
@@ -56,6 +58,9 @@ public class UpdateUserDTO {
 
         if(this.secondLastName.isPresent() && this.secondLastName.get().isBlank()){
             throw new BadRequestOnUpdateUserException(BadRequestOnUpdateUserException.Reason.INVALID_SECOND_LAST_NAME);
+        }
+        if(this.dni.isPresent() && this.dni.get()<=0){
+            throw new BadRequestOnUpdateUserException(BadRequestOnUpdateUserException.Reason.INVALID_DNI);
         }
     }
 
@@ -106,5 +111,13 @@ public class UpdateUserDTO {
 
     public void setSecondLastName(Optional<String> secondLastName) {
         this.secondLastName = secondLastName;
+    }
+
+    public Optional<Integer> getDni() {
+        return dni;
+    }
+
+    public void setDni(Optional<Integer> dni) {
+        this.dni = dni;
     }
 }

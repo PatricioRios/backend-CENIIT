@@ -1,6 +1,5 @@
 package ar.edu.ceniit.demo.user.aplication.entitys.objects;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
@@ -10,13 +9,12 @@ import java.util.UUID;
 
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class User {
     //Propiedades del sistema
     private UUID uuid; //-> Existe en DB del dominio
-    private Integer id ; //-> Existe en DB del dominio
+    private Long id ; //-> Existe en DB del dominio
     private String username; //-> Existe en DB del dominio
-    private String email = ""; //-> Existe en DB del dominio
+    private String email; //-> Existe en DB del dominio
     //private String password; //-> NO Existe en DB del dominio
 
     //propiedades del dominio
@@ -88,11 +86,11 @@ public class User {
         this.uuid = uuid;
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -238,5 +236,17 @@ public class User {
         }
     }
 
-
+    public User(UUID uuid, Long id, String username, String email, String firstName, Optional<String> secondName, String lastName, Optional<String> secondLastName, Integer dni, Instant createdAt, Instant updatedAt) {
+        this.uuid = uuid;
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.firstName = firstName;
+        this.secondName = secondName;
+        this.lastName = lastName;
+        this.secondLastName = secondLastName;
+        this.dni = dni;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 }

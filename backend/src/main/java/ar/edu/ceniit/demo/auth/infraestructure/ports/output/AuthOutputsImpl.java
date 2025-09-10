@@ -1,15 +1,15 @@
 package ar.edu.ceniit.demo.auth.infraestructure.ports.output;
 
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.AuthException;
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.Conflicts;
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.IdentityProviderException;
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.UserNotFoundInProviderException;
+import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.*;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.UserForDomain;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.AuthOutputs;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.CreateUserOnDomainOutput;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.dto.AuthUserResponse;
+import ar.edu.ceniit.demo.common.exceptions.FatalErrorException;
+import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserNotFoundException;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
 import ar.edu.ceniit.demo.user.aplication.ports.input.CreateUserUseCase;
+import ar.edu.ceniit.demo.user.aplication.ports.output.identity_provider.IPOutputs;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.admin.client.Keycloak;
@@ -24,11 +24,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 @Component
-public class AuthOutputsImpl implements AuthOutputs/*, CreateUserOnDomainOutput */{
+public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDomainOutput */ {
     private final String CLIENT_ID = "ceniit-backend-develop";
     private static final Logger logger = LoggerFactory.getLogger(AuthOutputsImpl.class);
     private final Keycloak keycloakClient;
@@ -42,18 +43,37 @@ public class AuthOutputsImpl implements AuthOutputs/*, CreateUserOnDomainOutput 
     }
 
     @Override
-    public void deleteUserOnIdentityProvider(UUID userId) throws AuthException {
+    public void deleteUserOnIdentityProvider(UUID userId) throws UserNotFoundInProviderException {
         UsersResource usersResource = realmResource.users();
         try {
-            logger.debug("Attempting to delete user with ID: {}", userId);
-            usersResource.delete(userId.toString());
+            System.out.println("Attempting to delete user with ID: {}" + userId);
+            Response response = usersResource.delete(userId.toString());
+            if (response.getStatus() == 204) {
+                System.out.println("Received 204 No Content response from Keycloak for user ID: {}" + userId);
+            } else if (response.getStatus() == 404) {
+                System.out.println("Received 404 Not Found response from Keycloak for user ID: {}" + userId);
+                throw new UserNotFoundInProviderException("User with ID " + userId + " not found in the identity provider.");
+            } else {
+                String errorBody = "";
+                try {
+                    if (response.hasEntity()) {
+                        errorBody = response.readEntity(String.class);
+                    }
+                } catch (Exception e) {
+                    System.out.println("Could not read error response body from Keycloak." + e);
+                }
+                System.out.println("Failed to delete user with ID {} from Keycloak. Status: {}. Body: {}" + userId + response.getStatus() + errorBody);
+                throw new IdentityProviderException("Failed to delete user with ID " + userId + " from the identity provider. Status: " + response.getStatus());
+            }
             logger.info("Successfully deleted user with ID: {} from Keycloak", userId);
         } catch (NotFoundException e) {
             logger.warn("User with ID {} not found in Keycloak. Assuming already deleted.", userId);
             throw new UserNotFoundInProviderException("User with ID " + userId + " not found in the identity provider.", e);
         } catch (Exception e) {
             logger.error("Error deleting user with ID {} from Keycloak", userId, e);
-            throw new IdentityProviderException("An unexpected error occurred while deleting user " + userId, e);
+            throw new FatalErrorException("no se que paso " + e.getMessage(),
+                    e,
+                    FatalErrorException.FatalErrorType.UNDEFINED);
         }
     }
 
@@ -102,7 +122,7 @@ public class AuthOutputsImpl implements AuthOutputs/*, CreateUserOnDomainOutput 
     }
 
     @Override
-    public Set<String> getAllRoles() throws Exception {
+    public Set<String> getAllRoles() {
         ClientRepresentation client = realmResource.clients().findByClientId(this.CLIENT_ID).get(0);
         Set<String> roles = realmResource.clients().get(client.getId()).roles().list()
                 .stream()
@@ -175,5 +195,57 @@ public class AuthOutputsImpl implements AuthOutputs/*, CreateUserOnDomainOutput 
                     userId, this.CLIENT_ID);
         }
         System.out.println("--- Finished putRolesToUser ---");
+    }
+
+    @Override
+    public void updateBasicInfoOnUser(UUID uuidOnIP, Optional<String> newEmail, Optional<String> newFirstName, Optional<String> newSecondName) throws UserNotFoundInProviderException, DuplicateEmailException {
+        UsersResource usersResource = realmResource.users();
+        UserRepresentation userRepresentation;
+        try {
+            userRepresentation = usersResource.get(uuidOnIP.toString()).toRepresentation();
+        } catch (NotFoundException e) {
+            throw new UserNotFoundInProviderException("User with ID " + uuidOnIP + " not found in the identity provider.", e);
+        }
+
+        newEmail.ifPresent(email -> {
+            // Verificar si el nuevo email ya está en uso por otro usuario
+            var usersWithEmail = usersResource.search(null, null, null, email, 0, 2);
+            boolean emailInUse = usersWithEmail.stream()
+                    .anyMatch(u -> !u.getId().equals(uuidOnIP.toString()));
+            if (emailInUse) {
+                throw new DuplicateEmailException("The email " + email + " is already in use by another user.");
+            }
+            userRepresentation.setEmail(email);
+        });
+
+        newFirstName.ifPresent(userRepresentation::setFirstName);
+        newSecondName.ifPresent(userRepresentation::setLastName);
+
+        usersResource.get(uuidOnIP.toString()).update(userRepresentation);
+    }
+
+    @Override
+    public void deleteUser(UUID uuidOnIP) throws UserNotFoundException {
+        try {
+            deleteUserOnIdentityProvider(uuidOnIP);
+        } catch (UserNotFoundInProviderException e) {
+            throw new UserNotFoundException("User with ID " + uuidOnIP + " not found in the identity provider.", e);
+        }
+    }
+
+    @Override
+    public void updateUserOnIP(UUID uuidOnIP,
+                               Optional<String> newEmail,
+                               Optional<String> newFirstName,
+                               Optional<String> newSecondName) throws
+            UserNotFoundException,
+            ar.edu.ceniit.demo.user.aplication.entitys.exceptions.DuplicateEmailException {
+        try {
+            updateBasicInfoOnUser(uuidOnIP, newEmail, newFirstName, newSecondName);
+        } catch (UserNotFoundInProviderException e) {
+            throw new UserNotFoundException("User with ID " + uuidOnIP + " not found in the identity provider.", e);
+        } catch (DuplicateEmailException e) {
+            throw new ar.edu.ceniit.demo.user.aplication.entitys.exceptions.DuplicateEmailException("The email is already in use by another user.", e);
+        }
     }
 }

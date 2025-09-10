@@ -4,5 +4,6 @@ public interface AuthOutputs extends
         DeleteUserOnIdentityProviderOutput,
         RegisterUserOnIdentityProviderOutput,
         PutRolesToUserOutput,
-        GetAllRolesOutput
+        GetAllRolesOutput,
+        UpdateBasicInfoOutput
 { }

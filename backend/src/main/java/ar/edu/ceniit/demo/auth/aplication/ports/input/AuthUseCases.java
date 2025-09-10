@@ -8,8 +8,8 @@ import java.util.UUID;
 public interface AuthUseCases extends
         RegisterNewUserUseCase,
         PutRolesToUserUseCase,
-        GetAllRolesOutput
-
+        GetAllRolesOutput,
+        DeleteUserUseCase,
+        UpdateBasicInfoUserUseCase
 {
-    void putRolesToUser(UUID uuid, Set<String> roles) throws Exception;
 }

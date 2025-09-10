@@ -6,5 +6,6 @@ import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserNotFoundExcepti
 import java.util.UUID;
 
 public interface DeleteUserUseCase {
-    void deleteUser(UUID uuid) throws UserNotFoundException, UserBadRequestException;
+    void deleteUser(UUID uuid)
+            throws UserNotFoundException, UserBadRequestException;
 }

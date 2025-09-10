@@ -1,6 +1,6 @@
 package ar.edu.ceniit.demo.user.aplication.ports.output;
 
-public interface OutputsUser extends
+public interface UserOutputs extends
         CreateUserOutput,
         DeleteUserByUUIDOutput,
         UpdateUserOutput,

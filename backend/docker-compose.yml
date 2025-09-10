@@ -1,0 +1,69 @@
+# docker-compose.yml
+#version: "3.8" # Especifica la versión de Docker Compose
+
+services:
+  # Servicio para la base de datos PostgreSQL
+  keycloak-postgres:
+    image: postgres:16 # Utiliza la imagen de PostgreSQL versión 16
+    container_name: keycloak-postgres # Asigna un nombre al contenedor
+    restart: unless-stopped # Reinicia el contenedor a menos que se detenga manualmente
+    environment: # Variables de entorno para la configuración de PostgreSQL
+      POSTGRES_DB: keycloak # Nombre de la base de datos
+      POSTGRES_USER: keycloak # Usuario de la base de datos
+      POSTGRES_PASSWORD: mysecretpassword # Contraseña del usuario
+    volumes: # Monta un volumen persistente para los datos de la base de datos
+      - trabajo_final_keycloak_db_data:/var/lib/postgresql/data
+    ports: # Mapea el puerto del host al puerto del contenedor
+      - "127.0.0.1:5432:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
+    networks: # Conecta el servicio a la red definida
+      - keycloak-net
+
+  # Servicio para el servidor Keycloak
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3.2 # Utiliza la imagen de Keycloak
+    container_name: keycloak # Asigna un nombre al contenedor
+    restart: unless-stopped # Reinicia el contenedor a menos que se detenga manualmente
+    environment: # Variables de entorno para la configuración de Keycloak
+      KC_DB: postgres # Especifica PostgreSQL como la base de datos
+      KC_DB_URL_HOST: keycloak-postgres # Nombre del host de la base de datos (nombre del servicio de Docker Compose)
+      KC_DB_USERNAME: keycloak # Usuario de la base de datos
+      KC_DB_PASSWORD: mysecretpassword # Contraseña de la base de datos
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin # Nombre de usuario del administrador inicial de Keycloak
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin # Contraseña del administrador inicial de Keycloak
+    ports: # Mapea el puerto del host al puerto del contenedor
+      - "127.0.0.1:3030:8080"
+    depends_on: # Asegura que keycloak-postgres se inicie antes que keycloak
+      - keycloak-postgres
+    networks: # Conecta el servicio a la red definida
+      - keycloak-net
+    command:
+      - start-dev # Comando para iniciar Keycloak en modo de desarrollo
+      - --import-realm
+    volumes:
+      - ./config/develop-config.json:/opt/keycloak/data/import/develop-config.json
+  # Servicio para la base de datos PostgreSQL de tu aplicación
+  app-postgres:
+    image: postgres:16
+    container_name: app-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: app_db
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+    ports: # Mapea el puerto del host al puerto del contenedor
+      - "127.0.0.1:5433:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
+    volumes:
+      - trabajo_final_app_db_data:/var/lib/postgresql/data
+    networks:
+      - keycloak-net
+
+networks:
+  # Define la red personalizada para los contenedores
+  keycloak-net:
+    driver: bridge # Tipo de red (por defecto, pero explícitamente definido)
+
+volumes:
+  # Define el volumen persistente para los datos de PostgreSQL
+  trabajo_final_keycloak_db_data: # Nombre del volumen
+  # Define el volumen persistente para los datos de PostgreSQL de la aplicación
+  trabajo_final_app_db_data:

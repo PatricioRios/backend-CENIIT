@@ -3,11 +3,11 @@ package ar.edu.ceniit.demo.user.aplication.ports.input;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.BadRequestOnUpdateUserException;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.DuplicateEmailException;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserNotFoundException;
-import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
-import ar.edu.ceniit.demo.user.aplication.ports.input.dtos.UpdateUserDTO;
+import ar.edu.ceniit.demo.user.aplication.ports.input.dtos.UpdateUserRequestDTO;
+import ar.edu.ceniit.demo.user.aplication.ports.input.dtos.UpdateUserResponseDTO;
 
 public interface UpdateUserUseCase {
-    UpdateUserDTO updateUser(UpdateUserDTO user) throws
+    UpdateUserResponseDTO updateUser(UpdateUserRequestDTO user) throws
             BadRequestOnUpdateUserException,
             UserNotFoundException,
             DuplicateEmailException

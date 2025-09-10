@@ -5,5 +5,6 @@ import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserNotFoundExcepti
 import java.util.UUID;
 
 public interface DeleteUserByUUIDOutput {
-    void deleteUserByUUID(UUID uuid) throws UserNotFoundException;
+    void deleteUserByUUID(UUID uuid)
+            throws UserNotFoundException;
 }

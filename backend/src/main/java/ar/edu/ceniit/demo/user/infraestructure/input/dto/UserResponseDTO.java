@@ -1,7 +1,10 @@
 package ar.edu.ceniit.demo.user.infraestructure.input.dto;
 
+import lombok.Builder;
+
 import java.util.UUID;
 
+@Builder
 public class UserResponseDTO {
 
     private UUID uuid;
@@ -26,6 +29,8 @@ public class UserResponseDTO {
         this.secondSurname = secondSurname;
         this.dni = dni;
     }
+
+
 
     public UUID getUuid() {
         return uuid;

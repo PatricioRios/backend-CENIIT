@@ -11,7 +11,8 @@ public class BadRequestOnUpdateUserException extends Exception {
         INVALID_FIRST_NAME("Invalid First Name"),
         INVALID_SECOND_NAME("Invalid Second Name"),
         INVALID_LAST_NAME("Invalid Last Name"),
-        INVALID_SECOND_LAST_NAME("Invalid Second Last Name"),;
+        INVALID_SECOND_LAST_NAME("Invalid Second Last Name"),
+        INVALID_DNI("Invalid DNI (Document National Identity is >= 9)"),;
         private final String reason;
         Reason(String reason) {
             this.reason = reason;

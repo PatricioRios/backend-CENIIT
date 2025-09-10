@@ -9,5 +9,7 @@ import ar.edu.ceniit.demo.user.aplication.ports.input.dtos.GetUserByUUIDResponse
 import java.util.UUID;
 
 public interface GetUserByUUIDUseCase {
-    GetUserByUUIDResponse getByUUID(UUID requestedUserId) throws UserNotFoundException, UserBadRequestException;
+    GetUserByUUIDResponse getByUUID(UUID requestedUserId)
+            throws UserNotFoundException,
+            UserBadRequestException;
 }
