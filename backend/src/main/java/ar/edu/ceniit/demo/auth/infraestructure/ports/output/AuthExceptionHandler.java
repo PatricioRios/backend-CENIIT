@@ -8,8 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-//@ControllerAdvice(basePackages = "ar.edu.ceniit.demo.auth.infraestructure.ports.output")
-@ControllerAdvice
+@ControllerAdvice(
+        basePackages = "ar.edu.ceniit.demo.auth.infraestructure.ports.output"
+)
 public class AuthExceptionHandler {
     @ExceptionHandler(BadRequest.class)
     public ResponseEntity<ErrorResponseDTO<Void>> handleAllExceptions(BadRequest ex, HttpServletRequest request) {

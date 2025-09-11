@@ -1,7 +1,7 @@
 package ar.edu.ceniit.demo.user.aplication.entitys.exceptions;
 
 
-public class    UserNotFoundException extends Exception {
+public class UserNotFoundException extends Exception {
     public UserNotFoundException() {
         super("User not found");
     }

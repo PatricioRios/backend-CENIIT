@@ -13,6 +13,9 @@ public class BadRequestOnCreateUserException extends Exception {
         Reason(String reason) {
             this.reason = reason;
         }
+        public String getReasonMessage() {
+            return reason;
+        }
     }
     private Reason reason;
     public BadRequestOnCreateUserException(BadRequestOnCreateUserException.Reason reason, Throwable cause) {

@@ -42,6 +42,7 @@ public class AuthUseCasesImpl implements AuthUseCases {
 
         // Paso 1: Registrar en el proveedor de identidad (Keycloak)
         AuthUserResponse createdAuthUser = authOutputs.registerUserOnIdentityProvider(authUserRequest);
+
         try {
             // Paso 2: Crear el usuario en la base de datos local
             UserForDomain userToCreate = new UserForDomain();

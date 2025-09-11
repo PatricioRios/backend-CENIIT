@@ -17,6 +17,9 @@ public class BadRequestOnUpdateUserException extends Exception {
         Reason(String reason) {
             this.reason = reason;
         }
+        public String getReasonMessage() {
+            return reason;
+        }
     }
 
     public Reason getReason() {
