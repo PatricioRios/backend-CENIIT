@@ -9,7 +9,6 @@ import ar.edu.ceniit.demo.user.infraestructure.input.dto.*;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class UserDTOMapper {
@@ -60,48 +59,48 @@ public class UserDTOMapper {
     }
 
     private Criteria toDomain(FilterDTO dto) {
-        if (dto == null) {
-            return null;
-        }
+        switch (dto) {
+            case null -> {
+                return null;
+            }
+            case AndFilterDTO andFilterDTO -> {
+                List<Criteria> criteria = andFilterDTO.getFilters().stream()
+                        .map(this::toDomain)
+                        .collect(Collectors.toList());
+                return new AndCriteria(criteria.toArray(new Criteria[0]));
+            }
+            case OrFilterDTO orFilterDTO -> {
+                List<Criteria> criteria = orFilterDTO.getFilters().stream()
+                        .map(this::toDomain)
+                        .collect(Collectors.toList());
+                return new OrCriteria(criteria.toArray(new Criteria[0]));
+            }
+            case StringComparationFieldFilterDTO fieldDto -> {
+                String value = fieldDto.getValue();
+                String op = fieldDto.getOperator().toUpperCase();
 
-        if (dto instanceof AndFilterDTO) {
-            List<Criteria> criteria = ((AndFilterDTO) dto).getFilters().stream()
-                    .map(this::toDomain)
-                    .collect(Collectors.toList());
-            return new AndCriteria(criteria.toArray(new Criteria[0]));
-        }
-
-        if (dto instanceof OrFilterDTO) {
-            List<Criteria> criteria = ((OrFilterDTO) dto).getFilters().stream()
-                    .map(this::toDomain)
-                    .collect(Collectors.toList());
-            return new OrCriteria(criteria.toArray(new Criteria[0]));
-        }
-
-        if (dto instanceof FieldFilterDTO) {
-            FieldFilterDTO fieldDto = (FieldFilterDTO) dto;
-            String value = fieldDto.getValue();
-            String op = fieldDto.getOperator().toUpperCase();
-
-            switch (fieldDto.getField()) {
-                case UUID:
-                    return new UserUUIDCriteria(StringOperator.valueOf(op), value);
-                case USERNAME:
-                    return new UserNameCriteria(StringOperator.valueOf(op), value);
-                case EMAIL:
-                    return new UserEmailCriteria(StringOperator.valueOf(op), value);
-                case FIRST_NAME:
-                    return new UserFirstNameCriteria(StringOperator.valueOf(op), value);
-                case LAST_NAME:
-                    return new UserLastNameCriteria(StringOperator.valueOf(op), value);
-                case DNI:
-                    return new UserDNICriteria(StringOperator.valueOf(op), value);
-                case CREATED_AT:
-                    return new UserCreatedAtCriteria(ComparableOperator.valueOf(op), OffsetDateTime.parse(value));
-                case UPDATED_AT:
-                    return new UserUpdatedAtCriteria(ComparableOperator.valueOf(op), OffsetDateTime.parse(value));
-                default:
-                    throw new IllegalArgumentException("Unsupported field for filtering: " + fieldDto.getField());
+                switch (fieldDto.getField()) {
+                    case UUID:
+                        return new UserUUIDCriteria(StringOperator.valueOf(op), value);
+                    case USERNAME:
+                        return new UserNameCriteria(StringOperator.valueOf(op), value);
+                    case EMAIL:
+                        return new UserEmailCriteria(StringOperator.valueOf(op), value);
+                    case FIRST_NAME:
+                        return new UserFirstNameCriteria(StringOperator.valueOf(op), value);
+                    case LAST_NAME:
+                        return new UserLastNameCriteria(StringOperator.valueOf(op), value);
+                    case DNI:
+                        return new UserDNICriteria(StringOperator.valueOf(op), value);
+                    case CREATED_AT:
+                        return new UserCreatedAtCriteria(ComparableOperator.valueOf(op), OffsetDateTime.parse(value));
+                    case UPDATED_AT:
+                        return new UserUpdatedAtCriteria(ComparableOperator.valueOf(op), OffsetDateTime.parse(value));
+                    default:
+                        throw new IllegalArgumentException("Unsupported field for filtering: " + fieldDto.getField());
+                }
+            }
+            default -> {
             }
         }
 

@@ -1,8 +1,9 @@
 package ar.edu.ceniit.demo.common.exceptions;
 
+import ar.edu.ceniit.demo.common.output.dto.ErrorResponseDTO;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.Conflicts;
-import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserBaseException;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,13 +33,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(UserBaseException.class)
-    public ResponseEntity<Map<String, String>> handleUserBaseException(UserBaseException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", ex.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -48,19 +42,51 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGlobalException(MethodArgumentNotValidException ex) {
-        /*
-        Map<String, String> response = new HashMap<>();
-        response.put("error", "An unexpected error occurred");
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        * */
-        Map<String, String> errors = new HashMap<>();
-        ex.getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
+    public ResponseEntity<ErrorResponseDTO<Void>> handleGlobalException(Exception ex, HttpServletRequest request) {
         log.error("e: ", ex);
-        return ResponseEntity.badRequest().body(errors);
+        return ResponseEntity.internalServerError().body(
+                new ErrorResponseDTO<>(
+                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                        "An unexpected error occurred" ,
+                        request.getRequestURI()
+                )
+        );
+    }
+    @ExceptionHandler(WarningErrorException.class)
+    public ResponseEntity<ErrorResponseDTO<Void>> handleGlobalException(WarningErrorException ex, HttpServletRequest request) {
+        log.warn("e: {}", ex.toString(), ex);
+        return ResponseEntity.internalServerError().body(
+                new ErrorResponseDTO<>(
+                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                        "An unexpected error occurred" ,
+                        request.getRequestURI()
+                )
+        );
+    }
+    @ExceptionHandler(FatalErrorException.class)
+    public ResponseEntity<ErrorResponseDTO<Void>> handleGlobalException(FatalErrorException ex, HttpServletRequest request) {
+        log.error("e: ", ex);
+        return ResponseEntity.internalServerError().body(
+                new ErrorResponseDTO<>(
+                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                        "An unexpected error occurred" ,
+                        request.getRequestURI()
+                )
+        );
+    }
+    @ExceptionHandler(InternalErrorException.class)
+    public ResponseEntity<ErrorResponseDTO<Void>> handleGlobalException(InternalErrorException ex, HttpServletRequest request) {
+        log.error("e: ", ex);
+        return ResponseEntity.internalServerError().body(
+                new ErrorResponseDTO<>(
+                        HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                        HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                        "An unexpected error occurred" ,
+                        request.getRequestURI()
+                )
+        );
     }
 }

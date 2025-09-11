@@ -7,18 +7,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * DTO for a simple filter on a specific field.
  * Contains the field, operator, and value for the comparison.
  */
-public class FieldFilterDTO extends FilterDTO {
+public class StringComparationFieldFilterDTO extends FilterDTO {
     @Schema(description = "Field to filter by.",
-            example = "USERNAME",
-            allowableValues = {"UUID", "USERNAME", "EMAIL", "FIRST_NAME", "LAST_NAME", "DNI", "CREATED_AT", "UPDATED_AT"})
+            example = "CREATED_AT",
+            allowableValues = {"CREATED_AT", "UPDATED_AT"})
     private User.Field field;
     @Schema(description = "Operator for the filter. Depends on the field type (String or Comparable).",
             example = "CONTAINS",
             allowableValues = {
-            "EQUAL", "NOT_EQUAL", "LIKE",
-                    "STARTS_WITH", "CONTAINS", "GREATER_THAN",
-                    "LESS_THAN", "GREATER_THAN_OR_EQUAL",
-                    "LESS_THAN_OR_EQUAL"})
+                    "EQUAL", "NOT_EQUAL",
+                    "LIKE", "STARTS_WITH",
+                    "CONTAINS",
+    })
     private String operator; // Ej: EQUALS, CONTAINS, GREATER_THAN
     @Schema(description = "Value to filter by. For date fields, use ISO 8601 format (e.g., '2025-09-09T10:00:00Z').",
             example = "john.doe")

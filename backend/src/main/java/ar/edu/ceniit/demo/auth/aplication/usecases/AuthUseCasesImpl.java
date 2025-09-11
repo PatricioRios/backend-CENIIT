@@ -1,16 +1,14 @@
 package ar.edu.ceniit.demo.auth.aplication.usecases;
 
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.BadRequest;
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.DuplicateEmailException;
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.UserNotFoundInProviderException;
+import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.*;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.AuthUseCases;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.RegisterUserCommand;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.UserForDomain;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.AuthOutputs;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.CreateUserOnDomainOutput;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.dto.AuthUserResponse;
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.AuthException;
-import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserNameIsAlreadyInUse;
+import ar.edu.ceniit.demo.common.exceptions.FatalErrorException;
+import ar.edu.ceniit.demo.common.exceptions.WarningErrorException;
 
 import java.util.Optional;
 import java.util.Set;
@@ -24,7 +22,15 @@ public class AuthUseCasesImpl implements AuthUseCases {
         this.createUserOnDomainOutput = createUserOnDomainOutput;
     }
     @Override
-    public void register(RegisterUserCommand command) throws AuthException, Exception {
+    public void register(RegisterUserCommand command) throws
+            BadRequestOnRegisterUserException,
+            UserNameIsAlreadyInUse,// ver que onda
+            DuplicatedEmailException// ver que onda
+         {
+
+        // Validaciones básicas
+        validateRequest(command);
+
         // Construir el DTO para el proveedor de identidad
         AuthUserResponse authUserRequest = AuthUserResponse.builder()
                 .username(command.getUsername())
@@ -55,21 +61,44 @@ public class AuthUseCasesImpl implements AuthUseCases {
                 authOutputs.deleteUserOnIdentityProvider(createdAuthUser.getId());
                 System.out.println("ELIMINACION EXITOSA");
                 System.out.println("Usuario eliminado del IdP: " + createdAuthUser.getUsername());
-            } catch (AuthException compensationException) {
+            } catch (Exception compensationException) {
                 // Si la compensación falla, se debe registrar el error de forma crítica
-                throw new Exception("Error de registro. Falla crítica en la compensación: el usuario "
-                        + createdAuthUser.getUsername() + " existe en el IdP pero no en la base de datos local.", compensationException);
+                throw new FatalErrorException(
+                        "Error crítico: No se pudo registrar el usuario localmente ni eliminarlo del IdP. " +
+                                "Se requiere intervención manual para el usuario: " + createdAuthUser.getUsername(),
+                        compensationException,
+                        FatalErrorException.FatalErrorType.SYSTEM_INCONSISTENCY
+                );
             }
             //throw new AuthException("Error al registrar el usuario en la base de datos local.", e);
-            throw new AuthException(e.getMessage(), e);
+            throw new WarningErrorException(e.getMessage(), e);
+        }
+    }
+
+    private static void validateRequest(RegisterUserCommand command) throws BadRequestOnRegisterUserException {
+        if (command.getUsername() == null || command.getUsername().isEmpty()) {
+            throw new BadRequestOnRegisterUserException(BadRequestOnRegisterUserException.Reason.INVALID_USERNAME);
+        }
+        if (command.getEmail() == null || command.getEmail().isEmpty() || !command.getEmail().matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
+            throw new BadRequestOnRegisterUserException(BadRequestOnRegisterUserException.Reason.INVALID_EMAIL);
+        }
+        if (command.getFirstName() == null || command.getFirstName().isEmpty()) {
+            throw new BadRequestOnRegisterUserException(BadRequestOnRegisterUserException.Reason.INVALID_FIRST_NAME);
+        }
+        if (command.getLastName() == null || command.getLastName().isEmpty()) {
+            throw new BadRequestOnRegisterUserException(BadRequestOnRegisterUserException.Reason.INVALID_LAST_NAME);
+        }
+        if (command.getPassword() == null || command.getPassword().isEmpty() || command.getPassword().length() <= 8) {
+            throw new BadRequestOnRegisterUserException(BadRequestOnRegisterUserException.Reason.INVALID_PASSWORD);
         }
     }
 
     @Override
-    public void putRolesToUser(UUID uuid, Set<String> roles) throws Exception {
+    public void putRolesToUser(UUID uuid, Set<String> roles) throws UserNotFoundInProviderException, BadRequest {
         if(uuid == null) {
             throw new BadRequest("El UUID no puede ser nulo.");
         }
+
         authOutputs.putRolesToUser(uuid, roles);
     }
 
@@ -84,7 +113,7 @@ public class AuthUseCasesImpl implements AuthUseCases {
     }
 
     @Override
-    public void updateBasicInfoOnUser(UUID uuidOnIP, Optional<String> newEmail, Optional<String> newFirstName, Optional<String> newSecondName) throws UserNotFoundInProviderException, DuplicateEmailException {
+    public void updateBasicInfoOnUser(UUID uuidOnIP, Optional<String> newEmail, Optional<String> newFirstName, Optional<String> newSecondName) throws UserNotFoundInProviderException, DuplicatedEmailException {
         authOutputs.updateBasicInfoOnUser(uuidOnIP, newEmail, newFirstName, newSecondName);
     }
 }

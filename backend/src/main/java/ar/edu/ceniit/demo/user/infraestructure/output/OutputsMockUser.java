@@ -1,6 +1,5 @@
 package ar.edu.ceniit.demo.user.infraestructure.output;
 
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.AuthException;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.UserForDomain;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.CreateUserOnDomainOutput;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.DuplicateEmailException;
@@ -98,7 +97,7 @@ public class OutputsMockUser implements UserOutputs, CreateUserOnDomainOutput {
     }
 
     @Override
-    public void createUser(UserForDomain user) throws AuthException, UserNameIsAlreadyInUse, DuplicateEmailException {
+    public void createUser(UserForDomain user) throws UserNameIsAlreadyInUse, DuplicateEmailException {
         if (users.values().stream().anyMatch(u -> u.getUsername().equals(user.getUsername()))) {
             throw new UserNameIsAlreadyInUse("Username " + user.getUsername() + " is already in use.");
         }

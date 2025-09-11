@@ -1,6 +1,5 @@
 package ar.edu.ceniit.demo.user.infraestructure.output;
 
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.AuthException;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.UserForDomain;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.CreateUserOnDomainOutput;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.*;
@@ -113,7 +112,7 @@ public class UsuarioPersistenceAdapter implements UserOutputs, CreateUserOnDomai
     }
 
     @Override
-    public void createUser(UserForDomain user) throws AuthException, UserNameIsAlreadyInUse, DuplicateEmailException {
+    public void createUser(UserForDomain user) throws UserNameIsAlreadyInUse, DuplicateEmailException {
         User domainUser = User.builder()
                 .uuid(user.getUuid())
                 .username(user.getUsername())

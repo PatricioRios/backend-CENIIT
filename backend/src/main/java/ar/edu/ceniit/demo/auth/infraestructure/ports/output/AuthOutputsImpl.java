@@ -1,14 +1,11 @@
 package ar.edu.ceniit.demo.auth.infraestructure.ports.output;
 
 import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.*;
-import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.UserForDomain;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.AuthOutputs;
-import ar.edu.ceniit.demo.auth.aplication.ports.output.CreateUserOnDomainOutput;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.dto.AuthUserResponse;
 import ar.edu.ceniit.demo.common.exceptions.FatalErrorException;
+import ar.edu.ceniit.demo.common.exceptions.WarningErrorException;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserNotFoundException;
-import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
-import ar.edu.ceniit.demo.user.aplication.ports.input.CreateUserUseCase;
 import ar.edu.ceniit.demo.user.aplication.ports.output.identity_provider.IPOutputs;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -20,13 +17,9 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDomainOutput */ {
@@ -61,7 +54,7 @@ public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDo
                     System.out.println("Could not read error response body from Keycloak." + e);
                 }
                 System.out.println("Failed to delete user with ID {} from Keycloak. Status: {}. Body: {}" + userId + response.getStatus() + errorBody);
-                throw new IdentityProviderException("Failed to delete user with ID " + userId + " from the identity provider. Status: " + response.getStatus());
+                throw new WarningErrorException("Failed to delete user with ID " + userId + " from the identity provider. Status: " + response.getStatus());
             }
             logger.info("Successfully deleted user with ID: {} from Keycloak", userId);
         } catch (NotFoundException e) {
@@ -75,8 +68,42 @@ public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDo
         }
     }
 
+    /**
+     * Valida si un nombre de usuario o un email ya existen en Keycloak.
+     * Si alguno de los dos ya existe, lanza una excepción específica.
+     *
+     * @param username El nombre de usuario a validar.
+     * @param email El email a validar.
+     * @throws UserNameIsAlreadyInUse Si el nombre de usuario ya está en uso.
+     * @throws DuplicatedEmailException Si el email ya está en uso.
+     */
+    private void preValidateUser(String username, String email) throws UserNameIsAlreadyInUse, DuplicatedEmailException {
+        UsersResource usersResource = realmResource.users();
+
+        // Buscar por nombre de usuario
+        List<UserRepresentation> usernameSearch = usersResource.searchByUsername(username, true);
+        if (!usernameSearch.isEmpty()) {
+            logger.warn("El nombre de usuario '{}' ya existe en Keycloak.", username);
+            throw new UserNameIsAlreadyInUse("Un usuario con este nombre de usuario ya existe.");
+        }
+
+        // Buscar por email
+        List<UserRepresentation> emailSearch = usersResource.searchByEmail(email, true);
+        if (!emailSearch.isEmpty()) {
+            logger.warn("El email '{}' ya existe en Keycloak.", email);
+            throw new DuplicatedEmailException("Un usuario con este email ya existe.");
+        }
+    }
+
     @Override
-    public AuthUserResponse registerUserOnIdentityProvider(AuthUserResponse user) throws AuthException {
+    public AuthUserResponse registerUserOnIdentityProvider(AuthUserResponse user) throws
+            UserNameIsAlreadyInUse,
+            DuplicatedEmailException {
+
+        // Paso 1: Realizar la pre-validación antes de intentar crear el usuario
+        preValidateUser(user.getUsername(), user.getEmail());
+
+        // Si la validación no lanza excepciones, procedemos a crear el usuario
         UsersResource usersResource = realmResource.users();
         UserRepresentation userRepresentation = new UserRepresentation();
         userRepresentation.setUsername(user.getUsername());
@@ -93,6 +120,7 @@ public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDo
 
         userRepresentation.setCredentials(Collections.singletonList(credentialRepresentation));
 
+        // Paso 2: Intentar la creación del usuario
         Response response = usersResource.create(userRepresentation);
 
         if (response.getStatus() == 201) {
@@ -100,22 +128,21 @@ public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDo
             String userId = path.substring(path.lastIndexOf('/') + 1);
             user.setId(UUID.fromString(userId));
 
-            logger.info("User {} created successfully in Keycloak with ID {}", user.getUsername(), userId);
+            logger.info("El usuario {} ha sido creado exitosamente en Keycloak con ID {}", user.getUsername(), userId);
             return user;
-        } else if (response.getStatus() == 409) {
-            logger.warn("User {} could not be created in Keycloak due to a conflict (409).", user.getUsername());
-            throw new Conflicts("A user with the same username or email already exists.");
         } else {
+            // El error 409 ya se ha manejado en la pre-validación,
+            // por lo que este 'else' se ejecutará para otros errores
             String errorBody = "";
             try {
                 if (response.hasEntity()) {
                     errorBody = response.readEntity(String.class);
                 }
             } catch (Exception e) {
-                logger.warn("Could not read error response body from Keycloak.", e);
+                logger.warn("No se pudo leer el cuerpo de la respuesta de error de Keycloak.", e);
             }
-            logger.error("Error creating user {} in Keycloak. Status: {}. Body: {}", user.getUsername(), response.getStatus(), errorBody);
-            throw new IdentityProviderException("Error creating user in Keycloak. Status: " + response.getStatus());
+            logger.error("Error al crear el usuario {} en Keycloak. Estado: {}. Cuerpo: {}", user.getUsername(), response.getStatus(), errorBody);
+            throw new WarningErrorException("Error al crear el usuario en Keycloak. Estado: " + response.getStatus() + ". Cuerpo: " + errorBody);
         }
     }
 
@@ -136,7 +163,7 @@ public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDo
     }
 
     @Override
-    public void putRolesToUser(UUID userId, Set<String> roles) throws Exception {
+    public void putRolesToUser(UUID userId, Set<String> roles) throws UserNotFoundInProviderException {
         System.out.println("--- Starting putRolesToUser ---");
         System.out.println("userId: " + userId);
         System.out.println("roles to assign: " + roles);
@@ -154,7 +181,7 @@ public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDo
         System.out.println("Client ID to search for: " + this.CLIENT_ID);
         ClientRepresentation client = realmResource.clients().findByClientId(this.CLIENT_ID).stream()
                 .findFirst()
-                .orElseThrow(() -> new IdentityProviderException("Client with ID " + this.CLIENT_ID + " not found."));
+                .orElseThrow(() -> new FatalErrorException("Client with ID " + this.CLIENT_ID + " not found."));
         System.out.println("Client found: " + client.getClientId() + " (internal ID: " + client.getId() + ")");
 
 
@@ -196,7 +223,7 @@ public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDo
     }
 
     @Override
-    public void updateBasicInfoOnUser(UUID uuidOnIP, Optional<String> newEmail, Optional<String> newFirstName, Optional<String> newSecondName) throws UserNotFoundInProviderException, DuplicateEmailException {
+    public void updateBasicInfoOnUser(UUID uuidOnIP, Optional<String> newEmail, Optional<String> newFirstName, Optional<String> newSecondName) throws UserNotFoundInProviderException, DuplicatedEmailException {
         UsersResource usersResource = realmResource.users();
         UserRepresentation userRepresentation;
         try {
@@ -211,7 +238,7 @@ public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDo
             boolean emailInUse = usersWithEmail.stream()
                     .anyMatch(u -> !u.getId().equals(uuidOnIP.toString()));
             if (emailInUse) {
-                throw new DuplicateEmailException("The email " + email + " is already in use by another user.");
+                throw new DuplicatedEmailException("The email " + email + " is already in use by another user.");
             }
             userRepresentation.setEmail(email);
         });
@@ -242,7 +269,7 @@ public class AuthOutputsImpl implements AuthOutputs, IPOutputs/*, CreateUserOnDo
             updateBasicInfoOnUser(uuidOnIP, newEmail, newFirstName, newSecondName);
         } catch (UserNotFoundInProviderException e) {
             throw new UserNotFoundException("User with ID " + uuidOnIP + " not found in the identity provider.", e);
-        } catch (DuplicateEmailException e) {
+        } catch (DuplicatedEmailException e) {
             throw new ar.edu.ceniit.demo.user.aplication.entitys.exceptions.DuplicateEmailException("The email is already in use by another user.", e);
         }
     }

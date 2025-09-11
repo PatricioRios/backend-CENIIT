@@ -1,6 +1,6 @@
 package ar.edu.ceniit.demo.auth.aplication.ports.input;
 
-import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.DuplicateEmailException;
+import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.DuplicatedEmailException;
 import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.UserNotFoundInProviderException;
 
 import java.util.Optional;
@@ -12,5 +12,5 @@ public interface UpdateBasicInfoUserUseCase {
                         Optional<String> newFirstName,
                         Optional<String> newSecondName)
             throws UserNotFoundInProviderException,
-            DuplicateEmailException;
+            DuplicatedEmailException;
 }

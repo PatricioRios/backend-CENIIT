@@ -29,18 +29,12 @@ public class User {
     public enum Field {
 
         UUID("uuid"),
-        //CRITERIO NO IMPLEMENTADO
         USERNAME("username"),
         EMAIL("email"),
-        //CRITERIO NO IMPLEMENTADO
         FIRST_NAME("firstName"),
-        //CRITERIO NO IMPLEMENTADO
         LAST_NAME("lastName"),
-        //CRITERIO NO IMPLEMENTADO
         DNI("dni"),
-        //CRITERIO NO IMPLEMENTADO #TODO: implementar criterios para fechas
         CREATED_AT("createdAt"),
-        //CRITERIO NO IMPLEMENTADO #TODO: implementar criterios para fechas
         UPDATED_AT("updatedAt");
 
         private final String fieldName;

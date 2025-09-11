@@ -16,7 +16,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = AndFilterDTO.class, name = "AND"),
         @JsonSubTypes.Type(value = OrFilterDTO.class, name = "OR"),
-        @JsonSubTypes.Type(value = FieldFilterDTO.class, name = "FIELD")
+        @JsonSubTypes.Type(value = StringComparationFieldFilterDTO.class, name = "STRING_FIELD"),
+        @JsonSubTypes.Type(value = NumericComarableFieldFilterDTO.class, name = "NUMERIC_FIELD"),
+
 })
 public abstract class FilterDTO {
 }

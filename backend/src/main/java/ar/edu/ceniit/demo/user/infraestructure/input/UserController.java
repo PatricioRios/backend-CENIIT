@@ -28,7 +28,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/users")
-public class UserController {
+public class UserController extends UserExceptionHandler {
 
     private final UserUseCases userUseCases;
     private final UserDTOMapper userDTOMapper;
@@ -125,14 +125,13 @@ public class UserController {
             description = "Returns a list of users. You can filter by various fields using a JSON object in the request body."
                     + "<h3>Available Fields for Filtering:</h3>"
                     + "<ul>"
-                    + "<li><b>String Fields:</b> UUID, USERNAME, EMAIL, FIRST_NAME, LAST_NAME</li>"
-                    + "<li><b>Integer Fields:</b> DNI</li>"
-                    + "<li><b>Date Fields:</b> CREATED_AT, UPDATED_AT (use format YYYY-MM-DDTHH:MM:SSZ)</li>"
+                    + "<li><b>String Fields:</b> UUID, USERNAME, EMAIL, FIRST_NAME, LAST_NAME, DNI</li>"
+                    + "<li><b>Date Fields (Use Numeric Operators for firtering this):</b> CREATED_AT, UPDATED_AT (use format YYYY-MM-DDTHH:MM:SSZ)</li>"
                     + "</ul>"
                     + "<h3>Available Operators:</h3>"
                     + "<ul>"
-                    + "<li><b>For String and Integer fields:</b> EQUAL, NOT_EQUAL, LIKE, STARTS_WITH, CONTAINS</li>"
-                    + "<li><b>For Date fields:</b> EQUAL, NOT_EQUAL, GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL</li>"
+                    + "<li><b>For String fields:</b> EQUAL, NOT_EQUAL, LIKE, CONTAINS, START_WITH </li>"
+                    + "<li><b>For Date and Numeric fields:</b> EQUAL, NOT_EQUAL, GREATER_THAN, LESS_THAN, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL</li>"
                     + "</ul>",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "JSON object for filtering users. You can create complex queries by nesting AND/OR filters.",
@@ -146,7 +145,7 @@ public class UserController {
                                             value = """
                                                     {
                                                       "filter": {
-                                                        "type": "FIELD",
+                                                        "type": "STRING_FIELD",
                                                         "field": "USERNAME",
                                                         "operator": "CONTAINS",
                                                         "value": "test"
@@ -163,13 +162,13 @@ public class UserController {
                                                         "type": "AND",
                                                         "filters": [
                                                           {
-                                                            "type": "FIELD",
+                                                            "type": "STRING_FIELD",
                                                             "field": "EMAIL",
                                                             "operator": "LIKE",
                                                             "value": "%@example.com"
                                                           },
                                                           {
-                                                            "type": "FIELD",
+                                                            "type": "STRING_FIELD",
                                                             "field": "FIRST_NAME",
                                                             "operator": "EQUAL",
                                                             "value": "John"
@@ -188,21 +187,15 @@ public class UserController {
             @RequestParam(required = false, defaultValue = "10") Integer limit,
             @RequestParam(required = false, defaultValue = "USERNAME") String sortBy,
             @RequestParam(required = false, defaultValue = "ASC") String sortOrder,
-            @org.springframework.web.bind.annotation.RequestBody(required = false) GetAllUsersRequest filterRequest
+            @RequestBody(required = false) GetAllUsersRequest filterRequest
     ) {
-        System.out.println("Criteria: " + filterRequest);
-        System.out.println("SortBy: " + sortBy);
-        System.out.println("SortOrder: " + sortOrder);
-        System.out.println("Limit: " + limit);
-        System.out.println("Offset: " + offset);
+
         Criteria criteria = userDTOMapper.toDomain(filterRequest);
-
-
 
 
         List<UserResponseDTO> users = userUseCases.getAllUsers(criteria, new SortOrder(stringToField(sortBy), stringToOrder(sortOrder)), limit, offset)
                 .stream()
-                .map(userDTOMapper::toResponse)
+                .map(this.userDTOMapper::toResponse)
                 .toList();
 
         return ResponseEntity.ok(users);
