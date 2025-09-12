@@ -2,7 +2,7 @@ package ar.edu.ceniit.demo.auth.aplication.entitys.exceptions;
 
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.BadRequestOnCreateUserException;
 
-public class BadRequestOnRegisterUserException extends RuntimeException {
+public class BadRequestOnRegisterUserException extends Exception {
         public enum Reason {
             INVALID_EMAIL("Invalid email format"),
             MISSING_REQUIRED_FIELDS("Missing required fields"),

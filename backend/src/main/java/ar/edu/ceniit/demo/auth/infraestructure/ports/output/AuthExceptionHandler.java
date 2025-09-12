@@ -3,14 +3,14 @@ package ar.edu.ceniit.demo.auth.infraestructure.ports.output;
 import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.*;
 import ar.edu.ceniit.demo.common.output.dto.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-@ControllerAdvice(
-        basePackages = "ar.edu.ceniit.demo.auth.infraestructure.ports.output"
-)
+@ControllerAdvice()
 public class AuthExceptionHandler {
     @ExceptionHandler(BadRequest.class)
     public ResponseEntity<ErrorResponseDTO<Void>> handleAllExceptions(BadRequest ex, HttpServletRequest request) {

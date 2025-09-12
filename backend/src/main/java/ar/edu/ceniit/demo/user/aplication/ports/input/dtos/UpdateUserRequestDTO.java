@@ -39,7 +39,7 @@ public class UpdateUserRequestDTO {
             throw new BadRequestOnUpdateUserException(BadRequestOnUpdateUserException.Reason.INVALID_UUID);
         }
 
-        if(this.email.isPresent() && this.email.get().isBlank()) {
+        if(this.email.isPresent() && !this.email.get().isBlank()) {
             if(!this.email.get().matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"))
                 throw new BadRequestOnUpdateUserException(BadRequestOnUpdateUserException.Reason.INVALID_EMAIL);
         }

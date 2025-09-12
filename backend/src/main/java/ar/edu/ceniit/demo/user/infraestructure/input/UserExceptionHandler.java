@@ -4,15 +4,15 @@ import ar.edu.ceniit.demo.common.output.dto.ErrorResponseDTO;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @Log4j2
-@ControllerAdvice(
-        basePackages = "ar.edu.ceniit.demo.user.infraestructure.input"
-)
+@ControllerAdvice()
 public class UserExceptionHandler {
 
     @ExceptionHandler(BadRequestOnCreateUserException.class)
