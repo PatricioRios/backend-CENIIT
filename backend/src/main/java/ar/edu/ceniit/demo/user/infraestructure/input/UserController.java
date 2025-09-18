@@ -18,9 +18,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 import java.util.Optional;
@@ -49,7 +51,6 @@ public class UserController extends UserExceptionHandler {
     @PutMapping()
     @PreAuthorize("#request.uuid == principal.getClaimAsString('sub') or hasRole('backend-admin')")
     public ResponseEntity<UserResponseDTO> updateByUser(@Valid @RequestBody UpdateUserByUserDTO request) throws UserNotFoundException, BadRequestOnUpdateUserException, DuplicateEmailException, UserBadRequestException {
-        System.out.println("Received update request: " + request);
         UpdateUserRequestDTO appUpdateDTO = new UpdateUserRequestDTO(
                 UUID.fromString(request.getUuid()),
                 Optional.ofNullable(request.getEmail()),
@@ -60,10 +61,7 @@ public class UserController extends UserExceptionHandler {
                 Optional.empty()
         );
 
-        System.out.println("Received update request: " + request);
-
         UpdateUserResponseDTO user = userUseCases.updateUser(appUpdateDTO);
-
 
         UserResponseDTO userResponse = UserResponseDTO.builder()
                 .uuid(user.getUuid())
@@ -82,7 +80,6 @@ public class UserController extends UserExceptionHandler {
     @PutMapping("/admin")
     @PreAuthorize("#request.uuid == principal.getClaimAsString('sub') or hasRole('backend-admin')")
     public ResponseEntity<UserResponseDTO> updateByAdmin(@Valid @RequestBody UpdateByAdminDTO request) throws UserNotFoundException, BadRequestOnUpdateUserException, DuplicateEmailException, UserBadRequestException {
-        System.out.println("Received update request: " + request);
         UpdateUserRequestDTO appUpdateDTO = new UpdateUserRequestDTO(
                 UUID.fromString(request.getUuid()),
                 Optional.ofNullable(request.getEmail()),
@@ -92,8 +89,6 @@ public class UserController extends UserExceptionHandler {
                 Optional.ofNullable(request.getSecondSurname()),
                 Optional.ofNullable(request.getDni())
         );
-
-        System.out.println("Received update request: " + request);
 
         UpdateUserResponseDTO user = userUseCases.updateUser(appUpdateDTO);
 
@@ -119,7 +114,7 @@ public class UserController extends UserExceptionHandler {
     }
 
     @PreAuthorize("hasRole('backend-admin')")
-    @GetMapping()
+    @PostMapping()
     @Operation(
             summary = "Get all users with optional filtering, sorting, and pagination",
             description = "Returns a list of users. You can filter by various fields using a JSON object in the request body."
@@ -182,13 +177,13 @@ public class UserController extends UserExceptionHandler {
                     )
             )
     )
-    public ResponseEntity<List<UserResponseDTO>> getAllUsers(
+    public ResponseEntity<List<UserResponseDTO>> searchUsers(
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             @RequestParam(required = false, defaultValue = "10") Integer limit,
             @RequestParam(required = false, defaultValue = "USERNAME") String sortBy,
             @RequestParam(required = false, defaultValue = "ASC") String sortOrder,
             @RequestBody(required = false) GetAllUsersRequest filterRequest
-    ) {
+    ) throws HttpClientErrorException.BadRequest {
 
         Criteria criteria = userDTOMapper.toDomain(filterRequest);
 
@@ -200,13 +195,20 @@ public class UserController extends UserExceptionHandler {
 
         return ResponseEntity.ok(users);
     }
-    private SortOrder.Order stringToOrder(String order) {
+    private SortOrder.Order stringToOrder(String order) throws HttpClientErrorException {
         try {
             switch (order.toUpperCase()) {
                 case "ASC", "ASCENDENTE" -> order = "ASCENDENTE";
                 case "DESC", "DESCENDENTE" -> order = "DESCENDENTE";
                 case "UNSORTED", "UNSORT" -> order = "UNSORTED";
-                default -> throw new IllegalArgumentException("Invalid sort order: " + order);
+                default -> throw HttpClientErrorException.create(
+                        "Invalid sort order",
+                        HttpStatus.BAD_REQUEST,
+                        null,
+                        null,
+                        null,
+                        null
+                );
             }
             return SortOrder.Order.valueOf(order.toUpperCase());
         } catch (IllegalArgumentException e) {
@@ -217,7 +219,14 @@ public class UserController extends UserExceptionHandler {
         try {
             return User.Field.valueOf(fieldName.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid field name: " + fieldName);
+            throw HttpClientErrorException.create(
+                    "Invalid sort field",
+                    HttpStatus.BAD_REQUEST,
+                    null,
+                    null,
+                    null,
+                    null
+            );
         }
     }
 }
