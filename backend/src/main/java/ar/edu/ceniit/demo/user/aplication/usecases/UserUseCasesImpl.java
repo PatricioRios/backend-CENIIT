@@ -3,6 +3,7 @@ package ar.edu.ceniit.demo.user.aplication.usecases;
 import ar.edu.ceniit.demo.common.exceptions.FatalErrorException;
 import ar.edu.ceniit.demo.common.exceptions.WarningErrorException;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.*;
+import ar.edu.ceniit.demo.user.aplication.entitys.objects.PagedResult;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.SortOrder;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.criteria.Criteria;
@@ -172,8 +173,9 @@ public class UserUseCasesImpl implements UserUseCases {
         }
         return userOutputs.getUserByUUID(requestedUserId);
     }
+
     @Override
-    public Set<User> getAllUsers(Criteria criteria, SortOrder sortOrder, int limit, int offset) {//TODO: Add more validations, And return correct and specific exceptions
+    public PagedResult<User> getAllUsers(Criteria criteria, SortOrder sortOrder, int limit, int offset) {//TODO: Add more validations, And return correct and specific exceptions
         return this.userOutputs.getAllUsers(criteria, sortOrder, limit, offset);
     }
 }

@@ -106,4 +106,32 @@ public class UserDTOMapper {
 
         throw new IllegalArgumentException("Unknown FilterDTO type: " + dto.getClass().getName());
     }
+
+    public ar.edu.ceniit.demo.user.aplication.ports.input.dtos.UpdateUserRequestDTO toUpdateUserRequestDTO(java.util.UUID uuid, UpdateUserRequest request, org.springframework.security.core.Authentication auth) {
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_backend-admin"));
+
+        return new ar.edu.ceniit.demo.user.aplication.ports.input.dtos.UpdateUserRequestDTO(
+                uuid,
+                Optional.ofNullable(request.getEmail()),
+                Optional.ofNullable(request.getFirstName()),
+                Optional.ofNullable(request.getSecondName()),
+                Optional.ofNullable(request.getSurname()),
+                Optional.ofNullable(request.getSecondSurname()),
+                isAdmin ? Optional.ofNullable(request.getDni()) : Optional.empty()
+        );
+    }
+
+    public UserResponseDTO toResponse(ar.edu.ceniit.demo.user.aplication.ports.input.dtos.UpdateUserResponseDTO user) {
+        return UserResponseDTO.builder()
+                .uuid(user.getUuid())
+                .email(user.getEmail().orElse(null))
+                .firstName(user.getFirstName().orElse(null))
+                .secondName(user.getSecondName().orElse(null))
+                .surname(user.getLastName().orElse(null))
+                .secondSurname(user.getSecondLastName().orElse(null))
+                .dni(user.getDni().orElse(null))
+                .username(user.getUsername().orElse(null))
+                .build();
+    }
 }
