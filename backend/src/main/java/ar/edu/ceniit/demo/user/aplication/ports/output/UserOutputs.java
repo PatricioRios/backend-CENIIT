@@ -5,5 +5,5 @@ public interface UserOutputs extends
         DeleteUserByUUIDOutput,
         UpdateUserOutput,
         GetUserByUUIDOutput,
-        GetAllUsersOutPut
+        SearchUserOutput
 { }

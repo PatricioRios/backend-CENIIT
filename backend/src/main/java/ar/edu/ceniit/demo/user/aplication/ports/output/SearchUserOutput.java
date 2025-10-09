@@ -5,6 +5,6 @@ import ar.edu.ceniit.demo.user.aplication.entitys.objects.SortOrder;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.criteria.Criteria;
 
-public interface GetAllUsersOutPut {
+public interface SearchUserOutput {
     PagedResult<User> getAllUsers(Criteria criteria, SortOrder sortOrder, int limit, int offset);
 }

@@ -21,9 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -99,17 +97,37 @@ public class UserController extends UserExceptionHandler {
             @RequestBody(required = false) GetAllUsersRequest filterRequest
     ) throws HttpClientErrorException.BadRequest, UserBadRequestException {
 
+
+        System.out.println("FFFFFFFFFFFFilter Request: " + filterRequest);
+
         Criteria criteria = userDTOMapper.toDomain(filterRequest);
 
         PagedResult<User> userPage = userUseCases.getAllUsers(criteria, new SortOrder(stringToField(sortBy), stringToOrder(sortOrder)), limit, offset);
+
 
         List<UserResponseDTO> userResponseDTOs = userPage.getContent().stream()
                 .map(this.userDTOMapper::toResponse)
                 .toList();
 
+        Sort sort;
+        try {
+            SortOrder.Order domainOrder = stringToOrder(sortOrder);
+            if (domainOrder == SortOrder.Order.UNSORTED) {
+                sort = Sort.unsorted();
+            } else {
+                Sort.Direction direction = domainOrder == SortOrder.Order.ASCENDENTE ? Sort.Direction.ASC : Sort.Direction.DESC;
+                User.Field field = stringToField(sortBy);
+                sort = Sort.by(direction, field.name().toLowerCase());
+            }
+        } catch (UserBadRequestException e) {
+            sort = Sort.unsorted(); // default to unsorted if params are invalid
+        }
+
+        Pageable pageable = PageRequest.of(userPage.getNumber(), userPage.getSize(), sort);
+
         Page<UserResponseDTO> response = new PageImpl<>(
                 userResponseDTOs,
-                PageRequest.of(userPage.getCurrentPage(), userPage.getPageSize()),
+                pageable,
                 userPage.getTotalElements()
         );
 

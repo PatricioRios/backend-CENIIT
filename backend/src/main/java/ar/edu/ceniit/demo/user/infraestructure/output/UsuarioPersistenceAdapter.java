@@ -115,7 +115,7 @@ public class UsuarioPersistenceAdapter implements UserOutputs, CreateUserOnDomai
                 .map(usuarioMapper::toDomain)
                 .collect(Collectors.toList());
 
-        return new PagedResult<>(users, userPage.getTotalElements(), userPage.getNumber(), userPage.getSize());
+        return new PagedResult<>(users, userPage.getTotalElements(), userPage.getNumber(), userPage.getSize(), userPage.getNumberOfElements(), userPage.isFirst(), userPage.isLast(), userPage.isEmpty());
     }
 
     @Override
