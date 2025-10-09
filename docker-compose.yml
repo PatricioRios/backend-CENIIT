@@ -40,7 +40,7 @@ services:
       - start-dev # Comando para iniciar Keycloak en modo de desarrollo
       - --import-realm
     volumes:
-      - ./config/develop-config.json:/opt/keycloak/data/import/develop-config.json
+      - ./keycloak-data/import:/opt/keycloak/data/import
 
 networks:
   # Define la red personalizada para los contenedores
