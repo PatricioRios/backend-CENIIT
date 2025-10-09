@@ -1,3 +1,9 @@
 spring client credentials:
 Client ID: My-Client-ID-For-Spring-App
 Name: Spring-Boot-Client-SPRINT-CODE-API
+
+-- Usuario para el servicio de Golang que gestionará los recursos
+CREATE ROLE recursos_user WITH LOGIN PASSWORD 'una_contraseña_segura';
+
+-- Usuario para el servicio de Java que gestionará las reservas
+CREATE ROLE reservas_user WITH LOGIN PASSWORD 'otra_contraseña_segura';

@@ -15,14 +15,12 @@ import ar.edu.ceniit.demo.user.infraestructure.input.dto.UpdateUserRequest;
 import ar.edu.ceniit.demo.user.infraestructure.input.dto.UserResponseDTO;
 import ar.edu.ceniit.demo.user.infraestructure.input.mapper.UserDTOMapper;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.*;
-import org.springframework.http.HttpStatus;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,6 +29,9 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 import java.util.UUID;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("/users")
@@ -89,7 +90,7 @@ public class UserController extends UserExceptionHandler {
             summary = "Search users with optional filtering, sorting, and pagination",
             description = "Returns a list of users based on complex filter criteria."
     )
-    public ResponseEntity<Page<UserResponseDTO>> searchUsers(
+    public ResponseEntity<PagedModel<EntityModel<UserResponseDTO>>> searchUsers(
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             @RequestParam(required = false, defaultValue = "10") Integer limit,
             @RequestParam(required = false, defaultValue = "USERNAME") String sortBy,
@@ -98,38 +99,42 @@ public class UserController extends UserExceptionHandler {
     ) throws HttpClientErrorException.BadRequest, UserBadRequestException {
 
 
-        System.out.println("FFFFFFFFFFFFilter Request: " + filterRequest);
 
         Criteria criteria = userDTOMapper.toDomain(filterRequest);
 
         PagedResult<User> userPage = userUseCases.getAllUsers(criteria, new SortOrder(stringToField(sortBy), stringToOrder(sortOrder)), limit, offset);
 
 
-        List<UserResponseDTO> userResponseDTOs = userPage.getContent().stream()
+        List<EntityModel<UserResponseDTO>> userResponseDTOs = userPage.getContent().stream()
                 .map(this.userDTOMapper::toResponse)
+                .map(user -> {
+                    try {
+                        return EntityModel.of(user,
+                                linkTo(methodOn(UserController.class).getUser(user.getUuid().toString())).withSelfRel());
+                    } catch (UserNotFoundException | UserBadRequestException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .toList();
 
-        Sort sort;
-        try {
-            SortOrder.Order domainOrder = stringToOrder(sortOrder);
-            if (domainOrder == SortOrder.Order.UNSORTED) {
-                sort = Sort.unsorted();
-            } else {
-                Sort.Direction direction = domainOrder == SortOrder.Order.ASCENDENTE ? Sort.Direction.ASC : Sort.Direction.DESC;
-                User.Field field = stringToField(sortBy);
-                sort = Sort.by(direction, field.name().toLowerCase());
-            }
-        } catch (UserBadRequestException e) {
-            sort = Sort.unsorted(); // default to unsorted if params are invalid
+        PagedModel.PageMetadata pageMetadata = new PagedModel.PageMetadata(
+                userPage.getSize(),
+                userPage.getNumber(),
+                userPage.getTotalElements(),
+                userPage.getTotalPages()
+        );
+
+        PagedModel<EntityModel<UserResponseDTO>> response = PagedModel.of(userResponseDTOs, pageMetadata);
+
+        response.add(linkTo(methodOn(UserController.class).searchUsers(offset, limit, sortBy, sortOrder, filterRequest)).withSelfRel());
+
+        if (!userPage.isLast()) {
+            response.add(linkTo(methodOn(UserController.class).searchUsers(offset + limit, limit, sortBy, sortOrder, filterRequest)).withRel("next"));
         }
 
-        Pageable pageable = PageRequest.of(userPage.getNumber(), userPage.getSize(), sort);
-
-        Page<UserResponseDTO> response = new PageImpl<>(
-                userResponseDTOs,
-                pageable,
-                userPage.getTotalElements()
-        );
+        if (!userPage.isFirst()) {
+            response.add(linkTo(methodOn(UserController.class).searchUsers(offset - limit, limit, sortBy, sortOrder, filterRequest)).withRel("prev"));
+        }
 
         return ResponseEntity.ok(response);
     }

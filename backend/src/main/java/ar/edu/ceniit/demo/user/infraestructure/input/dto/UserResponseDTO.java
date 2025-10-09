@@ -1,10 +1,12 @@
 package ar.edu.ceniit.demo.user.infraestructure.input.dto;
 
 import lombok.Builder;
+import org.springframework.hateoas.server.core.Relation;
 
 import java.util.UUID;
 
 @Builder
+@Relation(collectionRelation = "users")
 public class UserResponseDTO {
 
     private UUID uuid;

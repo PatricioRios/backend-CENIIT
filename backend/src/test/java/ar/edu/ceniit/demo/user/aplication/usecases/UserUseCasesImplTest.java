@@ -15,6 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
@@ -23,6 +25,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import ar.edu.ceniit.demo.user.aplication.entitys.objects.PagedResult;
 
 class UserUseCasesImplTest {
 
@@ -306,26 +309,28 @@ class UserUseCasesImplTest {
     }
 
     @Test
-    void whenGetAllUsers_shouldReturnSetOfUsers() {
-        Set<User> users = new HashSet<>();
+    void whenGetAllUsers_shouldReturnPagedResultOfUsers() {
+        List<User> users = new ArrayList<>();
         users.add(User.builder().username("test1").build());
         users.add(User.builder().username("test2").build());
+        PagedResult<User> pagedResult = new PagedResult<>(users, 2, 0, 10, 2, true, true, false);
 
-        when(userOutputs.getAllUsers(any(), any(), anyInt(), anyInt())).thenReturn(users);
+        when(userOutputs.getAllUsers(any(), any(), anyInt(), anyInt())).thenReturn(pagedResult);
 
-        Set<User> result = userUseCases.getAllUsers(null, null, 10, 0);
+        PagedResult<User> result = userUseCases.getAllUsers(null, null, 10, 0);
 
         assertNotNull(result);
-        assertEquals(2, result.size());
+        assertEquals(2, result.getContent().size());
     }
 
     @Test
-    void whenGetAllUsersWithNoUsers_shouldReturnEmptySet() {
-        when(userOutputs.getAllUsers(any(), any(), anyInt(), anyInt())).thenReturn(new HashSet<>());
+    void whenGetAllUsersWithNoUsers_shouldReturnEmptyPagedResult() {
+        PagedResult<User> pagedResult = new PagedResult<>(new ArrayList<>(), 0, 0, 10, 0, true, true, true);
+        when(userOutputs.getAllUsers(any(), any(), anyInt(), anyInt())).thenReturn(pagedResult);
 
-        Set<User> result = userUseCases.getAllUsers(null, null, 10, 0);
+        PagedResult<User> result = userUseCases.getAllUsers(null, null, 10, 0);
 
         assertNotNull(result);
-        assertTrue(result.isEmpty());
+        assertTrue(result.getContent().isEmpty());
     }
 }
