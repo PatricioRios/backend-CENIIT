@@ -1,5 +1,5 @@
 # docker-compose.yml
-version: "3.8" # Especifica la versión de Docker Compose
+#version: "3.8" # Especifica la versión de Docker Compose
 
 services:
   # Servicio para la base de datos PostgreSQL
@@ -41,6 +41,22 @@ services:
       - --import-realm
     volumes:
       - ./keycloak-data/import:/opt/keycloak/data/import
+  # Servicio para la base de datos PostgreSQL de tu aplicación
+  app-postgres:
+    image: postgres:16
+    container_name: app-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: app_db
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+    ports: # Mapea el puerto del host al puerto del contenedor
+      - "127.0.0.1:5433:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - trabajo_final_app_db_data:/var/lib/postgresql/data
+    networks:
+      - keycloak-net
 
 networks:
   # Define la red personalizada para los contenedores
@@ -50,3 +66,5 @@ networks:
 volumes:
   # Define el volumen persistente para los datos de PostgreSQL
   trabajo_final_keycloak_db_data: # Nombre del volumen
+  # Define el volumen persistente para los datos de PostgreSQL de la aplicación
+  trabajo_final_app_db_data:
