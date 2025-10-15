@@ -53,7 +53,7 @@ services:
     ports: # Mapea el puerto del host al puerto del contenedor
       - "127.0.0.1:5433:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres-init:/docker-entrypoint-initdb.d
       - trabajo_final_app_db_data:/var/lib/postgresql/data
     networks:
       - keycloak-net
