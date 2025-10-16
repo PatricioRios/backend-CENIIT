@@ -1,0 +1,112 @@
+
+# Rol y Objetivo
+Eres un desarrollador experto en Go (Golang), especializado en la creación de APIs RESTful robustas y conectadas a bases de datos PostgreSQL. Tu tarea es generar el código completo para una API REST que gestione las operaciones CRUD para una entidad "Recurso", basándose en el esquema de base de datos y la definición de endpoints proporcionados.
+
+# Pila Tecnológica
+- Utiliza todas las librerias que aparecen en el proyecto y ademas quiero que sigas la estructura que sugiere la plantilla del proyecto actual.
+
+# Estructura del Proyecto
+- El proyecto es un git clone de un repositorio de github el cual tiene como objetivo servir como una plantilla de inicio para proyectos backend teniend una estructura de tipo clean architecture.
+- Quiero que sigas la estructura de ejemplo. (de los enpoints y funcionalidades ya existentes.)
+
+
+# Modelo de Datos (model.go)
+Basado en la tabla de PostgreSQL, la `struct` de Go debe ser la siguiente. Crea un tipo personalizado `EstadoRecurso` que solo admita los valores "ACTIVO" y "MANTENIMIENTO".
+
+type EstadoRecurso string
+
+const (
+    Activo        EstadoRecurso = "ACTIVO"
+    Mantenimiento EstadoRecurso = "MANTENIMIENTO"
+)
+
+type Recurso struct {
+    ID          int64          `json:"id"`
+    Nombre      string         `json:"nombre"`
+    Descripcion string         `json:"descripcion"`
+    HrefPhoto   string         `json:"href_photo"`
+    Estado      EstadoRecurso  `json:"estado"`
+}
+
+La definicion de la tabla en PostgreSQL es la siguiente:
+"
+CREATE TABLE IF NOT EXISTS recursos_schema.recursos
+(
+    id serial NOT NULL,
+    nombre character varying(200) COLLATE pg_catalog."default",
+    descripcion character varying(200) COLLATE pg_catalog."default",
+    href_photo character varying(300) COLLATE pg_catalog."default",
+    estado estado_recurso NOT NULL,
+    CONSTRAINT recursos_pkey PRIMARY KEY (id)
+);
+"
+
+# Definición de Endpoints a Implementar
+
+Implementa los siguientes 5 endpoints RESTful:
+
+1.  **Crear un Nuevo Recurso**
+    -   Método: POST, Ruta: /recursos
+    -   Cuerpo de Petición (JSON): { "nombre": "string", "descripcion": "string", "href_photo": "string", "estado": "string" }
+    -   Comportamiento: Inserta un nuevo registro en la tabla `recursos`. Valida que el `nombre` y `estado` no estén vacíos y que `estado` sea "ACTIVO" o "MANTENIMIENTO".
+    -   Respuesta Exitosa (201 Created): Devuelve el objeto completo del recurso recién creado.
+
+2.  **Obtener la Lista de Recursos**
+    -   Método: GET, Ruta: /recursos
+    -   Comportamiento: Devuelve una lista de todos los recursos. Debe permitir un filtrado opcional por estado usando un query param.
+    -   Query Param (Opcional): `estado` (ej: /recursos?estado=ACTIVO).
+    -   Respuesta Exitosa (200 OK): Un array JSON con los recursos encontrados.
+
+3.  **Obtener un Recurso Específico**
+    -   Método: GET, Ruta: /recursos/:id
+    -   Comportamiento: Busca y devuelve un único recurso por su `id`.
+    -   Respuesta Exitosa (200 OK): El objeto JSON del recurso encontrado.
+    -   Respuesta de Error (404 Not Found): Si el `id` no existe.
+
+4.  **Actualizar un Recurso (Parcial)**
+    -   Método: PATCH, Ruta: /recursos/:id
+    -   Cuerpo de Petición (JSON): Solo los campos a modificar (ej: { "estado": "MANTENIMIENTO" }).
+    -   Comportamiento: Actualiza uno o más campos de un recurso existente.
+    -   Respuesta Exitosa (200 OK): Devuelve el objeto completo del recurso actualizado.
+    -   Respuesta de Error (404 Not Found): Si el `id` no existe.
+
+5.  **Eliminar un Recurso**
+    -   Método: DELETE, Ruta: /recursos/:id
+    -   Comportamiento: Elimina un recurso de la base de datos.
+    -   Respuesta Exitosa (204 No Content): Respuesta sin cuerpo.
+    -   Respuesta de Error (404 Not Found): Si el `id` no existe.
+
+# -- INICIO SECCION: GESTION DE FOTOS --
+
+# Requisito Adicional: Endpoints para la Gestión de Fotos
+Además de los endpoints CRUD para los recursos, implementa los siguientes endpoints para manejar la carga, actualización y eliminación de las fotos asociadas.
+
+1.  **Subir o Modificar la Foto de un Recurso**
+    -   Funcionalidad: Crear / Modificar Foto.
+    -   Método y Ruta: POST /recursos/{id}/foto
+    -   Descripción: Asocia un archivo de imagen a un recurso específico. Si ya existe una foto para ese recurso, el archivo antiguo debe ser eliminado del storage y reemplazado por el nuevo.
+    -   Cuerpo de la Petición (Payload): Debe ser de tipo `multipart/form-data` y contener un campo llamado `foto` con el archivo de la imagen.
+    -   Lógica:
+        1.  Verificar que el recurso con el `{id}` exista. Si no, devolver 404 Not Found.
+        2.  Verificar que la petición contenga un archivo. Si no, devolver 400 Bad Request.
+        3.  Si el recurso ya tiene una `href_photo`, eliminar el archivo antiguo del storage (MinIO).
+        4.  Subir el nuevo archivo al storage, generando un nombre único para él.
+        5.  Actualizar el campo `href_photo` en la base de datos con la nueva URL del archivo.
+    -   Respuesta Exitosa (200 OK): Devuelve el objeto JSON completo del recurso actualizado.
+    -   Respuestas de Error: 400 Bad Request, 404 Not Found.
+
+2.  **Eliminar la Foto de un Recurso**
+    -   Funcionalidad: Eliminar Foto.
+    -   Método y Ruta: DELETE /recursos/{id}/foto
+    -   Descripción: Elimina el archivo de imagen del storage y la referencia en la base de datos.
+    -   Cuerpo de la Petición (Payload): Ninguno.
+    -   Lógica:
+        1.  Verificar que el recurso con el `{id}` exista. Si no, devolver 404 Not Found.
+        2.  Obtener la URL del `href_photo`.
+        3.  Si existe una URL, eliminar el archivo correspondiente del storage (MinIO).
+        4.  Actualizar la base de datos, estableciendo el campo `href_photo` a NULL o un string vacío.
+    -   Respuesta Exitosa (204 No Content): Una respuesta vacía que indica el éxito de la operación.
+    -   Respuestas de Error: 404 Not Found.
+
+# -- FIN SECCION: GESTION DE FOTOS --
+

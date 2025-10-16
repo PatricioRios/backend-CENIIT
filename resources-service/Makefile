@@ -39,13 +39,7 @@ swag-v1: ### swag init
 	swag init -g internal/controller/http/router.go
 .PHONY: swag-v1
 
-proto-v1: ### generate source files from proto
-	protoc --go_out=. \
-		--go_opt=paths=source_relative \
-		--go-grpc_out=. \
-		--go-grpc_opt=paths=source_relative \
-		docs/proto/v1/*.proto
-.PHONY: proto-v1
+
 
 deps: ### deps tidy + verify
 	go mod tidy && go mod verify
@@ -60,7 +54,7 @@ format: ### Run code formatter
 	gci write . --skip-generated -s standard -s default
 .PHONY: format
 
-run: deps swag-v1 proto-v1 ### swag run for API v1
+run: deps swag-v1 ### swag run for API v1
 	go mod download && \
 	CGO_ENABLED=0 go run -tags migrate ./cmd/app
 .PHONY: run
