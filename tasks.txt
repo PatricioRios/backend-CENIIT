@@ -1,10 +1,11 @@
 sab 6 de septiembre (6/9/2025)
 
 enpoints:
-    registrar usuario
+registrar usuario COMPLETADO
+ver usuario COMPLETADO
+ver todos los usuarios COMPLETADO
+ver todos los roles COMPLETADO
+poner roles a usuario COMPLETADO
 
-    ver usuario
-    ver todos los usuarios
-
-    ver todos los roles
-    poner roles a usuario
+Recursos:
+-
