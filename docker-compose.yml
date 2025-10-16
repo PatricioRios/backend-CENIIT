@@ -14,7 +14,7 @@ services:
     volumes: # Monta un volumen persistente para los datos de la base de datos
       - trabajo_final_keycloak_db_data:/var/lib/postgresql/data
     ports: # Mapea el puerto del host al puerto del contenedor
-      - "127.0.0.1:5432:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
+      - "5432:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
     networks: # Conecta el servicio a la red definida
       - keycloak-net
 
@@ -31,7 +31,7 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin # Nombre de usuario del administrador inicial de Keycloak
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin # Contraseña del administrador inicial de Keycloak
     ports: # Mapea el puerto del host al puerto del contenedor
-      - "127.0.0.1:3030:8080"
+      - "3030:8080"
     depends_on: # Asegura que keycloak-postgres se inicie antes que keycloak
       - keycloak-postgres
     networks: # Conecta el servicio a la red definida
@@ -51,7 +51,7 @@ services:
       POSTGRES_USER: app_user
       POSTGRES_PASSWORD: app_password
     ports: # Mapea el puerto del host al puerto del contenedor
-      - "127.0.0.1:5433:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
+      - "5433:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
     volumes:
       - trabajo_final_app_db_data:/var/lib/postgresql/data
       - ./init-app-postgres-db:/docker-entrypoint-initdb.d
