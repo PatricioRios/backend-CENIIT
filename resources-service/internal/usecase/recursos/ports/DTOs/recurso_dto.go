@@ -9,3 +9,11 @@ type CreateResourceInput struct {
 	HrefPhoto   string
 	Estado      entity.EstadoRecurso
 }
+
+// UpdateResourceInput es el DTO de entrada para actualizar un recurso.
+type UpdateResourceInput struct {
+	Nombre      *string
+	Descripcion *string
+	HrefPhoto   *string
+	Estado      *entity.EstadoRecurso
+}
