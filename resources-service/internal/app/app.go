@@ -9,13 +9,11 @@ import (
 
 	"github.com/evrone/go-clean-template/config"
 	"github.com/evrone/go-clean-template/internal/controller/http"
-
-	// "github.com/evrone/go-clean-template/internal/repo/persistent"
-	// "github.com/evrone/go-clean-template/internal/repo/webapi"
-	// "github.com/evrone/go-clean-template/internal/usecase/translation"
+	"github.com/evrone/go-clean-template/internal/repo/persistent"
+	recursosusecase "github.com/evrone/go-clean-template/internal/usecase/recursos/usecases"
 	"github.com/evrone/go-clean-template/pkg/httpserver"
 	"github.com/evrone/go-clean-template/pkg/logger"
-	// "github.com/evrone/go-clean-template/pkg/postgres"
+	"github.com/evrone/go-clean-template/pkg/postgres"
 )
 
 // Run creates objects via constructors.
@@ -23,23 +21,22 @@ func Run(cfg *config.Config) {
 	l := logger.New(cfg.Log.Level)
 
 	// Repository
-	// pg, err := postgres.New(cfg.PG.URL, postgres.MaxPoolSize(cfg.PG.PoolMax))
-	// if err != nil {
-	// 	l.Fatal(fmt.Errorf("app - Run - postgres.New: %w", err))
-	// }
-	// defer pg.Close()
+	pg, err := postgres.New(cfg.PG.URL, postgres.MaxPoolSize(cfg.PG.PoolMax))
+	if err != nil {
+		l.Fatal(fmt.Errorf("app - Run - postgres.New: %w", err))
+	}
+	defer pg.Close()
+
+	recursoRepo := persistent.NewRecursoRepository(pg)
+
+	//recursoRepo := persistent.NewRecursoRepositoryMock() (mockeado)
 
 	// Use-Case
-	// Aca se inyectan los casos de uso a la aplicacion, en este caso el servicio de traduccion
-	// translationUseCase := translation.New(
-	// 	persistent.New(pg),
-	// 	webapi.New(),
-	// )
+	recursoUseCase := recursosusecase.NewRecursoUseCase(recursoRepo)
 
 	// HTTP Server
 	httpServer := httpserver.New(l, httpserver.Port(cfg.HTTP.Port), httpserver.Prefork(cfg.HTTP.UsePreforkMode))
-	//http.NewRouter(httpServer.App, cfg, translationUseCase, l)
-	http.NewRouter(httpServer.App, cfg, nil, l)
+	http.NewRouter(httpServer.App, cfg, recursoUseCase, l)
 
 	// Start servers
 	httpServer.Start()
@@ -48,7 +45,6 @@ func Run(cfg *config.Config) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	var err error
 	select {
 	case s := <-interrupt:
 		l.Info("app - Run - signal: %s", s.String())

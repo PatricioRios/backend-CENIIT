@@ -1,0 +1,125 @@
+openapi: 3.0.0
+info:
+  title: "API de Recursos - Crear Recurso"
+  description: "Especificación del endpoint para crear un nuevo recurso."
+  version: "1.0.0"
+
+paths:
+  /recursos:
+    post:
+      tags:
+        - Recursos
+      summary: "Crear un Nuevo Recurso"
+      description: |
+        Crea un nuevo recurso en la base de datos.
+        - Valida que `nombre` y `estado` no estén vacíos.
+        - Valida que `estado` sea "ACTIVO" o "MANTENIMIENTO".
+      operationId: createResource
+      requestBody:
+        description: "Datos del recurso a crear."
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResourceRequest'
+      responses:
+        '201':
+          description: "Recurso creado exitosamente."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recurso'
+        '400':
+          description: "Bad Request - Error en los datos de entrada."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2025-10-17T20:34:56.123Z"
+                status: 400
+                error: "Bad Request"
+                message: "Error de validación."
+                path: "/recursos"
+                details:
+                  - field: "nombre"
+                    error: "El campo nombre no puede estar vacío."
+                  - field: "estado"
+                    error: "El valor de estado debe ser 'ACTIVO' or 'MANTENIMIENTO'."
+
+components:
+  schemas:
+    CreateResourceRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          description: "Nombre del recurso."
+          example: "Laptop Gamer"
+        descripcion:
+          type: string
+          description: "Descripción detallada del recurso."
+          example: "Laptop con tarjeta gráfica RTX 4090."
+        href_photo:
+          type: string
+          description: "URL de la foto del recurso."
+          example: "https://example.com/images/laptop.jpg"
+        estado:
+          $ref: '#/components/schemas/EstadoRecurso'
+      required:
+        - nombre
+        - estado
+
+    Recurso:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: "ID único del recurso."
+          example: 101
+        nombre:
+          type: string
+          description: "Nombre del recurso."
+          example: "Laptop Gamer"
+        descripcion:
+          type: string
+          description: "Descripción detallada del recurso."
+          example: "Laptop con tarjeta gráfica RTX 4090."
+        href_photo:
+          type: string
+          description: "URL de la foto del recurso."
+          example: "https://example.com/images/laptop.jpg"
+        estado:
+          $ref: '#/components/schemas/EstadoRecurso'
+
+    EstadoRecurso:
+      type: string
+      description: "Estado del recurso."
+      enum:
+        - "ACTIVO"
+        - "MANTENIMIENTO"
+      example: "ACTIVO"
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: "Fecha y hora del error."
+        status:
+          type: integer
+          description: "Código de estado HTTP."
+        error:
+          type: string
+          description: "Frase de razón del estado HTTP."
+        message:
+          type: string
+          description: "Mensaje de error legible."
+        path:
+          type: string
+          description: "Ruta del endpoint invocado."
+        details:
+          type: "object"
+          description: "Datos adicionales y estructurados sobre el error."

@@ -9,12 +9,13 @@ import (
 type (
 	// Config -.
 	Config struct {
-		App     App
-		HTTP    HTTP
-		Log     Log
-		PG      PG
-		Metrics Metrics
-		Swagger Swagger
+		App      App
+		HTTP     HTTP
+		Log      Log
+		PG       PG
+		Metrics  Metrics
+		Swagger  Swagger
+		Keycloak Keycloak
 	}
 
 	// App -.
@@ -48,6 +49,13 @@ type (
 	// Swagger -.
 	Swagger struct {
 		Enabled bool `env:"SWAGGER_ENABLED" envDefault:"false"`
+	}
+
+	// Keycloak -.
+	Keycloak struct {
+		IssuerURL    string `env:"KEYCLOAK_ISSUER_URL,required"`
+		ClientID     string `env:"KEYCLOAK_CLIENT_ID,required"`
+		ClientSecret string `env:"KEYCLOAK_CLIENT_SECRET"`
 	}
 )
 
