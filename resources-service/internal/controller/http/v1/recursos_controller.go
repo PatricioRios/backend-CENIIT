@@ -14,18 +14,22 @@ import (
 
 	"github.com/evrone/go-clean-template/internal/controller/http/v1/request"
 	"github.com/evrone/go-clean-template/internal/usecase/common/apperror"
-	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports"
+	errorlogports "github.com/evrone/go-clean-template/internal/usecase/errorlog/ports"
+	recursosports "github.com/evrone/go-clean-template/internal/usecase/recursos/ports"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/DTOs"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/criteria"
+	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/gofiber/fiber/v2"
 )
 
 type RecursoRoutes struct {
-	uc ports.RecursoUseCase
+	uc              recursosports.RecursoUseCase
+	logErrorUseCase errorlogports.LogErrorUseCase
+	logger          logger.Interface
 }
 
-func NewRecursoRoutes(router fiber.Router, uc ports.RecursoUseCase) {
-	r := &RecursoRoutes{uc: uc}
+func NewRecursoRoutes(router fiber.Router, uc recursosports.RecursoUseCase, logErrorUC errorlogports.LogErrorUseCase, l logger.Interface) {
+	r := &RecursoRoutes{uc: uc, logErrorUseCase: logErrorUC, logger: l}
 	h := router.Group("/recursos")
 	{
 		h.Post("/", middleware.RequireRole("CREAR-RECURSO"), r.createResource)
@@ -47,7 +51,7 @@ func (r *RecursoRoutes) listResources(c *fiber.Ctx) error {
 
 	paginatedOutput, err := r.uc.ListResources(c.Context(), criteria)
 	if err != nil {
-		return handleError(c, err)
+		return r.handleError(c, err)
 	}
 
 	response := buildPaginatedResponse(c, paginatedOutput)
@@ -71,7 +75,7 @@ func (r *RecursoRoutes) searchResources(c *fiber.Ctx) error {
 
 	paginatedOutput, err := r.uc.ListResources(c.Context(), crit)
 	if err != nil {
-		return handleError(c, err)
+		return r.handleError(c, err)
 	}
 
 	response := buildPaginatedResponse(c, paginatedOutput)
@@ -89,7 +93,7 @@ func (r *RecursoRoutes) createResource(c *fiber.Ctx) error {
 
 	recurso, err := r.uc.CreateResource(c.Context(), input)
 	if err != nil {
-		return handleError(c, err)
+		return r.handleError(c, err)
 	}
 
 	return c.Status(http.StatusCreated).JSON(recurso)
@@ -103,7 +107,7 @@ func (r *RecursoRoutes) deleteResource(c *fiber.Ctx) error {
 
 	err = r.uc.DeleteResource(c.Context(), int64(id))
 	if err != nil {
-		return handleError(c, err)
+		return r.handleError(c, err)
 	}
 
 	return c.SendStatus(http.StatusNoContent)
@@ -124,7 +128,7 @@ func (r *RecursoRoutes) updateResource(c *fiber.Ctx) error {
 
 	recurso, err := r.uc.UpdateResource(c.Context(), int64(id), input)
 	if err != nil {
-		return handleError(c, err)
+		return r.handleError(c, err)
 	}
 
 	return c.Status(http.StatusOK).JSON(recurso)
@@ -138,7 +142,7 @@ func (r *RecursoRoutes) getResourceByID(c *fiber.Ctx) error {
 
 	recurso, err := r.uc.GetResourceByID(c.Context(), int64(id))
 	if err != nil {
-		return handleError(c, err)
+		return r.handleError(c, err)
 	}
 
 	return c.Status(http.StatusOK).JSON(recurso)
@@ -164,14 +168,27 @@ func toUpdateResourceInput(req request.UpdateResource) DTOs.UpdateResourceInput 
 	}
 }
 
-func handleError(c *fiber.Ctx, err error) error {
-	fmt.Println(err)
+func (r *RecursoRoutes) handleError(c *fiber.Ctx, err error) error {
 	switch {
+	case errors.Is(err, apperror.ErrBadRequest):
+		r.logger.Warn("Bad Request", "error", err.Error(), "path", c.Path())
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", err.Error(), c.Path()))
 	case errors.Is(err, apperror.ErrConflict):
+		r.logger.Warn("Conflict error", "error", err.Error(), "path", c.Path())
 		return c.Status(http.StatusConflict).JSON(common_response.NewErrorResponseDTO(http.StatusConflict, "Conflict", err.Error(), c.Path()))
 	case errors.Is(err, apperror.ErrNotFound):
+		r.logger.Warn("Not Found error", "error", err.Error(), "path", c.Path())
 		return c.Status(http.StatusNotFound).JSON(common_response.NewErrorResponseDTO(http.StatusNotFound, "Not Found", err.Error(), c.Path()))
 	default:
+		r.logger.Error("Internal Server Error", "error", err.Error(), "path", c.Path())
+
+		// Asynchronously log internal errors to the database (mocked)
+		_ = r.logErrorUseCase.Execute(c.Context(), errorlogports.LogErrorInput{
+			Err:           err,
+			RequestPath:   c.Path(),
+			RequestMethod: c.Method(),
+		})
+
 		return c.Status(http.StatusInternalServerError).JSON(common_response.NewErrorResponseDTO(http.StatusInternalServerError, "Internal Server Error", "Ocurrió un error inesperado", c.Path()))
 	}
 }

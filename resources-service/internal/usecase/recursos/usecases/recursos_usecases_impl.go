@@ -2,9 +2,11 @@ package usecases
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/usecase/common/apperror"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/criteria"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/DTOs"
@@ -27,12 +29,22 @@ func (uc *RecursoUseCaseImpl) ListResources(ctx context.Context, c criteria.Crit
 	// Get the resources for the current page
 	recursos, err := uc.repo.FindByCriteria(ctx, c)
 	if err != nil {
+		// Si es un error conocido del cliente (ej: Bad Request), lo devolvemos directamente.
+		if errors.Is(err, apperror.ErrBadRequest) || errors.Is(err, apperror.ErrNotFound) {
+			return nil, err
+		}
+		// Para otros errores, sí añadimos contexto porque son inesperados.
 		return nil, fmt.Errorf("error al listar recursos: %w", err)
 	}
 
 	// Get the total count of resources matching the criteria (without pagination)
 	total, err := uc.repo.CountByCriteria(ctx, c)
 	if err != nil {
+		// Si es un error conocido del cliente, lo devolvemos directamente.
+		if errors.Is(err, apperror.ErrBadRequest) {
+			return nil, err
+		}
+		// Para otros errores, sí añadimos contexto.
 		return nil, fmt.Errorf("error al contar recursos: %w", err)
 	}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/evrone/go-clean-template/config"
 	"github.com/evrone/go-clean-template/internal/controller/http"
 	"github.com/evrone/go-clean-template/internal/repo/persistent"
+	errorlogusecase "github.com/evrone/go-clean-template/internal/usecase/errorlog/usecases"
 	recursosusecase "github.com/evrone/go-clean-template/internal/usecase/recursos/usecases"
 	"github.com/evrone/go-clean-template/pkg/httpserver"
 	"github.com/evrone/go-clean-template/pkg/logger"
@@ -23,20 +24,21 @@ func Run(cfg *config.Config) {
 	// Repository
 	pg, err := postgres.New(cfg.PG.URL, postgres.MaxPoolSize(cfg.PG.PoolMax))
 	if err != nil {
-		l.Fatal(fmt.Errorf("app - Run - postgres.New: %w", err))
+		l.Fatal(fmt.Errorf("app - Run - postgres.New: %w", err).Error())
 	}
 	defer pg.Close()
 
+	// Repositories
 	recursoRepo := persistent.NewRecursoRepository(pg)
+	errorLogRepo := persistent.NewErrorLogRepositoryPostgres(pg) // Using real repo
 
-	//recursoRepo := persistent.NewRecursoRepositoryMock() (mockeado)
-
-	// Use-Case
+	// Use-Cases
 	recursoUseCase := recursosusecase.NewRecursoUseCase(recursoRepo)
+	logErrorUseCase := errorlogusecase.NewLogErrorUseCase(errorLogRepo, cfg)
 
 	// HTTP Server
 	httpServer := httpserver.New(l, httpserver.Port(cfg.HTTP.Port), httpserver.Prefork(cfg.HTTP.UsePreforkMode))
-	http.NewRouter(httpServer.App, cfg, recursoUseCase, l)
+	http.NewRouter(httpServer.App, cfg, recursoUseCase, logErrorUseCase, l)
 
 	// Start servers
 	httpServer.Start()
@@ -49,12 +51,12 @@ func Run(cfg *config.Config) {
 	case s := <-interrupt:
 		l.Info("app - Run - signal: %s", s.String())
 	case err = <-httpServer.Notify():
-		l.Error(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
+		l.Error(fmt.Errorf("app - Run - httpServer.Notify: %w", err).Error())
 	}
 
 	// Shutdown
 	err = httpServer.Shutdown()
 	if err != nil {
-		l.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
+		l.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err).Error())
 	}
 }

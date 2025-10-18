@@ -18,4 +18,7 @@ var (
     // ErrInternal se utiliza para errores inesperados en el servidor.
     // Este error debería enmascarar el error original para no exponer detalles.
     ErrInternal   = errors.New("error interno del servidor")
+
+	// ErrBadRequest se utiliza para una solicitud malformada que no puede ser procesada.
+	ErrBadRequest = errors.New("solicitud incorrecta")
 )

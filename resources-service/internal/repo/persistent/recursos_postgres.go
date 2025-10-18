@@ -121,6 +121,9 @@ func (r *RecursoRepository) FindByCriteria(ctx context.Context, c criteria.Crite
 
 	whereClause, err := buildWhereClauseFromCriteria(c.FilterGroup)
 	if err != nil {
+		if errors.Is(err, apperror.ErrBadRequest) {
+			return nil, err
+		}
 		return nil, fmt.Errorf("RecursoRepository - FindByCriteria - buildWhereClause: %w", err)
 	}
 	if whereClause != nil {
@@ -168,6 +171,9 @@ func (r *RecursoRepository) CountByCriteria(ctx context.Context, c criteria.Crit
 
 	whereClause, err := buildWhereClauseFromCriteria(c.FilterGroup)
 	if err != nil {
+		if errors.Is(err, apperror.ErrBadRequest) {
+			return 0, err
+		}
 		return 0, fmt.Errorf("RecursoRepository - CountByCriteria - buildWhereClause: %w", err)
 	}
 	if whereClause != nil {
@@ -269,7 +275,7 @@ func buildFilterPredicate(f criteria.Filter) (squirrel.Sqlizer, error) {
 	case criteria.ILIKE:
 		operator = "ILIKE"
 	default:
-		return nil, fmt.Errorf("operador de filtro no soportado: %s", f.Operator)
+		return nil, fmt.Errorf("%w: operador de filtro no soportado: %s", apperror.ErrBadRequest, f.Operator)
 	}
 
 	return squirrel.Expr(fmt.Sprintf("%s %s ?", f.Field, operator), value), nil

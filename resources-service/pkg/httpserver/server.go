@@ -100,7 +100,7 @@ func (s *Server) Shutdown() error {
 
 	err := s.App.ShutdownWithTimeout(s.shutdownTimeout)
 	if err != nil && !errors.Is(err, context.Canceled) {
-		s.logger.Error(err, "http server - Server - Shutdown - s.App.ShutdownWithTimeout")
+		s.logger.Error(err.Error(), "http server - Server - Shutdown - s.App.ShutdownWithTimeout")
 
 		shutdownErrors = append(shutdownErrors, err)
 	}
@@ -108,7 +108,7 @@ func (s *Server) Shutdown() error {
 	// Wait for all goroutines to finish and get any error
 	err = s.eg.Wait()
 	if err != nil && !errors.Is(err, context.Canceled) {
-		s.logger.Error(err, "http server - Server - Shutdown - s.eg.Wait")
+		s.logger.Error(err.Error(), "http server - Server - Shutdown - s.eg.Wait")
 
 		shutdownErrors = append(shutdownErrors, err)
 	}
