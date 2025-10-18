@@ -16,4 +16,6 @@ type RecursoRepository interface {
 
 	// FindByCriteria searches for resources based on dynamic criteria.
 	FindByCriteria(ctx context.Context, criteria criteria.Criteria) ([]entity.Recurso, error)
+	// CountByCriteria counts resources based on dynamic criteria.
+	CountByCriteria(ctx context.Context, criteria criteria.Criteria) (int64, error)
 }

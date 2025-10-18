@@ -3,12 +3,15 @@ package v1
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/evrone/go-clean-template/internal/controller/http/common/response"
+	common_response "github.com/evrone/go-clean-template/internal/controller/http/common/response"
 	"github.com/evrone/go-clean-template/internal/controller/http/middleware"
+	"github.com/evrone/go-clean-template/internal/controller/http/v1/response"
+
 	"github.com/evrone/go-clean-template/internal/controller/http/v1/request"
 	"github.com/evrone/go-clean-template/internal/usecase/common/apperror"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports"
@@ -25,12 +28,12 @@ func NewRecursoRoutes(router fiber.Router, uc ports.RecursoUseCase) {
 	r := &RecursoRoutes{uc: uc}
 	h := router.Group("/recursos")
 	{
-		h.Post("/", middleware.RequireRole("CREAR_RECURSO"), r.createResource)
-		h.Delete("/:id", middleware.RequireRole("CREAR_RECURSO"), r.deleteResource)
-		h.Patch("/:id", middleware.RequireRole("CREAR_RECURSO"), r.updateResource)
-		h.Get("/:id", middleware.RequireRole("CREAR_RECURSO"), r.getResourceByID)
-		h.Get("/", middleware.RequireRole("CREAR_RECURSO"), r.listResources)
-		h.Post("/search", middleware.RequireRole("CREAR_RECURSO"), r.searchResources)
+		h.Post("/", middleware.RequireRole("CREAR-RECURSO"), r.createResource)
+		h.Delete("/:id", middleware.RequireRole("CREAR-RECURSO"), r.deleteResource)
+		h.Patch("/:id", middleware.RequireRole("CREAR-RECURSO"), r.updateResource)
+		h.Get("/:id", middleware.RequireRole("CREAR-RECURSO"), r.getResourceByID)
+		h.Get("/", middleware.RequireRole("CREAR-RECURSO"), r.listResources)
+		h.Post("/search", middleware.RequireRole("CREAR-RECURSO"), r.searchResources)
 	}
 }
 
@@ -39,21 +42,23 @@ func NewRecursoRoutes(router fiber.Router, uc ports.RecursoUseCase) {
 func (r *RecursoRoutes) listResources(c *fiber.Ctx) error {
 	criteria, err := buildCriteriaFromQuery(c)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", err.Error(), c.Path()))
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", err.Error(), c.Path()))
 	}
 
-	recursos, err := r.uc.ListResources(c.Context(), criteria)
+	paginatedOutput, err := r.uc.ListResources(c.Context(), criteria)
 	if err != nil {
 		return handleError(c, err)
 	}
 
-	return c.Status(http.StatusOK).JSON(recursos)
+	response := buildPaginatedResponse(c, paginatedOutput)
+
+	return c.Status(http.StatusOK).JSON(response)
 }
 
 func (r *RecursoRoutes) searchResources(c *fiber.Ctx) error {
 	var crit criteria.Criteria
 	if err := c.BodyParser(&crit); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "Cuerpo de la petición JSON inválido", c.Path()))
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "Cuerpo de la petición JSON inválido", c.Path()))
 	}
 
 	// Parse pagination from query params
@@ -64,18 +69,20 @@ func (r *RecursoRoutes) searchResources(c *fiber.Ctx) error {
 		Offset: offset,
 	}
 
-	recursos, err := r.uc.ListResources(c.Context(), crit)
+	paginatedOutput, err := r.uc.ListResources(c.Context(), crit)
 	if err != nil {
 		return handleError(c, err)
 	}
 
-	return c.Status(http.StatusOK).JSON(recursos)
+	response := buildPaginatedResponse(c, paginatedOutput)
+
+	return c.Status(http.StatusOK).JSON(response)
 }
 
 func (r *RecursoRoutes) createResource(c *fiber.Ctx) error {
 	var req request.CreateResource
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "Cuerpo de la petición inválido", c.Path()))
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "Cuerpo de la petición inválido", c.Path()))
 	}
 
 	input := toCreateResourceInput(req)
@@ -91,7 +98,7 @@ func (r *RecursoRoutes) createResource(c *fiber.Ctx) error {
 func (r *RecursoRoutes) deleteResource(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "ID de recurso inválido", c.Path()))
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "ID de recurso inválido", c.Path()))
 	}
 
 	err = r.uc.DeleteResource(c.Context(), int64(id))
@@ -105,12 +112,12 @@ func (r *RecursoRoutes) deleteResource(c *fiber.Ctx) error {
 func (r *RecursoRoutes) updateResource(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "ID de recurso inválido", c.Path()))
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "ID de recurso inválido", c.Path()))
 	}
 
 	var req request.UpdateResource
 	if err := c.BodyParser(&req); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "Cuerpo de la petición inválido", c.Path()))
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "Cuerpo de la petición inválido", c.Path()))
 	}
 
 	input := toUpdateResourceInput(req)
@@ -126,7 +133,7 @@ func (r *RecursoRoutes) updateResource(c *fiber.Ctx) error {
 func (r *RecursoRoutes) getResourceByID(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "ID de recurso inválido", c.Path()))
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "ID de recurso inválido", c.Path()))
 	}
 
 	recurso, err := r.uc.GetResourceByID(c.Context(), int64(id))
@@ -161,11 +168,11 @@ func handleError(c *fiber.Ctx, err error) error {
 	fmt.Println(err)
 	switch {
 	case errors.Is(err, apperror.ErrConflict):
-		return c.Status(http.StatusConflict).JSON(response.NewErrorResponseDTO(http.StatusConflict, "Conflict", err.Error(), c.Path()))
+		return c.Status(http.StatusConflict).JSON(common_response.NewErrorResponseDTO(http.StatusConflict, "Conflict", err.Error(), c.Path()))
 	case errors.Is(err, apperror.ErrNotFound):
-		return c.Status(http.StatusNotFound).JSON(response.NewErrorResponseDTO(http.StatusNotFound, "Not Found", err.Error(), c.Path()))
+		return c.Status(http.StatusNotFound).JSON(common_response.NewErrorResponseDTO(http.StatusNotFound, "Not Found", err.Error(), c.Path()))
 	default:
-		return c.Status(http.StatusInternalServerError).JSON(response.NewErrorResponseDTO(http.StatusInternalServerError, "Internal Server Error", "Ocurrió un error inesperado", c.Path()))
+		return c.Status(http.StatusInternalServerError).JSON(common_response.NewErrorResponseDTO(http.StatusInternalServerError, "Internal Server Error", "Ocurrió un error inesperado", c.Path()))
 	}
 }
 
@@ -224,4 +231,84 @@ func buildCriteriaFromQuery(c *fiber.Ctx) (criteria.Criteria, error) {
 		Sort:       sorts,
 		Pagination: pag,
 	}, nil
+}
+
+func buildPaginatedResponse(c *fiber.Ctx, paginatedOutput *DTOs.PaginatedRecursosOutput) response.PaginatedResponse {
+	// 1. Map entities to HATEOAS response DTOs
+	recursosHATEOAS := make([]response.RecursoHATEOAS, 0, len(paginatedOutput.Recursos))
+	for _, r := range paginatedOutput.Recursos {
+		recursosHATEOAS = append(recursosHATEOAS, response.RecursoHATEOAS{
+			RecursoResponse: response.RecursoResponse{
+				ID:          r.ID,
+				Nombre:      r.Nombre,
+				Descripcion: r.Descripcion,
+				HrefPhoto:   r.HrefPhoto,
+				Estado:      r.Estado,
+				CreatedAt:   r.CreatedAt,
+				UpdatedAt:   r.UpdatedAt,
+			},
+			Links: struct {
+				Self response.Link `json:"self"`
+			}{
+				Self: response.Link{
+					Href: fmt.Sprintf("%s/recursos/%d", c.BaseURL(), r.ID),
+				},
+			},
+		})
+	}
+
+	// 2. Calculate page info
+	totalPages := int64(0)
+	if paginatedOutput.Limit > 0 {
+		totalPages = int64(math.Ceil(float64(paginatedOutput.TotalElements) / float64(paginatedOutput.Limit)))
+	}
+	currentPage := int64(0)
+	if paginatedOutput.Limit > 0 {
+		currentPage = int64(paginatedOutput.Offset / paginatedOutput.Limit)
+	}
+
+	pageInfo := response.PageInfo{
+		Size:          uint64(len(paginatedOutput.Recursos)),
+		TotalElements: paginatedOutput.TotalElements,
+		TotalPages:    totalPages,
+		Number:        currentPage,
+	}
+
+	// 3. Build navigation links
+	selfURL := c.OriginalURL()
+	var nextURL, prevURL *response.Link
+
+	// Next page link
+	if (paginatedOutput.Offset + paginatedOutput.Limit) < uint64(paginatedOutput.TotalElements) {
+		nextOffset := paginatedOutput.Offset + paginatedOutput.Limit
+		nextURL = &response.Link{
+			Href: fmt.Sprintf("%s/recursos/search?limit=%d&offset=%d", c.BaseURL(), paginatedOutput.Limit, nextOffset),
+		}
+	}
+
+	// Previous page link
+	if paginatedOutput.Offset > 0 {
+		prevOffset := paginatedOutput.Offset - paginatedOutput.Limit
+		if int64(prevOffset) < 0 { // Ensure offset doesn't go negative
+			prevOffset = 0
+		}
+		prevURL = &response.Link{
+			Href: fmt.Sprintf("%s/recursos/search?limit=%d&offset=%d", c.BaseURL(), paginatedOutput.Limit, prevOffset),
+		}
+	}
+
+	links := response.Links{
+		Self: response.Link{Href: selfURL},
+		Next: nextURL,
+		Prev: prevURL,
+	}
+
+	// 4. Assemble final response
+	return response.PaginatedResponse{
+		Embedded: response.EmbeddedRecursos{
+			Recursos: recursosHATEOAS,
+		},
+		Links: links,
+		Page:  pageInfo,
+	}
 }

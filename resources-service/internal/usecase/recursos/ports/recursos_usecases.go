@@ -16,5 +16,5 @@ type RecursoUseCase interface {
 	GetResourceByID(ctx context.Context, id int64) (*entity.Recurso, error)
 
 	// ListResources lists resources based on dynamic criteria.
-	ListResources(ctx context.Context, criteria criteria.Criteria) ([]entity.Recurso, error)
+	ListResources(ctx context.Context, criteria criteria.Criteria) (*DTOs.PaginatedRecursosOutput, error)
 }

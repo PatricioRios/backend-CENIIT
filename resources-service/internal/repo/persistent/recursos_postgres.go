@@ -115,23 +115,37 @@ func (r *RecursoRepository) Update(ctx context.Context, recurso *entity.Recurso)
 
 // FindByCriteria busca recursos aplicando un conjunto dinámico de criterios.
 func (r *RecursoRepository) FindByCriteria(ctx context.Context, c criteria.Criteria) ([]entity.Recurso, error) {
-	fmt.Println("llego hasta aca")
+	builder := r.Builder.
+		Select("id", "nombre", "descripcion", "href_photo", "estado", "created_at", "updated_at").
+		From("recursos_schema.recursos")
 
-	visitor := newSqlVisitor(r.Builder)
-	fmt.Println("build del query")
-	sql, args, err := visitor.BuildQuery(c)
+	whereClause, err := buildWhereClauseFromCriteria(c.FilterGroup)
 	if err != nil {
-		return nil, fmt.Errorf("RecursoRepository - FindByCriteria - visitor.BuildQuery: %w", err)
+		return nil, fmt.Errorf("RecursoRepository - FindByCriteria - buildWhereClause: %w", err)
 	}
-	fmt.Println("ejecucion del query")
+	if whereClause != nil {
+		builder = builder.Where(whereClause)
+	}
+
+	for _, s := range c.Sort {
+		builder = builder.OrderBy(fmt.Sprintf("%s %s", s.Field, s.Direction))
+	}
+
+	if c.Pagination != nil {
+		builder = builder.Limit(c.Pagination.Limit).Offset(c.Pagination.Offset)
+	}
+
+	sql, args, err := builder.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("RecursoRepository - FindByCriteria - builder.ToSql: %w", err)
+	}
+
 	rows, err := r.Pool.Query(ctx, sql, args...)
 	if err != nil {
-		fmt.Println(err)
 		return nil, fmt.Errorf("RecursoRepository - FindByCriteria - r.Pool.Query: %w", err)
 	}
-	fmt.Println("build del query 2")
-
 	defer rows.Close()
+
 	var recursos []entity.Recurso
 	for rows.Next() {
 		var recurso entity.Recurso
@@ -144,42 +158,39 @@ func (r *RecursoRepository) FindByCriteria(ctx context.Context, c criteria.Crite
 		}
 		recursos = append(recursos, recurso)
 	}
-	fmt.Println("llego hasta aca (final)")
+
 	return recursos, nil
 }
 
-// --- sqlVisitor (Implementación privada del patrón Visitor) ---
+// CountByCriteria cuenta los recursos aplicando un conjunto dinámico de criterios.
+func (r *RecursoRepository) CountByCriteria(ctx context.Context, c criteria.Criteria) (int64, error) {
+	builder := r.Builder.Select("count(*)").From("recursos_schema.recursos")
 
-type sqlVisitor struct {
-	builder squirrel.SelectBuilder
-}
-
-func newSqlVisitor(builder squirrel.StatementBuilderType) *sqlVisitor {
-	return &sqlVisitor{
-		builder: builder.Select("id", "nombre", "descripcion", "href_photo", "estado", "created_at", "updated_at").
-			From("recursos_schema.recursos"),
-	}
-}
-
-func (v *sqlVisitor) BuildQuery(c criteria.Criteria) (string, []any, error) {
-	mainFilter, err := v.visitFilterGroup(c.FilterGroup)
+	whereClause, err := buildWhereClauseFromCriteria(c.FilterGroup)
 	if err != nil {
-		return "", nil, err
+		return 0, fmt.Errorf("RecursoRepository - CountByCriteria - buildWhereClause: %w", err)
 	}
-	if mainFilter != nil {
-		v.builder = v.builder.Where(mainFilter)
+	if whereClause != nil {
+		builder = builder.Where(whereClause)
 	}
 
-	if err := v.visitSort(c.Sort); err != nil {
-		return "", nil, err
+	sql, args, err := builder.ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("RecursoRepository - CountByCriteria - builder.ToSql: %w", err)
 	}
-	if err := v.visitPagination(c.Pagination); err != nil {
-		return "", nil, err
+
+	var count int64
+	err = r.Pool.QueryRow(ctx, sql, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("RecursoRepository - CountByCriteria - r.Pool.QueryRow: %w", err)
 	}
-	return v.builder.ToSql()
+
+	return count, nil
 }
 
-func (v *sqlVisitor) visitFilterGroup(fg criteria.FilterGroup) (squirrel.Sqlizer, error) {
+// --- Filter Building Helpers ---
+
+func buildWhereClauseFromCriteria(fg criteria.FilterGroup) (squirrel.Sqlizer, error) {
 	if len(fg.Filters) == 0 && len(fg.FilterGroups) == 0 {
 		return nil, nil
 	}
@@ -187,7 +198,7 @@ func (v *sqlVisitor) visitFilterGroup(fg criteria.FilterGroup) (squirrel.Sqlizer
 	var predicates []squirrel.Sqlizer
 
 	for _, f := range fg.Filters {
-		pred, err := v.visitFilter(f)
+		pred, err := buildFilterPredicate(f)
 		if err != nil {
 			return nil, err
 		}
@@ -195,7 +206,7 @@ func (v *sqlVisitor) visitFilterGroup(fg criteria.FilterGroup) (squirrel.Sqlizer
 	}
 
 	for _, group := range fg.FilterGroups {
-		pred, err := v.visitFilterGroup(group)
+		pred, err := buildWhereClauseFromCriteria(group)
 		if err != nil {
 			return nil, err
 		}
@@ -215,7 +226,7 @@ func (v *sqlVisitor) visitFilterGroup(fg criteria.FilterGroup) (squirrel.Sqlizer
 	return squirrel.And(predicates), nil
 }
 
-func (v *sqlVisitor) visitFilter(f criteria.Filter) (squirrel.Sqlizer, error) {
+func buildFilterPredicate(f criteria.Filter) (squirrel.Sqlizer, error) {
 	value := f.Value
 	var operator string
 
@@ -262,18 +273,4 @@ func (v *sqlVisitor) visitFilter(f criteria.Filter) (squirrel.Sqlizer, error) {
 	}
 
 	return squirrel.Expr(fmt.Sprintf("%s %s ?", f.Field, operator), value), nil
-}
-
-func (v *sqlVisitor) visitSort(sorts []criteria.Sort) error {
-	for _, s := range sorts {
-		v.builder = v.builder.OrderBy(fmt.Sprintf("%s %s", s.Field, s.Direction))
-	}
-	return nil
-}
-
-func (v *sqlVisitor) visitPagination(p *criteria.Pagination) error {
-	if p != nil {
-		v.builder = v.builder.Limit(p.Limit).Offset(p.Offset)
-	}
-	return nil
 }

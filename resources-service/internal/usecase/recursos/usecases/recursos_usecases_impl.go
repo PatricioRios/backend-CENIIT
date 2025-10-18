@@ -22,13 +22,33 @@ func NewRecursoUseCase(repo ports.RecursoRepository) *RecursoUseCaseImpl {
 	}
 }
 
-// ListResources lista los recursos aplicando un conjunto de criterios.
-func (uc *RecursoUseCaseImpl) ListResources(ctx context.Context, c criteria.Criteria) ([]entity.Recurso, error) {
+// ListResources lista los recursos aplicando un conjunto de criterios y devuelve datos de paginación.
+func (uc *RecursoUseCaseImpl) ListResources(ctx context.Context, c criteria.Criteria) (*DTOs.PaginatedRecursosOutput, error) {
+	// Get the resources for the current page
 	recursos, err := uc.repo.FindByCriteria(ctx, c)
 	if err != nil {
 		return nil, fmt.Errorf("error al listar recursos: %w", err)
 	}
-	return recursos, nil
+
+	// Get the total count of resources matching the criteria (without pagination)
+	total, err := uc.repo.CountByCriteria(ctx, c)
+	if err != nil {
+		return nil, fmt.Errorf("error al contar recursos: %w", err)
+	}
+
+	// The pagination object can be nil, so we need to handle that.
+	var limit, offset uint64
+	if c.Pagination != nil {
+		limit = c.Pagination.Limit
+		offset = c.Pagination.Offset
+	}
+
+	return &DTOs.PaginatedRecursosOutput{
+		Recursos:      recursos,
+		TotalElements: total,
+		Limit:         limit,
+		Offset:        offset,
+	}, nil
 }
 
 // CreateResource maneja la lógica para crear un nuevo recurso.
