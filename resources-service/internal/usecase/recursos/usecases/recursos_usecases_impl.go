@@ -6,6 +6,7 @@ import (
 
 	"github.com/evrone/go-clean-template/internal/entity"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports"
+	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/criteria"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/DTOs"
 )
 
@@ -19,6 +20,15 @@ func NewRecursoUseCase(repo ports.RecursoRepository) *RecursoUseCaseImpl {
 	return &RecursoUseCaseImpl{
 		repo: repo,
 	}
+}
+
+// ListResources lista los recursos aplicando un conjunto de criterios.
+func (uc *RecursoUseCaseImpl) ListResources(ctx context.Context, c criteria.Criteria) ([]entity.Recurso, error) {
+	recursos, err := uc.repo.FindByCriteria(ctx, c)
+	if err != nil {
+		return nil, fmt.Errorf("error al listar recursos: %w", err)
+	}
+	return recursos, nil
 }
 
 // CreateResource maneja la lógica para crear un nuevo recurso.
