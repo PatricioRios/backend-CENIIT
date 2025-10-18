@@ -47,8 +47,8 @@ services:
     container_name: app-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: app_db
-      POSTGRES_USER: app_user
+      #POSTGRES_DB: app_db
+      #POSTGRES_USER: app_user
       POSTGRES_PASSWORD: app_password
     ports: # Mapea el puerto del host al puerto del contenedor
       - "5433:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
@@ -57,6 +57,27 @@ services:
       - ./init-app-postgres-db:/docker-entrypoint-initdb.d
     networks:
       - keycloak-net
+  minio:
+    image: minio/minio:latest
+    container_name: minio-server
+    command: server /data --console-address ":9001"
+    ports:
+      # Puerto para la API (donde tu app Go se conectará)
+      - "9000:9000"
+      # Puerto para la consola web de administración
+      - "9001:9001"
+    volumes:
+      # Directorio local donde se guardarán los archivos permanentemente
+      - ./minio-data:/data
+    environment:
+      # ¡IMPORTANTE! Cambia estas credenciales por unas seguras
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminsecret
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
 
 networks:
   # Define la red personalizada para los contenedores

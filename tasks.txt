@@ -8,4 +8,83 @@ ver todos los roles COMPLETADO
 poner roles a usuario COMPLETADO
 
 Recursos:
--
+
+
+# Rol y Objetivo
+Eres un desarrollador experto en Go (Golang) especializado en la creación de APIs RESTful. Tu tarea es generar el código completo para una API REST que gestione las operaciones CRUD (Crear, Leer, Actualizar, Eliminar) para una entidad llamada "Recurso", basándote en las funcionalidades descritas.
+
+# Pila Tecnológica
+- **Lenguaje**: Go (Golang)
+- **Framework/Router**: Gin (`github.com/gin-gonic/gin`)
+- **Manejo de UUIDs**: `github.com/google/uuid`
+- **Persistencia de datos**: Utiliza un slice en memoria para simular una base de datos. La arquitectura debe usar un patrón de repositorio para que en el futuro sea fácil cambiar este slice por una base de datos real como PostgreSQL o MySQL.
+
+# Estructura del Proyecto
+Organiza el código en la siguiente estructura de directorios para asegurar que sea modular y escalable:
+
+/proyecto-recursos
+|-- /cmd/api/
+|   `-- main.go         # Punto de entrada, configuración del servidor y rutas de Gin.
+|-- /internal/recurso/
+|   |-- model.go        # Define la struct del Recurso y los modelos JSON.
+|   |-- repository.go   # Lógica de acceso a datos (interactúa con el slice en memoria).
+|   |-- service.go      # Lógica de negocio (orquesta las operaciones).
+|   `-- handler.go      # Manejadores HTTP que reciben las peticiones y llaman al servicio.
+`-- go.mod
+
+# Definición de la Entidad: Recurso
+La estructura `Recurso` en `model.go` debe contener los siguientes campos:
+
+- `ID`: `string` (generado como UUID v4)
+- `Nombre`: `string`
+- `Descripcion`: `string`
+- `FechaCreacion`: `time.Time`
+- `FechaActualizacion`: `time.Time`
+
+# Funcionalidades a Implementar (Endpoints de la API)
+
+A continuación se detallan los 5 endpoints que debes crear, mapeados a las funcionalidades de la imagen:
+
+1.  **Registrar nuevo recurso (INGSOFT-12)**
+    -   **Método**: `POST`
+    -   **Endpoint**: `/recursos`
+    -   **Payload (JSON)**: `{ "nombre": "string", "descripcion": "string" }`
+    -   **Comportamiento**: Debe crear un nuevo recurso con un ID único (UUID) y las fechas de creación/actualización.
+    -   **Respuesta Exitosa (201 Created)**: El objeto completo del recurso recién creado.
+
+2.  **Ver listado de recursos (INGSOFT-7)**
+    -   **Método**: `GET`
+    -   **Endpoint**: `/recursos`
+    -   **Comportamiento**: Debe devolver todos los recursos almacenados.
+    -   **Respuesta Exitosa (200 OK)**: Un array JSON con la lista de todos los recursos.
+
+3.  **Buscar recurso específico (INGSOFT-8)**
+    -   **Método**: `GET`
+    -   **Endpoint**: `/recursos/:id`
+    -   **Comportamiento**: Debe buscar y devolver un recurso por su ID.
+    -   **Respuesta Exitosa (200 OK)**: El objeto JSON del recurso encontrado.
+    -   **Respuesta de Error (404 Not Found)**: Si el recurso con ese ID no existe.
+
+4.  **Editar recurso (INGSOFT-13)**
+    -   **Método**: `PUT`
+    -   **Endpoint**: `/recursos/:id`
+    -   **Payload (JSON)**: `{ "nombre": "string", "descripcion": "string" }`
+    -   **Comportamiento**: Debe actualizar los datos de un recurso existente y la `FechaActualizacion`.
+    -   **Respuesta Exitosa (200 OK)**: El objeto JSON del recurso ya actualizado.
+    -   **Respuesta de Error (404 Not Found)**: Si el recurso con ese ID no existe.
+
+5.  **Eliminar recurso (INGSOFT-14)**
+    -   **Método**: `DELETE`
+    -   **Endpoint**: `/recursos/:id`
+    -   **Comportamiento**: Debe eliminar un recurso de la lista.
+    -   **Respuesta Exitosa (204 No Content)**: Respuesta sin cuerpo para indicar el éxito.
+    -   **Respuesta de Error (404 Not Found)**: Si el recurso con ese ID no existe.
+
+# Requisitos Adicionales
+- El código debe seguir las convenciones de Go y estar formateado correctamente (`gofmt`).
+- Incluye un manejo de errores robusto en todas las capas (handler, service, repository).
+- Añade comentarios claros en el código donde la lógica sea compleja.
+- Valida los datos de entrada en el handler (por ejemplo, que el nombre no esté vacío).
+
+# Entregable
+Genera el contenido completo de cada uno de los siguientes archivos: `main.go`, `model.go`, `repository.go`, `service.go`, y `handler.go`. Presenta cada archivo en un bloque de código separado y claramente etiquetado con su ruta completa (ej: `cmd/api/main.go`).
