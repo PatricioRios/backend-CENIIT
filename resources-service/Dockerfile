@@ -1,29 +1,23 @@
-# Step 1: Modules caching
-FROM golang:1.25-alpine3.21 AS modules
-
-COPY go.mod go.sum /modules/
-
-WORKDIR /modules
-
-RUN go mod download
-
-# Step 2: Builder
-FROM golang:1.25-alpine3.21 AS builder
-
-COPY --from=modules /go/pkg /go/pkg
-COPY . /app
+# Etapa 1: Compilar la aplicación
+FROM golang:1.25-alpine AS build
 
 WORKDIR /app
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build -tags migrate -o /bin/app ./cmd/app
+COPY go.mod ./
+COPY go.sum ./
+RUN go mod download
 
-# Step 3: Final
-FROM scratch
+COPY . .
 
-COPY --from=builder /app/config /config
-COPY --from=builder /app/migrations /migrations
-COPY --from=builder /bin/app /app
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main ./cmd/app/main.go
 
-CMD ["/app"]
+# Etapa 2: Crear la imagen final
+FROM alpine:latest
+
+WORKDIR /app
+
+COPY --from=build /app/main .
+
+EXPOSE 8082
+
+ENTRYPOINT ["./main"]

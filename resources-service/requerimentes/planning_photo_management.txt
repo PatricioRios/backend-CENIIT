@@ -1,0 +1,102 @@
+### Plan de Implementación: Gestión de Fotos
+
+**1. Configuración de MinIO:**
+
+*   **Objetivo:** Añadir la configuración de MinIO al struct de configuración de la aplicación.
+*   **Archivo a modificar:** `config/config.go`
+*   **Detalles:**
+    *   Añadir campos para el endpoint de MinIO, `accessKeyID`, `secretAccessKey`, y el nombre del bucket.
+    *   Cargar estas variables de entorno en la función `NewConfig`.
+
+**2. Cliente de MinIO:**
+
+*   **Objetivo:** Crear un cliente de MinIO que se pueda reutilizar en toda la aplicación.
+*   **Archivo a crear:** `pkg/minio/minio.go`
+*   **Detalles:**
+    *   Crear una función `New` que reciba la configuración de MinIO y devuelva un cliente de MinIO (`*minio.Client`).
+    *   Manejar la inicialización y la validación de la conexión.
+
+**3. Repositorio de Almacenamiento de Archivos (Storage):**
+
+*   **Objetivo:** Abstraer la lógica de subida y eliminación de archivos en MinIO.
+*   **Archivo a crear:** `internal/repo/persistent/file_storage_minio.go`
+*   **Detalles:**
+    *   Definir una interfaz `FileStorageRepository` en `internal/usecase/recursos/ports/file_storage_port.go` con los métodos `Upload` y `Delete`.
+    *   Implementar esta interfaz en `FileStorageMinio` que usará el cliente de MinIO.
+    *   El método `Upload` recibirá un `multipart.FileHeader`, generará un nombre de archivo único (ej: usando UUID), lo subirá a MinIO y devolverá la URL.
+    *   El método `Delete` recibirá el nombre del objeto y lo eliminará de MinIO.
+
+**4. Interfaces de Casos de Uso para Fotos:**
+
+*   **Objetivo:** Definir los contratos para la lógica de negocio de la gestión de fotos.
+*   **Archivos a crear/modificar:**
+    *   `internal/usecase/recursos/ports/photo_usecases.go` (nuevo)
+    *   `internal/usecase/recursos/ports/DTOs/photo_dto.go` (nuevo)
+*   **Detalles:**
+    *   En `photo_usecases.go`, definir la interfaz `PhotoUseCase` con dos métodos:
+        *   `UploadPhoto(ctx context.Context, input DTOs.UploadPhotoInput) (*entity.Recurso, error)`
+        *   `DeletePhoto(ctx context.Context, resourceID int64) error`
+    *   En `photo_dto.go`, definir el DTO de entrada:
+        *   `UploadPhotoInput`: contendrá el `ResourceID` y el `File` (`*multipart.FileHeader`).
+
+**5. Implementación de Casos de Uso para Fotos:**
+
+*   **Objetivo:** Implementar la lógica de negocio para subir y eliminar fotos.
+*   **Archivo a crear:** `internal/usecase/recursos/usecases/photo_usecases_impl.go`
+*   **Detalles:**
+    *   Crear `PhotoUseCaseImpl` que recibirá `RecursoRepository` y `FileStorageRepository`.
+    *   **`UploadPhoto`:**
+        1.  Obtener el recurso por ID usando `RecursoRepository`.
+        2.  Si el recurso tiene una foto (`HrefPhoto`), extraer el nombre del objeto y llamar a `FileStorageRepository.Delete`.
+        3.  Llamar a `FileStorageRepository.Upload` con el nuevo archivo para subirlo.
+        4.  Actualizar el campo `HrefPhoto` del recurso con la nueva URL.
+        5.  Guardar el recurso actualizado usando `RecursoRepository.Update`.
+    *   **`DeletePhoto`:**
+        1.  Obtener el recurso por ID.
+        2.  Si `HrefPhoto` no está vacío, extraer el nombre del objeto y llamar a `FileStorageRepository.Delete`.
+        3.  Establecer `HrefPhoto` a una cadena vacía.
+        4.  Guardar el recurso actualizado.
+
+**6. Controlador HTTP:**
+
+*   **Objetivo:** Exponer los nuevos casos de uso a través de endpoints REST.
+*   **Archivo a modificar:** `internal/controller/http/v1/recursos_controller.go` y `internal/controller/http/v1/router.go`.
+*   **Detalles:**
+    *   Inyectar `PhotoUseCase` en el `recursoRoutes` struct.
+    *   Añadir dos nuevos métodos al controlador:
+        *   `uploadPhoto(c *gin.Context)`:
+            1.  Parsear el `id` del recurso de la URL.
+            2.  Obtener el archivo del `multipart/form-data`.
+            3.  Llamar a `PhotoUseCase.UploadPhoto`.
+            4.  Devolver el recurso actualizado o un error.
+        *   `deletePhoto(c *gin.Context)`:
+            1.  Parsear el `id` del recurso.
+            2.  Llamar a `PhotoUseCase.DeletePhoto`.
+            3.  Devolver `204 No Content` o un error.
+    *   En `router.go`, añadir las nuevas rutas:
+        *   `POST /recursos/:id/foto`
+        *   `DELETE /recursos/:id/foto`
+
+**7. Integración y Flujo de la Aplicación:**
+
+*   **Objetivo:** Conectar todas las nuevas piezas en el `main.go`.
+*   **Archivo a modificar:** `cmd/app/main.go`
+*   **Detalles:**
+    *   Inicializar el cliente de MinIO.
+    *   Inicializar el `FileStorageMinio`.
+    *   Inicializar el `PhotoUseCaseImpl`.
+    *   Inyectar el `PhotoUseCase` en el controlador HTTP.
+
+### Alternativas de Implementación:
+
+1.  **Servicio de Medios Separado:** Podríamos crear un microservicio completamente nuevo dedicado a la gestión de archivos multimedia.
+    *   **Ventajas:** Mayor desacoplamiento y especialización. El servicio de recursos solo se preocuparía por las URL de las fotos, no de su gestión.
+    *   **Desventajas:** Aumenta la complejidad de la arquitectura (más servicios que desplegar y mantener, comunicación entre servicios).
+
+2.  **Lógica de Fotos en el Caso de Uso de Recursos Existente:** En lugar de crear un `PhotoUseCase` separado, podríamos añadir los métodos `UploadPhoto` y `DeletePhoto` directamente a la interfaz `RecursoUseCase`.
+    *   **Ventajas:** Menos interfaces y archivos nuevos, manteniendo la lógica relacionada con los recursos en un solo lugar.
+    *   **Desventajas:** La interfaz `RecursoUseCase` tendría más responsabilidades, lo que podría ir en contra del Principio de Responsabilidad Única (SRP).
+
+3.  **Endpoints Genéricos para Archivos:** Crear endpoints genéricos como `/files` para subir archivos y que devuelvan un ID. Luego, el recurso simplemente se asociaría con ese ID.
+    *   **Ventajas:** Más flexible y reutilizable para otros tipos de recursos que necesiten archivos.
+    *   **Desventajas:** Requiere una tabla de asociación adicional en la base de datos para vincular archivos y recursos, añadiendo complejidad a la lógica de datos.

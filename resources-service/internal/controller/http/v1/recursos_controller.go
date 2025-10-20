@@ -24,12 +24,13 @@ import (
 
 type RecursoRoutes struct {
 	uc              recursosports.RecursoUseCase
+	photoUseCase    recursosports.PhotoUseCase
 	logErrorUseCase errorlogports.LogErrorUseCase
 	logger          logger.Interface
 }
 
-func NewRecursoRoutes(router fiber.Router, uc recursosports.RecursoUseCase, logErrorUC errorlogports.LogErrorUseCase, l logger.Interface) {
-	r := &RecursoRoutes{uc: uc, logErrorUseCase: logErrorUC, logger: l}
+func NewRecursoRoutes(router fiber.Router, uc recursosports.RecursoUseCase, photoUC recursosports.PhotoUseCase, logErrorUC errorlogports.LogErrorUseCase, l logger.Interface) {
+	r := &RecursoRoutes{uc: uc, photoUseCase: photoUC, logErrorUseCase: logErrorUC, logger: l}
 	h := router.Group("/recursos")
 	{
 		h.Post("/", middleware.RequireRole("CREAR-RECURSO"), r.createResource)
@@ -38,7 +39,51 @@ func NewRecursoRoutes(router fiber.Router, uc recursosports.RecursoUseCase, logE
 		h.Get("/:id", middleware.RequireRole("CREAR-RECURSO"), r.getResourceByID)
 		h.Get("/", middleware.RequireRole("CREAR-RECURSO"), r.listResources)
 		h.Post("/search", middleware.RequireRole("CREAR-RECURSO"), r.searchResources)
+
+		// Photo management routes
+		h.Post("/:id/foto", middleware.RequireRole("CREAR-RECURSO"), r.uploadPhoto)
+		h.Delete("/:id/foto", middleware.RequireRole("CREAR-RECURSO"), r.deletePhoto)
 	}
+}
+
+// --- Photo Handlers ---
+
+func (r *RecursoRoutes) uploadPhoto(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "ID de recurso inválido", c.Path()))
+	}
+
+	file, err := c.FormFile("foto")
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "No se encontró el archivo 'foto' en la petición", c.Path()))
+	}
+
+	input := DTOs.UploadPhotoInput{
+		ResourceID: int64(id),
+		File:       file,
+	}
+
+	recurso, err := r.photoUseCase.UploadPhoto(c.Context(), input)
+	if err != nil {
+		return r.handleError(c, err)
+	}
+
+	return c.Status(http.StatusOK).JSON(recurso)
+}
+
+func (r *RecursoRoutes) deletePhoto(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "ID de recurso inválido", c.Path()))
+	}
+
+	err = r.photoUseCase.DeletePhoto(c.Context(), int64(id))
+	if err != nil {
+		return r.handleError(c, err)
+	}
+
+	return c.SendStatus(http.StatusNoContent)
 }
 
 // --- Handlers ---

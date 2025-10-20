@@ -1,76 +1,67 @@
 # docker-compose.yml
-#version: "3.8" # Especifica la versión de Docker Compose
+version: "3.8"
 
 services:
-  # Servicio para la base de datos PostgreSQL
   keycloak-postgres:
-    image: postgres:16 # Utiliza la imagen de PostgreSQL versión 16
-    container_name: keycloak-postgres # Asigna un nombre al contenedor
-    restart: unless-stopped # Reinicia el contenedor a menos que se detenga manualmente
-    environment: # Variables de entorno para la configuración de PostgreSQL
-      POSTGRES_DB: keycloak # Nombre de la base de datos
-      POSTGRES_USER: keycloak # Usuario de la base de datos
-      POSTGRES_PASSWORD: mysecretpassword # Contraseña del usuario
-    volumes: # Monta un volumen persistente para los datos de la base de datos
+    image: postgres:16
+    container_name: keycloak-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: mysecretpassword
+    volumes:
       - trabajo_final_keycloak_db_data:/var/lib/postgresql/data
-    ports: # Mapea el puerto del host al puerto del contenedor
-      - "5432:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
-    networks: # Conecta el servicio a la red definida
-      - keycloak-net
+    networks:
+      - app-network
 
-  # Servicio para el servidor Keycloak
   keycloak:
-    image: quay.io/keycloak/keycloak:26.3.2 # Utiliza la imagen de Keycloak
-    container_name: keycloak # Asigna un nombre al contenedor
-    restart: unless-stopped # Reinicia el contenedor a menos que se detenga manualmente
-    environment: # Variables de entorno para la configuración de Keycloak
-      KC_DB: postgres # Especifica PostgreSQL como la base de datos
-      KC_DB_URL_HOST: keycloak-postgres # Nombre del host de la base de datos (nombre del servicio de Docker Compose)
-      KC_DB_USERNAME: keycloak # Usuario de la base de datos
-      KC_DB_PASSWORD: mysecretpassword # Contraseña de la base de datos
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin # Nombre de usuario del administrador inicial de Keycloak
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin # Contraseña del administrador inicial de Keycloak
-    ports: # Mapea el puerto del host al puerto del contenedor
+    image: quay.io/keycloak/keycloak:26.3.2
+    container_name: keycloak
+    restart: unless-stopped
+    environment:
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-postgres
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: mysecretpassword
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
       - "3030:8080"
-    depends_on: # Asegura que keycloak-postgres se inicie antes que keycloak
+    depends_on:
       - keycloak-postgres
-    networks: # Conecta el servicio a la red definida
-      - keycloak-net
+    networks:
+      - app-network
     command:
-      - start-dev # Comando para iniciar Keycloak en modo de desarrollo
+      - start-dev
       - --import-realm
     volumes:
       - ./keycloak-data/import:/opt/keycloak/data/import
-  # Servicio para la base de datos PostgreSQL de tu aplicación
+
   app-postgres:
     image: postgres:16
     container_name: app-postgres
     restart: unless-stopped
     environment:
-      #POSTGRES_DB: app_db
-      #POSTGRES_USER: app_user
       POSTGRES_PASSWORD: app_password
-    ports: # Mapea el puerto del host al puerto del contenedor
-      - "5433:5432" # El puerto 5432 del host se mapea al puerto 5432 del contenedor
+    ports:
+      - "5433:5432"
     volumes:
       - trabajo_final_app_db_data:/var/lib/postgresql/data
       - ./init-app-postgres-db:/docker-entrypoint-initdb.d
     networks:
-      - keycloak-net
+      - app-network
+
   minio:
     image: minio/minio:latest
     container_name: minio-server
     command: server /data --console-address ":9001"
     ports:
-      # Puerto para la API (donde tu app Go se conectará)
       - "9000:9000"
-      # Puerto para la consola web de administración
       - "9001:9001"
     volumes:
-      # Directorio local donde se guardarán los archivos permanentemente
       - ./minio-data:/data
     environment:
-      # ¡IMPORTANTE! Cambia estas credenciales por unas seguras
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadminsecret
     healthcheck:
@@ -78,14 +69,52 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - app-network
+
+  auth-service:
+    build:
+      context: ./backend
+    container_name: auth-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    depends_on:
+      - app-postgres
+    networks:
+      - app-network
+
+  resources-service:
+    build:
+      context: ./resources-service
+    container_name: resources-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    depends_on:
+      - minio
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:1.29.1-alpine
+    container_name: nginx-proxy
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-service
+      - resources-service
+      - keycloak
+      - minio
+    networks:
+      - app-network
 
 networks:
-  # Define la red personalizada para los contenedores
-  keycloak-net:
-    driver: bridge # Tipo de red (por defecto, pero explícitamente definido)
+  app-network:
+    driver: bridge
 
 volumes:
-  # Define el volumen persistente para los datos de PostgreSQL
-  trabajo_final_keycloak_db_data: # Nombre del volumen
-  # Define el volumen persistente para los datos de PostgreSQL de la aplicación
+  trabajo_final_keycloak_db_data:
   trabajo_final_app_db_data:

@@ -16,6 +16,15 @@ type (
 		Metrics  Metrics
 		Swagger  Swagger
 		Keycloak Keycloak
+		Minio    Minio
+	}
+
+	// Minio -.
+	Minio struct {
+		Endpoint        string `env:"MINIO_ENDPOINT,required"`
+		AccessKeyID     string `env:"MINIO_ACCESS_KEY_ID,required"`
+		SecretAccessKey string `env:"MINIO_SECRET_ACCESS_KEY,required"`
+		BucketName      string `env:"MINIO_BUCKET_NAME,required"`
 	}
 
 	// App -.

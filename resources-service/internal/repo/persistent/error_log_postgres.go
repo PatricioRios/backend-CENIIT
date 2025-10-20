@@ -20,6 +20,9 @@ func NewErrorLogRepositoryPostgres(pg *postgres.Postgres) *ErrorLogRepositoryPos
 
 // Save guarda un nuevo log de error en la base de datos.
 func (r *ErrorLogRepositoryPostgres) Save(ctx context.Context, errorLog *entity.ErrorLog) error {
+	fmt.Println("--- Saving internal error to DB ---")
+	fmt.Println(errorLog)
+
 	sql, args, err := r.Builder.
 		Insert("logging_schema.error_logs").
 		Columns("service_name", "error_message", "stack_trace", "request_path", "request_method").
@@ -34,11 +37,13 @@ func (r *ErrorLogRepositoryPostgres) Save(ctx context.Context, errorLog *entity.
 
 	if err != nil {
 		// No podemos registrar este error en la BD (sería un bucle), así que solo lo devolvemos.
+		fmt.Println("ErrorLogRepository - Save - r.Builder.ToSql:", err)
 		return fmt.Errorf("ErrorLogRepository - Save - r.Builder: %w", err)
 	}
 
 	// Usamos Exec ya que no necesitamos que nos devuelva ninguna fila.
 	if _, err := r.Pool.Exec(ctx, sql, args...); err != nil {
+		fmt.Println("ErrorLogRepository - Save - r.Pool.Exec:", err)
 		return fmt.Errorf("ErrorLogRepository - Save - r.Pool.Exec: %w", err)
 	}
 

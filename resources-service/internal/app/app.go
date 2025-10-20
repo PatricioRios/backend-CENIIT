@@ -14,6 +14,7 @@ import (
 	recursosusecase "github.com/evrone/go-clean-template/internal/usecase/recursos/usecases"
 	"github.com/evrone/go-clean-template/pkg/httpserver"
 	"github.com/evrone/go-clean-template/pkg/logger"
+	"github.com/evrone/go-clean-template/pkg/minio"
 	"github.com/evrone/go-clean-template/pkg/postgres"
 )
 
@@ -28,17 +29,25 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
+	// Minio client
+	minioClient, err := minio.New(cfg.Minio)
+	if err != nil {
+		l.Fatal(fmt.Errorf("app - Run - minio.New: %w", err).Error())
+	}
+
 	// Repositories
 	recursoRepo := persistent.NewRecursoRepository(pg)
 	errorLogRepo := persistent.NewErrorLogRepositoryPostgres(pg) // Using real repo
+	fileStorageRepo := persistent.NewFileStorageMinio(minioClient, cfg.Minio)
 
 	// Use-Cases
 	recursoUseCase := recursosusecase.NewRecursoUseCase(recursoRepo)
+	photoUseCase := recursosusecase.NewPhotoUseCase(recursoRepo, fileStorageRepo)
 	logErrorUseCase := errorlogusecase.NewLogErrorUseCase(errorLogRepo, cfg)
 
 	// HTTP Server
 	httpServer := httpserver.New(l, httpserver.Port(cfg.HTTP.Port), httpserver.Prefork(cfg.HTTP.UsePreforkMode))
-	http.NewRouter(httpServer.App, cfg, recursoUseCase, logErrorUseCase, l)
+	http.NewRouter(httpServer.App, cfg, recursoUseCase, photoUseCase, logErrorUseCase, l)
 
 	// Start servers
 	httpServer.Start()

@@ -17,7 +17,7 @@ import (
 )
 
 // NewRouter -.
-func NewRouter(app *fiber.App, cfg *config.Config, recursoUseCase recursosports.RecursoUseCase, logErrorUseCase errorlogports.LogErrorUseCase, l logger.Interface) {
+func NewRouter(app *fiber.App, cfg *config.Config, recursoUseCase recursosports.RecursoUseCase, photoUseCase recursosports.PhotoUseCase, logErrorUseCase errorlogports.LogErrorUseCase, l logger.Interface) {
 	// Options
 	app.Use(middleware.Logger(l))
 	app.Use(middleware.Recovery(l))
@@ -47,6 +47,6 @@ func NewRouter(app *fiber.App, cfg *config.Config, recursoUseCase recursosports.
 	apiV1Group := app.Group("/v1")
 	apiV1Group.Use(authMiddleware)
 	{
-		v1.NewRecursoRoutes(apiV1Group, recursoUseCase, logErrorUseCase, l)
+		v1.NewRecursoRoutes(apiV1Group, recursoUseCase, photoUseCase, logErrorUseCase, l)
 	}
 }
