@@ -43,6 +43,8 @@ services:
     container_name: app-postgres
     restart: unless-stopped
     environment:
+      #POSTGRES_DB: app_db <- se configura en el "- ./init-app-postgres-db:/docker-entrypoint-initdb.d"
+      #POSTGRES_USER: app_user
       POSTGRES_PASSWORD: app_password
     ports:
       - "5433:5432"
@@ -83,6 +85,11 @@ services:
       - app-postgres
     networks:
       - app-network
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://app-postgres:5432/app_db
+      - SPRING_DATASOURCE_USERNAME=app_user
+      - SPRING_DATASOURCE_PASSWORD=app_password
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/develop-spring-realm
 
   resources-service:
     build:
@@ -93,8 +100,22 @@ services:
       - "8082:8082"
     depends_on:
       - minio
+      - app-postgres
     networks:
       - app-network
+    environment:
+      - APP_NAME=resources-service
+      - APP_VERSION=1.0.0
+      - HTTP_PORT=8082
+      - LOG_LEVEL=debug
+      - PG_POOL_MAX=10
+      - PG_URL=postgres://app_user:app_password@app-postgres:5432/app_db?sslmode=disable
+      - KEYCLOAK_ISSUER_URL=http://keycloak:8080/realms/develop-spring-realm
+      - KEYCLOAK_CLIENT_ID=ceniit-backend-develop
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY_ID=minioadmin
+      - MINIO_SECRET_ACCESS_KEY=minioadminsecret
+      - MINIO_BUCKET_NAME=recursos
 
   nginx:
     image: nginx:1.29.1-alpine
