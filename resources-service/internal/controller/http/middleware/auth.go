@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -17,13 +18,23 @@ var (
 
 // AuthMiddleware creates a new authentication middleware.
 func AuthMiddleware(cfg *config.Keycloak, l logger.Interface) (fiber.Handler, error) {
-	provider, err := oidc.NewProvider(context.Background(), cfg.IssuerURL)
+
+	/* MANERA ANTIGUA
+			provider, err := oidc.NewProvider(context.Background(), cfg.IssuerURL)
 	if err != nil {
-		l.Error("failed to create OIDC provider: %v", err)
+		l.Info(fmt.Sprintf("failed to create provider: ", err))
+
 		return nil, err
 	}
 
 	verifier := provider.Verifier(&oidc.Config{ClientID: cfg.ClientID})
+	*/
+
+	l.Info(fmt.Sprint("clientID :", cfg.ClientID,
+		", issuerURL :", cfg.IssuerURL, ", JwksURL: ", cfg.JwksURL))
+
+	keySet := oidc.NewRemoteKeySet(context.Background(), cfg.JwksURL)
+	verifier := oidc.NewVerifier(cfg.IssuerURL, keySet, &oidc.Config{ClientID: cfg.ClientID})
 
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
@@ -40,7 +51,7 @@ func AuthMiddleware(cfg *config.Keycloak, l logger.Interface) (fiber.Handler, er
 
 		idToken, err := verifier.Verify(c.Context(), tokenString)
 		if err != nil {
-			l.Info("failed to verify token: %v", err)
+			l.Info(fmt.Sprintf("failed to verify token: ", err))
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid or Expired Token"})
 		}
 

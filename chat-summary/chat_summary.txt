@@ -1,0 +1,36 @@
+### Initial Goal
+The initial goal was to review and refine a Docker Compose setup to make it more robust and production-like. The setup consists of several services, including two backend applications (`auth-service` and `resources-service`), Keycloak for authentication, PostgreSQL databases, Minio for storage, and nginx as a reverse proxy.
+
+### Problems Encountered and Solutions Applied
+
+1.  **Initial Configuration Review:**
+    *   **Problem:** The initial `docker-compose.yml` file had some suboptimal configurations for Keycloak's hostname and an incorrect nginx image version.
+    *   **Solution:** I corrected the Keycloak hostname settings and the nginx image version in the `docker-compose.yml` file.
+
+2.  **Port Conflict:**
+    *   **Problem:** The `nginx` service failed to start because port 80 was already in use on the host machine.
+    *   **Solution:** We used the `lsof -i :80` command to identify that the `apache2` service was using port 80. You then stopped and disabled the `apache2` service to resolve the conflict.
+
+3.  **Service Dependencies and Startup Order:**
+    *   **Problem:** The services had a complex and circular dependency on each other, causing startup failures. `nginx` depended on the backend services, which in turn depended on `nginx` for Keycloak token validation.
+    *   **Solution:** We went through several iterations of adjusting the `depends_on` and `extra_hosts` settings in the `docker-compose.yml` file to manage the startup order and service discovery.
+
+4.  **Token Validation and Issuer Mismatch:**
+    *   **Problem:** The backend services were failing to validate the JWTs issued by Keycloak. This was due to a mismatch between the issuer URL in the tokens (using `localhost`) and the issuer URL expected by the services (using internal Docker hostnames).
+    *   **Solution:** This was the most complex issue. We tried several approaches, including:
+        *   Using separate `issuer-uri` and `jwk-set-uri` configurations.
+        *   Modifying the Go code in the `resources-service` to manually create the OIDC verifier.
+        *   Adding the `JwksURL` field to the Go service's configuration.
+        *   The final and correct solution was to use a custom hostname (`keycloak.local`) for Keycloak and configure all services to use it consistently. This involved:
+            *   Setting `KC_HOSTNAME` and `KC_HOSTNAME_URL` in the `keycloak` service.
+            *   Using `extra_hosts` in the `auth-service` and `resources-service` to map `keycloak.local` to the host machine.
+            *   Updating the issuer URLs in the `auth-service` and `resources-service`.
+            *   Adding a `frontendUrl` attribute to the Keycloak realm configuration to enforce the correct issuer in the tokens.
+            *   Instructing you to add `127.0.0.1 keycloak.local` to your `/etc/hosts` file.
+
+5.  **Disk Space Issue:**
+    *   **Problem:** At one point, all services started failing with a "No space left on device" error.
+    *   **Solution:** I suggested you check your disk space with `df -h` and clean up unused Docker resources with `docker system prune -a --volumes`, which resolved the issue.
+
+### Current Status
+All services are now starting up successfully. The remaining errors are related to the token validation, which we are in the process of resolving with the `keycloak.local` custom hostname approach. The next step is to run `docker compose up --build` with the latest configuration and check the logs.

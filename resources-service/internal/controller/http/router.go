@@ -2,6 +2,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ansrivas/fiberprometheus/v2"
@@ -40,7 +41,7 @@ func NewRouter(app *fiber.App, cfg *config.Config, recursoUseCase recursosports.
 	// Auth middleware
 	authMiddleware, err := middleware.AuthMiddleware(&cfg.Keycloak, l)
 	if err != nil {
-		l.Fatal("failed to create auth middleware: %v", err)
+		l.Fatal(fmt.Sprintf("failed to create auth middleware: %s", err))
 	}
 
 	// Routers

@@ -1,0 +1,22 @@
+### Goal
+To resolve token validation and service communication issues in a complex Docker Compose setup. We picked up from a point where services were failing to validate JWTs from Keycloak.
+
+### Problems Encountered and Solutions Applied
+
+1.  **Incorrect Service-to-Keycloak Communication:**
+    *   **Problem:** Both `auth-service` (Java) and `resources-service` (Go) were failing to validate tokens. The errors evolved from `Connection refused` to `unsupported protocol scheme` as we debugged.
+    *   **Analysis:** The core issue was that services were configured with incorrect URLs for Keycloak. They were variously using `localhost` instead of the correct Docker network hostname (`keycloak.local`), the wrong port (`8080` instead of the host-exposed `3030`), or were missing the JWKS URL entirely. Configuration was spread across `application.properties` and `docker-compose.yml` environment variables, with the latter taking precedence.
+    *   **Solution:** We standardized the configuration in `docker-compose.yml` as the single source of truth. We corrected the `issuer-uri` and `jwk-set-uri` for `auth-service` and the `issuer-url` and `jwks-url` for `resources-service` to all point to `http://keycloak.local:3030`.
+
+2.  **Keycloak Admin Client Failure:**
+    *   **Problem:** After fixing the token validation, a specific endpoint in `auth-service` (`/api/auth/auth/roles`) began failing with a `Connection refused` error to `localhost:3030`.
+    *   **Analysis:** We traced the error to the Keycloak Admin Client library being used by this endpoint. It had its own separate configuration, defined in `KeycloakConfig.java`, which was reading a property (`keycloak.provider.config.server.url`) from `application.properties` that was still set to `localhost`.
+    *   **Solution:** We overrode this property by adding a `KEYCLOAK_PROVIDER_CONFIG_SERVER_URL` environment variable to the `auth-service` in `docker-compose.yml`, pointing it to the correct `http://keycloak.local:3030` address.
+
+3.  **Keycloak Health Check Race Condition:**
+    *   **Problem:** With all URLs seemingly correct, the entire stack failed to start because `keycloak` was being reported as `unhealthy`, preventing dependent services from starting. This happened even after you confirmed you were clearing all Docker volumes (`docker compose down -v`) on each run.
+    *   **Analysis:** The Keycloak container, especially on a fresh start with an empty database, takes a long time to initialize. The default health check was too aggressive, marking the container as failed before it could become fully ready.
+    *   **Solution:** We made the health check more robust by adding a `start_period: 60s` to the `healthcheck` configuration for the `keycloak` service in `docker-compose.yml`. This gives the container a 60-second grace period to start before Docker begins counting health check failures.
+
+### Current Status
+All identified configuration issues have been addressed. The `docker-compose.yml` file now includes explicit dependencies on Keycloak's health, a robust health check for Keycloak itself, and consistent, correct URLs for all services and clients. The next step is to run `docker compose up --build` to confirm that all services start successfully and all endpoints are fully functional.

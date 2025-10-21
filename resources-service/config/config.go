@@ -63,6 +63,7 @@ type (
 	// Keycloak -.
 	Keycloak struct {
 		IssuerURL    string `env:"KEYCLOAK_ISSUER_URL,required"`
+		JwksURL      string `env:"KEYCLOAK_JWKS_URL"`
 		ClientID     string `env:"KEYCLOAK_CLIENT_ID,required"`
 		ClientSecret string `env:"KEYCLOAK_CLIENT_SECRET"`
 	}

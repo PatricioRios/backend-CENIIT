@@ -11,10 +11,10 @@ SET standard_conforming_strings = on;
 -- Drop databases (except postgres and template1)
 --
 
-DROP DATABASE "TP";
-DROP DATABASE app_db;
-DROP DATABASE paradigmas;
-DROP DATABASE test_1;
+--DROP DATABASE "TP";
+--DROP DATABASE app_db;
+--DROP DATABASE paradigmas;
+--DROP DATABASE test_1;
 
 
 
@@ -23,9 +23,9 @@ DROP DATABASE test_1;
 -- Drop roles
 --
 
-DROP ROLE app_user;
-DROP ROLE recursos_user;
-DROP ROLE reservas_user;
+--DROP ROLE app_user;
+--DROP ROLE recursos_user;
+--DROP ROLE reservas_user;
 
 
 --

@@ -1,0 +1,969 @@
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.18kB done
+#1 DONE 0.0s
+
+#2 [auth-service internal] load build definition from Dockerfile
+#2 transferring dockerfile: 415B done
+#2 DONE 0.0s
+
+#3 [resources-service internal] load build definition from Dockerfile
+#3 transferring dockerfile: 385B done
+#3 DONE 0.0s
+
+#4 [resources-service internal] load metadata for docker.io/library/golang:1.25-alpine
+#4 ...
+
+#5 [auth] library/eclipse-temurin:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#6 [auth] library/golang:pull token for registry-1.docker.io
+#6 DONE 0.0s
+
+#7 [resources-service internal] load metadata for docker.io/library/alpine:latest
+#7 ...
+
+#8 [auth] library/alpine:pull token for registry-1.docker.io
+#8 DONE 0.0s
+
+#9 [auth] library/maven:pull token for registry-1.docker.io
+#9 DONE 0.0s
+
+#10 [auth-service internal] load metadata for docker.io/library/maven:3.9.6-eclipse-temurin-21
+#10 ...
+
+#7 [resources-service internal] load metadata for docker.io/library/alpine:latest
+#7 DONE 1.8s
+
+#10 [auth-service internal] load metadata for docker.io/library/maven:3.9.6-eclipse-temurin-21
+#10 DONE 1.8s
+
+#11 [auth-service internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine
+#11 DONE 1.9s
+
+#4 [resources-service internal] load metadata for docker.io/library/golang:1.25-alpine
+#4 DONE 1.9s
+
+#12 [auth-service internal] load .dockerignore
+#12 transferring context: 2B done
+#12 DONE 0.0s
+
+#13 [auth-service build 1/6] FROM docker.io/library/maven:3.9.6-eclipse-temurin-21@sha256:8d63d4c1902cb12d9e79a70671b18ebe26358cb592561af33ca1808f00d935cb
+#13 DONE 0.0s
+
+#14 [auth-service stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:990397e0495ac088ab6ee3d949a2e97b715a134d8b96c561c5d130b3786a489d
+#14 DONE 0.0s
+
+#15 [resources-service internal] load .dockerignore
+#15 transferring context: 185B done
+#15 DONE 0.0s
+
+#16 [resources-service stage-1 1/3] FROM docker.io/library/alpine:latest@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
+#16 DONE 0.0s
+
+#17 [resources-service build 1/7] FROM docker.io/library/golang:1.25-alpine@sha256:aee43c3ccbf24fdffb7295693b6e33b21e01baec1b2a55acc351fde345e9ec34
+#17 DONE 0.0s
+
+#18 [auth-service internal] load build context
+#18 transferring context: 16.88kB done
+#18 DONE 0.0s
+
+#19 [auth-service build 3/6] COPY pom.xml .
+#19 CACHED
+
+#20 [auth-service build 5/6] COPY src ./src
+#20 CACHED
+
+#21 [auth-service build 4/6] RUN mvn dependency:go-offline
+#21 CACHED
+
+#22 [auth-service build 6/6] RUN mvn package -DskipTests
+#22 CACHED
+
+#23 [auth-service stage-1 2/3] WORKDIR /app
+#23 CACHED
+
+#24 [auth-service build 2/6] WORKDIR /app
+#24 CACHED
+
+#25 [auth-service stage-1 3/3] COPY --from=build /app/target/demo-0.0.1-SNAPSHOT.jar app.jar
+#25 CACHED
+
+#26 [resources-service internal] load build context
+#26 transferring context: 6.19kB done
+#26 DONE 0.0s
+
+#27 [resources-service build 5/7] RUN go mod download
+#27 CACHED
+
+#28 [resources-service build 7/7] RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main ./cmd/app/main.go
+#28 CACHED
+
+#29 [resources-service build 4/7] COPY go.sum ./
+#29 CACHED
+
+#30 [resources-service stage-1 2/3] WORKDIR /app
+#30 CACHED
+
+#31 [resources-service build 6/7] COPY . .
+#31 CACHED
+
+#32 [resources-service build 3/7] COPY go.mod ./
+#32 CACHED
+
+#33 [resources-service build 2/7] WORKDIR /app
+#33 CACHED
+
+#34 [resources-service stage-1 3/3] COPY --from=build /app/main .
+#34 CACHED
+
+#35 [auth-service] exporting to image
+#35 exporting layers done
+#35 writing image sha256:6c571f5eab5aa4b5c49eac81a3b1d8f310ec29d6401a2dfbf5e0173c8d8e6a72 done
+#35 naming to docker.io/library/trabajo_final-auth-service done
+#35 DONE 0.0s
+
+#36 [resources-service] exporting to image
+#36 exporting layers done
+#36 writing image sha256:5337ae9ef5ee3f2c8bc0cc29983864ce15495fe20c207efbcdb0825207f25e91 done
+#36 naming to docker.io/library/trabajo_final-resources-service done
+#36 DONE 0.0s
+
+#37 [resources-service] resolving provenance for metadata file
+#37 DONE 0.0s
+
+#38 [auth-service] resolving provenance for metadata file
+#38 DONE 0.0s
+ trabajo_final-resources-service  Built
+ trabajo_final-auth-service  Built
+ Network trabajo_final_app-network  Creating
+ Network trabajo_final_app-network  Created
+ Volume trabajo_final_trabajo_final_keycloak_db_data  Creating
+ Volume trabajo_final_trabajo_final_keycloak_db_data  Created
+ Volume trabajo_final_trabajo_final_app_db_data  Creating
+ Volume trabajo_final_trabajo_final_app_db_data  Created
+ Container keycloak-postgres  Creating
+ Container minio-server  Creating
+ Container app-postgres  Creating
+ Container minio-server  Created
+ Container keycloak-postgres  Created
+ Container keycloak  Creating
+ Container app-postgres  Created
+ Container resources-service  Creating
+ Container auth-service  Creating
+ Container resources-service  Created
+ Container auth-service  Created
+ Container nginx-proxy  Creating
+ Container keycloak  Created
+ Container nginx-proxy  Created
+Attaching to app-postgres, auth-service, keycloak, keycloak-postgres, minio-server, nginx-proxy, resources-service
+keycloak-postgres  | The files belonging to this database system will be owned by user "postgres".
+keycloak-postgres  | This user must also own the server process.
+keycloak-postgres  | 
+keycloak-postgres  | The database cluster will be initialized with locale "en_US.utf8".
+keycloak-postgres  | The default database encoding has accordingly been set to "UTF8".
+keycloak-postgres  | The default text search configuration will be set to "english".
+keycloak-postgres  | 
+keycloak-postgres  | Data page checksums are disabled.
+keycloak-postgres  | 
+keycloak-postgres  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+keycloak-postgres  | creating subdirectories ... ok
+keycloak-postgres  | selecting dynamic shared memory implementation ... posix
+keycloak-postgres  | selecting default max_connections ... 100
+app-postgres       | The files belonging to this database system will be owned by user "postgres".
+app-postgres       | This user must also own the server process.
+app-postgres       | 
+app-postgres       | The database cluster will be initialized with locale "en_US.utf8".
+app-postgres       | The default database encoding has accordingly been set to "UTF8".
+app-postgres       | The default text search configuration will be set to "english".
+app-postgres       | 
+app-postgres       | Data page checksums are disabled.
+app-postgres       | 
+app-postgres       | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+app-postgres       | creating subdirectories ... ok
+app-postgres       | selecting dynamic shared memory implementation ... posix
+app-postgres       | selecting default max_connections ... 100
+keycloak-postgres  | selecting default shared_buffers ... 128MB
+app-postgres       | selecting default shared_buffers ... 128MB
+keycloak-postgres  | selecting default time zone ... Etc/UTC
+keycloak-postgres  | creating configuration files ... ok
+app-postgres       | selecting default time zone ... Etc/UTC
+app-postgres       | creating configuration files ... ok
+keycloak-postgres  | running bootstrap script ... ok
+app-postgres       | running bootstrap script ... ok
+minio-server       | MinIO Object Storage Server
+minio-server       | Copyright: 2015-2025 MinIO, Inc.
+minio-server       | License: GNU AGPLv3 - https://www.gnu.org/licenses/agpl-3.0.html
+minio-server       | Version: RELEASE.2025-09-07T16-13-09Z (go1.24.6 linux/amd64)
+minio-server       | 
+minio-server       | API: http://172.18.0.4:9000  http://127.0.0.1:9000 
+minio-server       | WebUI: http://172.18.0.4:9001 http://127.0.0.1:9001  
+minio-server       | 
+minio-server       | Docs: https://docs.min.io
+keycloak-postgres  | performing post-bootstrap initialization ... ok
+app-postgres       | performing post-bootstrap initialization ... ok
+keycloak-postgres  | syncing data to disk ... ok
+keycloak-postgres  | 
+keycloak-postgres  | 
+keycloak-postgres  | Success. You can now start the database server using:
+keycloak-postgres  | 
+keycloak-postgres  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+keycloak-postgres  | 
+keycloak-postgres  | initdb: warning: enabling "trust" authentication for local connections
+keycloak-postgres  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+app-postgres       | syncing data to disk ... ok
+app-postgres       | 
+app-postgres       | 
+app-postgres       | Success. You can now start the database server using:
+app-postgres       | 
+app-postgres       |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+app-postgres       | 
+app-postgres       | initdb: warning: enabling "trust" authentication for local connections
+app-postgres       | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+keycloak-postgres  | waiting for server to start....2025-10-21 19:48:37.978 UTC [48] LOG:  starting PostgreSQL 16.9 (Debian 16.9-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+keycloak-postgres  | 2025-10-21 19:48:37.980 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+keycloak-postgres  | 2025-10-21 19:48:37.986 UTC [51] LOG:  database system was shut down at 2025-10-21 19:48:37 UTC
+app-postgres       | waiting for server to start....2025-10-21 19:48:37.988 UTC [49] LOG:  starting PostgreSQL 16.9 (Debian 16.9-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+app-postgres       | 2025-10-21 19:48:37.989 UTC [49] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+keycloak-postgres  | 2025-10-21 19:48:37.991 UTC [48] LOG:  database system is ready to accept connections
+app-postgres       | 2025-10-21 19:48:37.995 UTC [52] LOG:  database system was shut down at 2025-10-21 19:48:37 UTC
+app-postgres       | 2025-10-21 19:48:37.999 UTC [49] LOG:  database system is ready to accept connections
+keycloak-postgres  |  done
+keycloak-postgres  | server started
+app-postgres       |  done
+app-postgres       | server started
+app-postgres       | 
+app-postgres       | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/respaldo_app_completo.sql
+keycloak           | WARNING: Hostname v1 options [hostname-admin-url, hostname-url, proxy] are still in use, please review your configuration
+keycloak           | Updating the configuration and installing your custom providers, if any. Please wait.
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE ROLE
+app-postgres       | ALTER ROLE
+app-postgres       | CREATE ROLE
+app-postgres       | ALTER ROLE
+app-postgres       | CREATE ROLE
+app-postgres       | ALTER ROLE
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | UPDATE 1
+app-postgres       | 2025-10-21 19:48:38.130 UTC [50] LOG:  checkpoint starting: immediate force wait
+keycloak-postgres  | CREATE DATABASE
+keycloak-postgres  | 
+keycloak-postgres  | 
+keycloak-postgres  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+keycloak-postgres  | 
+app-postgres       | 2025-10-21 19:48:38.144 UTC [50] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.004 s, total=0.015 s; sync files=8, longest=0.002 s, average=0.001 s; distance=6 kB, estimate=6 kB; lsn=0/14EBC80, redo lsn=0/14EBC48
+keycloak-postgres  | waiting for server to shut down...2025-10-21 19:48:38.145 UTC [48] LOG:  received fast shutdown request
+keycloak-postgres  | .2025-10-21 19:48:38.146 UTC [48] LOG:  aborting any active transactions
+keycloak-postgres  | 2025-10-21 19:48:38.148 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+keycloak-postgres  | 2025-10-21 19:48:38.148 UTC [49] LOG:  shutting down
+keycloak-postgres  | 2025-10-21 19:48:38.149 UTC [49] LOG:  checkpoint starting: shutdown immediate
+app-postgres       | DROP DATABASE
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "template1" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | COMMENT
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "template1" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | REVOKE
+app-postgres       | GRANT
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "TP" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+keycloak-postgres  | 2025-10-21 19:48:38.232 UTC [49] LOG:  checkpoint complete: wrote 922 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.014 s, sync=0.062 s, total=0.084 s; sync files=301, longest=0.002 s, average=0.001 s; distance=4255 kB, estimate=4255 kB; lsn=0/1912108, redo lsn=0/1912108
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+keycloak-postgres  | 2025-10-21 19:48:38.238 UTC [48] LOG:  database system is shut down
+keycloak-postgres  |  done
+keycloak-postgres  | server stopped
+keycloak-postgres  | 
+keycloak-postgres  | PostgreSQL init process complete; ready for start up.
+keycloak-postgres  | 
+keycloak-postgres  | 2025-10-21 19:48:38.264 UTC [1] LOG:  starting PostgreSQL 16.9 (Debian 16.9-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+keycloak-postgres  | 2025-10-21 19:48:38.264 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+keycloak-postgres  | 2025-10-21 19:48:38.264 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+keycloak-postgres  | 2025-10-21 19:48:38.268 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+keycloak-postgres  | 2025-10-21 19:48:38.274 UTC [64] LOG:  database system was shut down at 2025-10-21 19:48:38 UTC
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+keycloak-postgres  | 2025-10-21 19:48:38.279 UTC [1] LOG:  database system is ready to accept connections
+app-postgres       | You are now connected to database "app_db" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE SCHEMA
+app-postgres       | ALTER SCHEMA
+app-postgres       | CREATE SCHEMA
+app-postgres       | ALTER SCHEMA
+app-postgres       | CREATE SCHEMA
+app-postgres       | ALTER SCHEMA
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | CREATE FUNCTION
+app-postgres       | ALTER FUNCTION
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | COMMENT
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | COMMENT
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | COPY 0
+app-postgres       | COPY 0
+app-postgres       | COPY 0
+app-postgres       | COPY 1
+app-postgres       | COPY 24
+app-postgres       | COPY 16
+app-postgres       | COPY 0
+app-postgres       | COPY 0
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |      26
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |      21
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE INDEX
+app-postgres       | CREATE INDEX
+app-postgres       | CREATE INDEX
+app-postgres       | CREATE INDEX
+app-postgres       | CREATE TRIGGER
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | GRANT
+app-postgres       | GRANT
+app-postgres       | GRANT
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "paradigmas" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | 2025-10-21 19:48:38.397 UTC [50] LOG:  checkpoint starting: immediate force wait
+app-postgres       | 2025-10-21 19:48:38.564 UTC [50] LOG:  checkpoint complete: wrote 3712 buffers (22.7%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.043 s, sync=0.119 s, total=0.167 s; sync files=1237, longest=0.002 s, average=0.001 s; distance=17258 kB, estimate=17258 kB; lsn=0/25C6498, redo lsn=0/25C6460
+app-postgres       | DROP DATABASE
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "postgres" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | COMMENT
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "test_1" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE SCHEMA
+app-postgres       | ALTER SCHEMA
+app-postgres       | CREATE SCHEMA
+app-postgres       | ALTER SCHEMA
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | COPY 24
+app-postgres       | COPY 0
+app-postgres       | COPY 0
+app-postgres       | COPY 0
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |      26
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | GRANT
+app-postgres       | GRANT
+app-postgres       | GRANT
+app-postgres       | 
+app-postgres       | 
+app-postgres       | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/respaldo_app_completo.sql.bak
+app-postgres       | 
+app-postgres       | waiting for server to shut down....2025-10-21 19:48:38.674 UTC [49] LOG:  received fast shutdown request
+app-postgres       | 2025-10-21 19:48:38.675 UTC [49] LOG:  aborting any active transactions
+app-postgres       | 2025-10-21 19:48:38.677 UTC [49] LOG:  background worker "logical replication launcher" (PID 55) exited with exit code 1
+app-postgres       | 2025-10-21 19:48:38.677 UTC [50] LOG:  shutting down
+app-postgres       | 2025-10-21 19:48:38.678 UTC [50] LOG:  checkpoint starting: shutdown immediate
+app-postgres       | 2025-10-21 19:48:38.749 UTC [50] LOG:  checkpoint complete: wrote 1867 buffers (11.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.019 s, sync=0.049 s, total=0.072 s; sync files=623, longest=0.001 s, average=0.001 s; distance=8653 kB, estimate=16397 kB; lsn=0/2E39C58, redo lsn=0/2E39C58
+app-postgres       | 2025-10-21 19:48:38.760 UTC [49] LOG:  database system is shut down
+app-postgres       |  done
+app-postgres       | server stopped
+app-postgres       | 
+app-postgres       | PostgreSQL init process complete; ready for start up.
+app-postgres       | 
+app-postgres       | 2025-10-21 19:48:38.791 UTC [1] LOG:  starting PostgreSQL 16.9 (Debian 16.9-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+app-postgres       | 2025-10-21 19:48:38.791 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+app-postgres       | 2025-10-21 19:48:38.791 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+app-postgres       | 2025-10-21 19:48:38.793 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+app-postgres       | 2025-10-21 19:48:38.797 UTC [72] LOG:  database system was shut down at 2025-10-21 19:48:38 UTC
+app-postgres       | 2025-10-21 19:48:38.803 UTC [1] LOG:  database system is ready to accept connections
+keycloak           | 2025-10-21 19:48:42,113 INFO  [io.quarkus.deployment.QuarkusAugmentor] (main) Quarkus augmentation completed in 3537ms
+keycloak           | WARNING: Hostname v1 options [hostname-admin-url, hostname-url, proxy] are still in use, please review your configuration
+keycloak           | Running the server in development mode. DO NOT use this configuration in production.
+keycloak           | 2025-10-21 19:48:43,232 INFO  [org.keycloak.url.HostnameV2ProviderFactory] (main) If hostname is specified, hostname-strict is effectively ignored
+keycloak           | 2025-10-21 19:48:44,358 INFO  [org.hibernate.orm.jdbc.batch] (JPA Startup Thread) HHH100501: Automatic JDBC statement batching enabled (maximum batch size 32)
+keycloak-postgres  | 2025-10-21 19:48:44.380 UTC [68] ERROR:  relation "migration_model" does not exist at character 25
+keycloak-postgres  | 2025-10-21 19:48:44.380 UTC [68] STATEMENT:  SELECT ID, VERSION FROM MIGRATION_MODEL ORDER BY UPDATE_TIME DESC
+keycloak-postgres  | 2025-10-21 19:48:44.845 UTC [69] ERROR:  relation "public.databasechangeloglock" does not exist at character 22
+keycloak-postgres  | 2025-10-21 19:48:44.845 UTC [69] STATEMENT:  SELECT COUNT(*) FROM public.databasechangeloglock
+keycloak           | 2025-10-21 19:48:44,874 INFO  [org.keycloak.quarkus.runtime.storage.database.liquibase.QuarkusJpaUpdaterProvider] (main) Initializing database schema. Using changelog META-INF/jpa-changelog-master.xml
+auth-service       |  ______     ______     __   __     __     __     ______
+auth-service       | /\  ___\   /\  ___\   /\ "-.\ \   /\ \   /\ \   /\__  _\
+auth-service       | \ \ \____  \ \  __\   \ \ \-.  \  \ \ \  \ \ \  \/_/\ \/
+auth-service       |  \ \_____\  \ \_____\  \ \_\\"\_\  \ \_\  \ \_\    \ \_\
+auth-service       |   \/_____/   \/_____/   \/_/ \/_/   \/_/   \/_/     \/_/
+auth-service       | 2025-10-21T19:48:48.237Z  INFO 1 --- [ceniit-resource-manager] [           main] ar.edu.ceniit.demo.DemoApplication       : Starting DemoApplication v0.0.1-SNAPSHOT using Java 21.0.8 with PID 1 (/app/app.jar started by root in /app)
+auth-service       | 2025-10-21T19:48:48.239Z  INFO 1 --- [ceniit-resource-manager] [           main] ar.edu.ceniit.demo.DemoApplication       : No active profile set, falling back to 1 default profile: "default"
+auth-service       | 2025-10-21T19:48:48.822Z  INFO 1 --- [ceniit-resource-manager] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+auth-service       | 2025-10-21T19:48:48.861Z  INFO 1 --- [ceniit-resource-manager] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 33 ms. Found 1 JPA repository interface.
+auth-service       | 2025-10-21T19:48:49.212Z  INFO 1 --- [ceniit-resource-manager] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8081 (http)
+auth-service       | 2025-10-21T19:48:49.222Z  INFO 1 --- [ceniit-resource-manager] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+auth-service       | 2025-10-21T19:48:49.222Z  INFO 1 --- [ceniit-resource-manager] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.43]
+auth-service       | 2025-10-21T19:48:49.242Z  INFO 1 --- [ceniit-resource-manager] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+auth-service       | 2025-10-21T19:48:49.242Z  INFO 1 --- [ceniit-resource-manager] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 984 ms
+auth-service       | 2025-10-21T19:48:49.379Z  INFO 1 --- [ceniit-resource-manager] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+auth-service       | 2025-10-21T19:48:49.432Z  INFO 1 --- [ceniit-resource-manager] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.22.Final
+auth-service       | 2025-10-21T19:48:49.464Z  INFO 1 --- [ceniit-resource-manager] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+auth-service       | 2025-10-21T19:48:49.652Z  INFO 1 --- [ceniit-resource-manager] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+auth-service       | 2025-10-21T19:48:49.679Z  INFO 1 --- [ceniit-resource-manager] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+auth-service       | 2025-10-21T19:48:49.853Z  INFO 1 --- [ceniit-resource-manager] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@cb318ac
+auth-service       | 2025-10-21T19:48:49.854Z  INFO 1 --- [ceniit-resource-manager] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+auth-service       | 2025-10-21T19:48:49.880Z  WARN 1 --- [ceniit-resource-manager] [           main] org.hibernate.orm.deprecation            : HHH90000025: PostgreSQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+auth-service       | 2025-10-21T19:48:49.895Z  INFO 1 --- [ceniit-resource-manager] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+auth-service       | 	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+auth-service       | 	Database driver: undefined/unknown
+auth-service       | 	Database version: 16.9
+auth-service       | 	Autocommit mode: undefined/unknown
+auth-service       | 	Isolation level: undefined/unknown
+auth-service       | 	Minimum pool size: undefined/unknown
+auth-service       | 	Maximum pool size: undefined/unknown
+keycloak           | 2025-10-21 19:48:49,973 INFO  [org.infinispan.CONTAINER] (main) Virtual threads support enabled
+keycloak           | 2025-10-21 19:48:50,053 INFO  [org.infinispan.CONTAINER] (main) ISPN000556: Starting user marshaller 'org.infinispan.commons.marshall.ImmutableProtoStreamMarshaller'
+keycloak           | 2025-10-21 19:48:50,247 INFO  [org.keycloak.connections.infinispan.DefaultInfinispanConnectionProviderFactory] (main) Node name: node_249125, Site name: null
+keycloak           | 2025-10-21 19:48:50,374 INFO  [org.keycloak.exportimport.dir.DirImportProvider] (main) Importing from directory /opt/keycloak/bin/../data/import
+keycloak           | 2025-10-21 19:48:50,378 INFO  [org.keycloak.services] (main) KC-SERVICES0050: Initializing master realm
+auth-service       | 2025-10-21T19:48:50.421Z  INFO 1 --- [ceniit-resource-manager] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+auth-service       | 2025-10-21T19:48:50.459Z  INFO 1 --- [ceniit-resource-manager] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+keycloak           | 2025-10-21 19:48:51,046 INFO  [org.keycloak.services] (main) KC-SERVICES0030: Full model import requested. Strategy: IGNORE_EXISTING
+auth-service       | 2025-10-21T19:48:51.052Z  WARN 1 --- [ceniit-resource-manager] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+auth-service       | 2025-10-21T19:48:51.614Z  INFO 1 --- [ceniit-resource-manager] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8081 (http) with context path '/'
+auth-service       | 2025-10-21T19:48:51.621Z  INFO 1 --- [ceniit-resource-manager] [           main] ar.edu.ceniit.demo.DemoApplication       : Started DemoApplication in 3.628 seconds (process running for 3.923)
+keycloak           | 2025-10-21 19:48:52,014 INFO  [org.keycloak.exportimport.util.ImportUtils] (main) Realm 'develop-spring-realm' imported
+keycloak           | 2025-10-21 19:48:52,016 INFO  [org.keycloak.services] (main) KC-SERVICES0032: Import finished successfully
+keycloak           | 2025-10-21 19:48:52,083 INFO  [org.keycloak.services] (main) KC-SERVICES0077: Created temporary admin user with username admin
+keycloak           | 2025-10-21 19:48:52,187 INFO  [io.quarkus] (main) Keycloak 26.4.1 on JVM (powered by Quarkus 3.27.0) started in 9.927s. Listening on: http://0.0.0.0:8080
+keycloak           | 2025-10-21 19:48:52,187 INFO  [io.quarkus] (main) Profile dev activated. 
+keycloak           | 2025-10-21 19:48:52,187 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, jdbc-postgresql, keycloak, narayana-jta, opentelemetry, reactive-routes, rest, rest-jackson, smallrye-context-propagation, vertx]
+resources-service  | {"level":"info","time":"2025-10-21T19:49:07Z","caller":"/app/internal/controller/http/router.go:42","message":"clientID :backend-recursos, issuerURL :http://keycloak.local:3030/realms/develop-spring-realm, JwksURL: http://keycloak.local:3030/realms/develop-spring-realm/protocol/openid-connect/certs"}
+resources-service  | {"level":"info","time":"2025-10-21T19:49:07Z","caller":"/app/internal/app/app.go:53","message":"http server - Server - Started"}
+resources-service  | 
+resources-service  |  ┌───────────────────────────────────────────────────┐ 
+resources-service  |  │                   Fiber v2.52.9                   │ 
+resources-service  |  │               http://127.0.0.1:8082               │ 
+resources-service  |  │       (bound on host 0.0.0.0 and port 8082)       │ 
+resources-service  |  │                                                   │ 
+resources-service  |  │ Handlers ............ 28  Processes ........... 1 │ 
+resources-service  |  │ Prefork ....... Disabled  PID ................. 1 │ 
+resources-service  |  └───────────────────────────────────────────────────┘ 
+resources-service  | 
+nginx-proxy        | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+nginx-proxy        | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+nginx-proxy        | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+nginx-proxy        | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+nginx-proxy        | 10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+nginx-proxy        | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+nginx-proxy        | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+nginx-proxy        | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+nginx-proxy        | /docker-entrypoint.sh: Configuration complete; ready for start up
+auth-service       | 2025-10-21T19:49:26.205Z  INFO 1 --- [ceniit-resource-manager] [nio-8081-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+auth-service       | 2025-10-21T19:49:26.205Z  INFO 1 --- [ceniit-resource-manager] [nio-8081-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+auth-service       | 2025-10-21T19:49:26.206Z  INFO 1 --- [ceniit-resource-manager] [nio-8081-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+nginx-proxy        | 172.18.0.1 - - [21/Oct/2025:19:49:26 +0000] "GET /api/auth/auth/roles HTTP/1.1" 401 0 "-" "PostmanRuntime/7.44.1"
+auth-service       | Converting JWT to Authentication Token: eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5MlFsSjZFa3U0bkYxZGZGMTJsV25FX2pGRTlrNXVSODFaWk0wQjR2UGdnIn0.eyJleHAiOjE3NjEwNzY0NjYsImlhdCI6MTc2MTA3NjE2NiwianRpIjoib25ydHJvOjQ2ZDAxMTc4LTQ5MDItMDkyOC0zZjIxLWIwNDJjZmI4ZDJiMSIsImlzcyI6Imh0dHA6Ly9rZXljbG9hay5sb2NhbDozMDMwL3JlYWxtcy9kZXZlbG9wLXNwcmluZy1yZWFsbSIsImF1ZCI6WyJiYWNrZW5kLXJlY3Vyc29zIiwiYWNjb3VudCJdLCJzdWIiOiI0MWMwYTViZC1hYzZlLTQzZjMtOGQ0My02YmJhZWUyMmFmMjUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJjZW5paXQtYmFja2VuZC1kZXZlbG9wIiwic2lkIjoiNWQwYzA2YWMtYjEyMC1lMDUxLWZlZWEtYWU4YmU2MGYyZWY4IiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIqIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJyZWFsbS11c2VyIiwicmVhbG0tYWRtaW4iLCJsaXN0LXJvbGVzIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiIsInB1dC1yb2xlcy1vbi11c2VyIiwiZGVmYXVsdC1yb2xlcy1kZXZlbG9wLXNwcmluZy1yZWFsbSJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImJhY2tlbmQtcmVjdXJzb3MiOnsicm9sZXMiOlsiRUxJTUlOQVItUkVDVVJTTyIsIkNSRUFSLVJFQ1VSU08iXX0sImNlbmlpdC1iYWNrZW5kLWRldmVsb3AiOnsicm9sZXMiOlsiYmFja2VuZC11c2VyIiwibGlzdC1yb2xlcyIsImJhY2tlbmQtYWRtaW4iLCJwdXQtcm9sZXMtb24tdXNlciJdfSwiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJlbWFpbCBwcm9maWxlIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJwYXRyaWNpbyByaW9zIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGF0cmljaW9yaW9zIiwiZ2l2ZW5fbmFtZSI6InBhdHJpY2lvIiwiZmFtaWx5X25hbWUiOiJyaW9zIiwiZW1haWwiOiJwYXRyaW9jaW9yaW9zQGdtYWlsLmNvbSJ9.o3xz2Px6Vx1eDm5FjOPs_tpl4oqN5ch85Wt9onmKWyW4AkXtFXG4yjQQ0dtnPYq2XwIupgM7Yxi0GWicNL1Y_TxDTUENdKNF0wht9P4Ux0rEUKQq-WqM80R2XLTXXHfu-0CYhwyornfdPwoCkzEAdoLCb3CccUS8ti9gNZ3RlEnWJ5sVaLdxtI-T_apR_jZe0foyWP77Lz1MVOE6q-QRQmFEXZPXSyrla-DBBvUoo-nB86hZO7NfPDcSZbLq0LnPvuOfwLmR3n9ADVVGOUnQayiSqsAlojY4yqrhegv0mO88qQJP3buzsdFbUnGpKLcXU-tne1FPCOF_jmZ1oYX4Zg
+auth-service       | Extracted Authorities: [SCOPE_email, SCOPE_profile, ROLE_backend-user, ROLE_put-roles-on-user, ROLE_backend-admin, ROLE_list-roles]
+auth-service       | 2025-10-21T19:49:28.473Z ERROR 1 --- [ceniit-resource-manager] [nio-8081-exec-2] a.e.c.d.c.e.GlobalExceptionHandler       : e: 
+auth-service       | 
+auth-service       | jakarta.ws.rs.ProcessingException: RESTEASY004655: Unable to invoke request: org.apache.http.conn.HttpHostConnectException: Connect to localhost:3030 [localhost/127.0.0.1, localhost/0:0:0:0:0:0:0:1] failed: Connection refused
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.engines.ManualClosingApacheHttpClient43Engine.invoke(ManualClosingApacheHttpClient43Engine.java:361) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.internal.ClientInvocation.invoke(ClientInvocation.java:427) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.internal.proxy.ClientInvoker.invokeSync(ClientInvoker.java:134) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.internal.proxy.ClientInvoker.invoke(ClientInvoker.java:103) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.internal.proxy.ClientProxy.invoke(ClientProxy.java:61) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	at jdk.proxy2/jdk.proxy2.$Proxy155.grantToken(Unknown Source) ~[na:na]
+auth-service       | 	at org.keycloak.admin.client.token.TokenManager.grantToken(TokenManager.java:99) ~[keycloak-admin-client-25.0.6.jar!/:25.0.6]
+auth-service       | 	at org.keycloak.admin.client.token.TokenManager.getAccessToken(TokenManager.java:75) ~[keycloak-admin-client-25.0.6.jar!/:25.0.6]
+auth-service       | 	at org.keycloak.admin.client.token.TokenManager.getAccessTokenString(TokenManager.java:70) ~[keycloak-admin-client-25.0.6.jar!/:25.0.6]
+auth-service       | 	at org.keycloak.admin.client.resource.BearerAuthFilter.filter(BearerAuthFilter.java:52) ~[keycloak-admin-client-25.0.6.jar!/:25.0.6]
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.internal.ClientInvocation.filterRequest(ClientInvocation.java:644) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.internal.ClientInvocation.invoke(ClientInvocation.java:424) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.internal.proxy.ClientInvoker.invokeSync(ClientInvoker.java:134) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.internal.proxy.ClientInvoker.invoke(ClientInvoker.java:103) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.internal.proxy.ClientProxy.invoke(ClientProxy.java:61) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	at jdk.proxy2/jdk.proxy2.$Proxy191.findByClientId(Unknown Source) ~[na:na]
+auth-service       | 	at ar.edu.ceniit.demo.auth.infraestructure.ports.output.AuthOutputsImpl.getAllRoles(AuthOutputsImpl.java:151) ~[!/:0.0.1-SNAPSHOT]
+auth-service       | 	at ar.edu.ceniit.demo.auth.aplication.usecases.AuthUseCasesImpl.getAllRoles(AuthUseCasesImpl.java:108) ~[!/:0.0.1-SNAPSHOT]
+auth-service       | 	at ar.edu.ceniit.demo.auth.infraestructure.ports.input.AuthController.getAllRoles(AuthController.java:95) ~[!/:0.0.1-SNAPSHOT]
+auth-service       | 	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source) ~[na:na]
+auth-service       | 	at java.base/java.lang.reflect.Method.invoke(Unknown Source) ~[na:na]
+auth-service       | 	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:360) ~[spring-aop-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.proceed(AuthorizationManagerBeforeMethodInterceptor.java:268) ~[spring-security-core-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.attemptAuthorization(AuthorizationManagerBeforeMethodInterceptor.java:263) ~[spring-security-core-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.invoke(AuthorizationManagerBeforeMethodInterceptor.java:196) ~[spring-security-core-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.config.annotation.method.configuration.DeferringMethodInterceptor.invoke(DeferringMethodInterceptor.java:44) ~[spring-security-config-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:728) ~[spring-aop-6.2.9.jar!/:6.2.9]
+auth-service       | 	at ar.edu.ceniit.demo.auth.infraestructure.ports.input.AuthController$$SpringCGLIB$$0.getAllRoles(<generated>) ~[!/:0.0.1-SNAPSHOT]
+auth-service       | 	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source) ~[na:na]
+auth-service       | 	at java.base/java.lang.reflect.Method.invoke(Unknown Source) ~[na:na]
+auth-service       | 	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:258) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:191) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118) ~[spring-webmvc-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:991) ~[spring-webmvc-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:896) ~[spring-webmvc-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) ~[spring-webmvc-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089) ~[spring-webmvc-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979) ~[spring-webmvc-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014) ~[spring-webmvc-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:903) ~[spring-webmvc-6.2.9.jar!/:6.2.9]
+auth-service       | 	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:564) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885) ~[spring-webmvc-6.2.9.jar!/:6.2.9]
+auth-service       | 	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51) ~[tomcat-embed-websocket-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:365) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:101) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:125) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:119) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.authentication.AuthenticationFilter.doFilterInternal(AuthenticationFilter.java:177) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.doFilterInternal(BearerTokenAuthenticationFilter.java:158) ~[spring-security-oauth2-resource-server-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191) ~[spring-security-web-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.filter.ServletRequestPathFilter.doFilter(ServletRequestPathFilter.java:52) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebSecurityConfiguration.java:319) ~[spring-security-config-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$4(HandlerMappingIntrospector.java:267) ~[spring-webmvc-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:240) ~[spring-security-config-6.5.2.jar!/:6.5.2]
+auth-service       | 	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:362) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:278) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.2.9.jar!/:6.2.9]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:116) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:398) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1769) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1189) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:658) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63) ~[tomcat-embed-core-10.1.43.jar!/:na]
+auth-service       | 	at java.base/java.lang.Thread.run(Unknown Source) ~[na:na]
+auth-service       | Caused by: org.apache.http.conn.HttpHostConnectException: Connect to localhost:3030 [localhost/127.0.0.1, localhost/0:0:0:0:0:0:0:1] failed: Connection refused
+auth-service       | 	at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:156) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.apache.http.impl.conn.PoolingHttpClientConnectionManager.connect(PoolingHttpClientConnectionManager.java:376) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.apache.http.impl.execchain.MainClientExec.establishRoute(MainClientExec.java:393) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.apache.http.impl.execchain.MainClientExec.execute(MainClientExec.java:236) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.apache.http.impl.execchain.ProtocolExec.execute(ProtocolExec.java:186) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.apache.http.impl.execchain.RetryExec.execute(RetryExec.java:89) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.apache.http.impl.execchain.RedirectExec.execute(RedirectExec.java:110) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.apache.http.impl.client.InternalHttpClient.doExecute(InternalHttpClient.java:185) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:83) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:56) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.jboss.resteasy.client.jaxrs.engines.ManualClosingApacheHttpClient43Engine.invoke(ManualClosingApacheHttpClient43Engine.java:344) ~[resteasy-client-6.2.7.Final.jar!/:6.2.7.Final]
+auth-service       | 	... 134 common frames omitted
+auth-service       | Caused by: java.net.ConnectException: Connection refused
+auth-service       | 	at java.base/sun.nio.ch.Net.connect0(Native Method) ~[na:na]
+auth-service       | 	at java.base/sun.nio.ch.Net.connect(Unknown Source) ~[na:na]
+auth-service       | 	at java.base/sun.nio.ch.Net.connect(Unknown Source) ~[na:na]
+auth-service       | 	at java.base/sun.nio.ch.NioSocketImpl.connect(Unknown Source) ~[na:na]
+auth-service       | 	at java.base/java.net.SocksSocketImpl.connect(Unknown Source) ~[na:na]
+auth-service       | 	at java.base/java.net.Socket.connect(Unknown Source) ~[na:na]
+auth-service       | 	at org.apache.http.conn.socket.PlainConnectionSocketFactory.connectSocket(PlainConnectionSocketFactory.java:75) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:142) ~[httpclient-4.5.14.jar!/:4.5.14]
+auth-service       | 	... 144 common frames omitted
+auth-service       | 
+nginx-proxy        | 172.18.0.1 - - [21/Oct/2025:19:49:28 +0000] "GET /api/auth/auth/roles HTTP/1.1" 500 163 "-" "PostmanRuntime/7.44.1"

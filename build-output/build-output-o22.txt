@@ -1,0 +1,734 @@
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.18kB done
+#1 DONE 0.0s
+
+#2 [auth-service internal] load build definition from Dockerfile
+#2 transferring dockerfile: 415B done
+#2 DONE 0.0s
+
+#3 [resources-service internal] load build definition from Dockerfile
+#3 transferring dockerfile: 385B done
+#3 DONE 0.0s
+
+#4 [auth] library/maven:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#5 [auth] library/eclipse-temurin:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#6 [auth] library/golang:pull token for registry-1.docker.io
+#6 DONE 0.0s
+
+#7 [auth] library/alpine:pull token for registry-1.docker.io
+#7 DONE 0.0s
+
+#8 [resources-service internal] load metadata for docker.io/library/alpine:latest
+#8 ...
+
+#9 [resources-service internal] load metadata for docker.io/library/golang:1.25-alpine
+#9 DONE 1.1s
+
+#10 [auth-service internal] load metadata for docker.io/library/maven:3.9.6-eclipse-temurin-21
+#10 DONE 1.4s
+
+#11 [auth-service internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine
+#11 ...
+
+#8 [resources-service internal] load metadata for docker.io/library/alpine:latest
+#8 DONE 1.5s
+
+#12 [resources-service internal] load .dockerignore
+#12 transferring context: 185B done
+#12 DONE 0.0s
+
+#13 [resources-service build 1/7] FROM docker.io/library/golang:1.25-alpine@sha256:aee43c3ccbf24fdffb7295693b6e33b21e01baec1b2a55acc351fde345e9ec34
+#13 DONE 0.0s
+
+#14 [resources-service stage-1 1/3] FROM docker.io/library/alpine:latest@sha256:4b7ce07002c69e8f3d704a9c5d6fd3053be500b7f1c69fc0d80990c2ad8dd412
+#14 DONE 0.0s
+
+#11 [auth-service internal] load metadata for docker.io/library/eclipse-temurin:21-jre-alpine
+#11 DONE 1.6s
+
+#15 [resources-service internal] load build context
+#15 transferring context: 6.19kB done
+#15 DONE 0.0s
+
+#16 [resources-service build 5/7] RUN go mod download
+#16 CACHED
+
+#17 [resources-service build 4/7] COPY go.sum ./
+#17 CACHED
+
+#18 [resources-service build 7/7] RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main ./cmd/app/main.go
+#18 CACHED
+
+#19 [resources-service build 3/7] COPY go.mod ./
+#19 CACHED
+
+#20 [resources-service build 6/7] COPY . .
+#20 CACHED
+
+#21 [resources-service build 2/7] WORKDIR /app
+#21 CACHED
+
+#22 [resources-service stage-1 2/3] WORKDIR /app
+#22 CACHED
+
+#23 [resources-service stage-1 3/3] COPY --from=build /app/main .
+#23 CACHED
+
+#24 [auth-service internal] load .dockerignore
+#24 transferring context: 2B done
+#24 DONE 0.0s
+
+#25 [auth-service build 1/6] FROM docker.io/library/maven:3.9.6-eclipse-temurin-21@sha256:8d63d4c1902cb12d9e79a70671b18ebe26358cb592561af33ca1808f00d935cb
+#25 DONE 0.0s
+
+#26 [auth-service stage-1 1/3] FROM docker.io/library/eclipse-temurin:21-jre-alpine@sha256:990397e0495ac088ab6ee3d949a2e97b715a134d8b96c561c5d130b3786a489d
+#26 DONE 0.0s
+
+#27 [resources-service] exporting to image
+#27 exporting layers done
+#27 writing image sha256:5337ae9ef5ee3f2c8bc0cc29983864ce15495fe20c207efbcdb0825207f25e91 done
+#27 naming to docker.io/library/trabajo_final-resources-service done
+#27 DONE 0.0s
+
+#28 [auth-service internal] load build context
+#28 transferring context: 16.88kB done
+#28 DONE 0.0s
+
+#29 [auth-service stage-1 2/3] WORKDIR /app
+#29 CACHED
+
+#30 [auth-service build 3/6] COPY pom.xml .
+#30 CACHED
+
+#31 [auth-service build 5/6] COPY src ./src
+#31 CACHED
+
+#32 [auth-service build 6/6] RUN mvn package -DskipTests
+#32 CACHED
+
+#33 [auth-service build 4/6] RUN mvn dependency:go-offline
+#33 CACHED
+
+#34 [auth-service build 2/6] WORKDIR /app
+#34 CACHED
+
+#35 [auth-service stage-1 3/3] COPY --from=build /app/target/demo-0.0.1-SNAPSHOT.jar app.jar
+#35 CACHED
+
+#36 [auth-service] exporting to image
+#36 exporting layers done
+#36 writing image sha256:6c571f5eab5aa4b5c49eac81a3b1d8f310ec29d6401a2dfbf5e0173c8d8e6a72 done
+#36 naming to docker.io/library/trabajo_final-auth-service done
+#36 DONE 0.0s
+
+#37 [resources-service] resolving provenance for metadata file
+#37 DONE 0.0s
+
+#38 [auth-service] resolving provenance for metadata file
+#38 DONE 0.0s
+ trabajo_final-auth-service  Built
+ trabajo_final-resources-service  Built
+ Network trabajo_final_app-network  Creating
+ Network trabajo_final_app-network  Created
+ Volume trabajo_final_trabajo_final_keycloak_db_data  Creating
+ Volume trabajo_final_trabajo_final_keycloak_db_data  Created
+ Volume trabajo_final_trabajo_final_app_db_data  Creating
+ Volume trabajo_final_trabajo_final_app_db_data  Created
+ Container minio-server  Creating
+ Container keycloak-postgres  Creating
+ Container app-postgres  Creating
+ Container keycloak-postgres  Created
+ Container app-postgres  Created
+ Container keycloak  Creating
+ Container minio-server  Created
+ Container resources-service  Creating
+ Container keycloak  Created
+ Container auth-service  Creating
+ Container resources-service  Created
+ Container auth-service  Created
+ Container nginx-proxy  Creating
+ Container nginx-proxy  Created
+Attaching to app-postgres, auth-service, keycloak, keycloak-postgres, minio-server, nginx-proxy, resources-service
+app-postgres       | The files belonging to this database system will be owned by user "postgres".
+app-postgres       | This user must also own the server process.
+app-postgres       | 
+app-postgres       | The database cluster will be initialized with locale "en_US.utf8".
+app-postgres       | The default database encoding has accordingly been set to "UTF8".
+app-postgres       | The default text search configuration will be set to "english".
+app-postgres       | 
+app-postgres       | Data page checksums are disabled.
+app-postgres       | 
+app-postgres       | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+keycloak-postgres  | The files belonging to this database system will be owned by user "postgres".
+keycloak-postgres  | This user must also own the server process.
+keycloak-postgres  | 
+keycloak-postgres  | The database cluster will be initialized with locale "en_US.utf8".
+keycloak-postgres  | The default database encoding has accordingly been set to "UTF8".
+keycloak-postgres  | The default text search configuration will be set to "english".
+keycloak-postgres  | 
+keycloak-postgres  | Data page checksums are disabled.
+keycloak-postgres  | 
+keycloak-postgres  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+app-postgres       | creating subdirectories ... ok
+app-postgres       | selecting dynamic shared memory implementation ... posix
+keycloak-postgres  | creating subdirectories ... ok
+keycloak-postgres  | selecting dynamic shared memory implementation ... posix
+keycloak-postgres  | selecting default max_connections ... 100
+app-postgres       | selecting default max_connections ... 100
+app-postgres       | selecting default shared_buffers ... 128MB
+keycloak-postgres  | selecting default shared_buffers ... 128MB
+app-postgres       | selecting default time zone ... Etc/UTC
+keycloak-postgres  | selecting default time zone ... Etc/UTC
+keycloak-postgres  | creating configuration files ... ok
+app-postgres       | creating configuration files ... ok
+keycloak-postgres  | running bootstrap script ... ok
+app-postgres       | running bootstrap script ... ok
+keycloak-postgres  | performing post-bootstrap initialization ... ok
+app-postgres       | performing post-bootstrap initialization ... ok
+minio-server       | MinIO Object Storage Server
+minio-server       | Copyright: 2015-2025 MinIO, Inc.
+minio-server       | License: GNU AGPLv3 - https://www.gnu.org/licenses/agpl-3.0.html
+minio-server       | Version: RELEASE.2025-09-07T16-13-09Z (go1.24.6 linux/amd64)
+minio-server       | 
+minio-server       | API: http://172.18.0.4:9000  http://127.0.0.1:9000 
+minio-server       | WebUI: http://172.18.0.4:9001 http://127.0.0.1:9001  
+minio-server       | 
+minio-server       | Docs: https://docs.min.io
+app-postgres       | syncing data to disk ... ok
+app-postgres       | 
+app-postgres       | 
+app-postgres       | Success. You can now start the database server using:
+app-postgres       | 
+app-postgres       |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+app-postgres       | 
+app-postgres       | initdb: warning: enabling "trust" authentication for local connections
+app-postgres       | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+keycloak-postgres  | syncing data to disk ... ok
+keycloak-postgres  | 
+keycloak-postgres  | 
+keycloak-postgres  | Success. You can now start the database server using:
+keycloak-postgres  | 
+keycloak-postgres  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+keycloak-postgres  | 
+keycloak-postgres  | initdb: warning: enabling "trust" authentication for local connections
+keycloak-postgres  | initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+app-postgres       | waiting for server to start....2025-10-21 20:48:47.351 UTC [48] LOG:  starting PostgreSQL 16.9 (Debian 16.9-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+app-postgres       | 2025-10-21 20:48:47.352 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+keycloak-postgres  | waiting for server to start....2025-10-21 20:48:47.352 UTC [48] LOG:  starting PostgreSQL 16.9 (Debian 16.9-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+keycloak-postgres  | 2025-10-21 20:48:47.353 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+app-postgres       | 2025-10-21 20:48:47.358 UTC [51] LOG:  database system was shut down at 2025-10-21 20:48:47 UTC
+keycloak-postgres  | 2025-10-21 20:48:47.359 UTC [51] LOG:  database system was shut down at 2025-10-21 20:48:47 UTC
+app-postgres       | 2025-10-21 20:48:47.362 UTC [48] LOG:  database system is ready to accept connections
+keycloak-postgres  | 2025-10-21 20:48:47.364 UTC [48] LOG:  database system is ready to accept connections
+app-postgres       |  done
+app-postgres       | server started
+keycloak-postgres  |  done
+keycloak-postgres  | server started
+app-postgres       | 
+app-postgres       | /usr/local/bin/docker-entrypoint.sh: running /docker-entrypoint-initdb.d/respaldo_app_completo.sql
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE ROLE
+app-postgres       | ALTER ROLE
+app-postgres       | CREATE ROLE
+app-postgres       | ALTER ROLE
+app-postgres       | CREATE ROLE
+app-postgres       | ALTER ROLE
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | UPDATE 1
+app-postgres       | 2025-10-21 20:48:47.496 UTC [49] LOG:  checkpoint starting: immediate force wait
+app-postgres       | 2025-10-21 20:48:47.509 UTC [49] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.003 s, total=0.014 s; sync files=8, longest=0.001 s, average=0.001 s; distance=6 kB, estimate=6 kB; lsn=0/14EBC80, redo lsn=0/14EBC48
+keycloak           | Invalid value for option 'KC_DB': postgresql. Expected values are: dev-file, dev-mem, mariadb, mssql, mysql, oracle, postgres, tidb
+app-postgres       | DROP DATABASE
+keycloak-postgres  | CREATE DATABASE
+keycloak-postgres  | 
+keycloak-postgres  | 
+keycloak-postgres  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+keycloak-postgres  | 
+keycloak-postgres  | waiting for server to shut down....2025-10-21 20:48:47.524 UTC [48] LOG:  received fast shutdown request
+keycloak-postgres  | 2025-10-21 20:48:47.525 UTC [48] LOG:  aborting any active transactions
+keycloak-postgres  | 2025-10-21 20:48:47.527 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+keycloak-postgres  | 2025-10-21 20:48:47.527 UTC [49] LOG:  shutting down
+keycloak-postgres  | 2025-10-21 20:48:47.528 UTC [49] LOG:  checkpoint starting: shutdown immediate
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "template1" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | COMMENT
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "template1" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | REVOKE
+app-postgres       | GRANT
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+keycloak-postgres  | 2025-10-21 20:48:47.579 UTC [49] LOG:  checkpoint complete: wrote 922 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.015 s, sync=0.031 s, total=0.052 s; sync files=301, longest=0.002 s, average=0.001 s; distance=4255 kB, estimate=4255 kB; lsn=0/1912108, redo lsn=0/1912108
+keycloak-postgres  | 2025-10-21 20:48:47.584 UTC [48] LOG:  database system is shut down
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "TP" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+keycloak-postgres  |  done
+keycloak-postgres  | server stopped
+keycloak-postgres  | 
+keycloak-postgres  | PostgreSQL init process complete; ready for start up.
+keycloak-postgres  | 
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "app_db" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE SCHEMA
+app-postgres       | ALTER SCHEMA
+app-postgres       | CREATE SCHEMA
+keycloak-postgres  | 2025-10-21 20:48:47.644 UTC [1] LOG:  starting PostgreSQL 16.9 (Debian 16.9-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+keycloak-postgres  | 2025-10-21 20:48:47.644 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+keycloak-postgres  | 2025-10-21 20:48:47.644 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+app-postgres       | ALTER SCHEMA
+app-postgres       | CREATE SCHEMA
+app-postgres       | ALTER SCHEMA
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+keycloak-postgres  | 2025-10-21 20:48:47.647 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | CREATE FUNCTION
+app-postgres       | ALTER FUNCTION
+app-postgres       | SET
+app-postgres       | SET
+keycloak-postgres  | 2025-10-21 20:48:47.651 UTC [64] LOG:  database system was shut down at 2025-10-21 20:48:47 UTC
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | COMMENT
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+keycloak-postgres  | 2025-10-21 20:48:47.656 UTC [1] LOG:  database system is ready to accept connections
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | COMMENT
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | COPY 0
+app-postgres       | COPY 0
+app-postgres       | COPY 0
+app-postgres       | COPY 1
+app-postgres       | COPY 24
+app-postgres       | COPY 16
+app-postgres       | COPY 0
+app-postgres       | COPY 0
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |      26
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |      21
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE INDEX
+app-postgres       | CREATE INDEX
+app-postgres       | CREATE INDEX
+app-postgres       | CREATE INDEX
+app-postgres       | CREATE TRIGGER
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | GRANT
+app-postgres       | GRANT
+app-postgres       | GRANT
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "paradigmas" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | 2025-10-21 20:48:47.764 UTC [49] LOG:  checkpoint starting: immediate force wait
+[Kkeycloak exited with code 2 (restarting)
+app-postgres       | 2025-10-21 20:48:47.902 UTC [49] LOG:  checkpoint complete: wrote 3712 buffers (22.7%); 0 WAL file(s) added, 0 removed, 1 recycled; write=0.047 s, sync=0.087 s, total=0.139 s; sync files=1237, longest=0.001 s, average=0.001 s; distance=17258 kB, estimate=17258 kB; lsn=0/25C6498, redo lsn=0/25C6460
+app-postgres       | DROP DATABASE
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "postgres" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | COMMENT
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE DATABASE
+app-postgres       | ALTER DATABASE
+app-postgres       | You are now connected to database "test_1" as user "postgres".
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       |  set_config 
+app-postgres       | ------------
+app-postgres       |  
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE SCHEMA
+app-postgres       | ALTER SCHEMA
+app-postgres       | CREATE SCHEMA
+app-postgres       | ALTER SCHEMA
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | CREATE TYPE
+app-postgres       | ALTER TYPE
+app-postgres       | SET
+app-postgres       | SET
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | CREATE SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER SEQUENCE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | COPY 24
+app-postgres       | COPY 0
+app-postgres       | COPY 0
+app-postgres       | COPY 0
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |      26
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       |  setval 
+app-postgres       | --------
+app-postgres       |       1
+app-postgres       | (1 row)
+app-postgres       | 
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | ALTER TABLE
+app-postgres       | GRANT
+app-postgres       | GRANT
+app-postgres       | GRANT
+app-postgres       | 
+app-postgres       | 
+app-postgres       | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/respaldo_app_completo.sql.bak
+app-postgres       | 
+app-postgres       | waiting for server to shut down....2025-10-21 20:48:48.025 UTC [48] LOG:  received fast shutdown request
+app-postgres       | 2025-10-21 20:48:48.026 UTC [48] LOG:  aborting any active transactions
+app-postgres       | 2025-10-21 20:48:48.028 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+app-postgres       | 2025-10-21 20:48:48.028 UTC [49] LOG:  shutting down
+app-postgres       | 2025-10-21 20:48:48.029 UTC [49] LOG:  checkpoint starting: shutdown immediate
+app-postgres       | 2025-10-21 20:48:48.098 UTC [49] LOG:  checkpoint complete: wrote 1867 buffers (11.4%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.021 s, sync=0.044 s, total=0.070 s; sync files=623, longest=0.001 s, average=0.001 s; distance=8653 kB, estimate=16397 kB; lsn=0/2E39C58, redo lsn=0/2E39C58
+app-postgres       | 2025-10-21 20:48:48.110 UTC [48] LOG:  database system is shut down
+app-postgres       |  done
+app-postgres       | server stopped
+app-postgres       | 
+app-postgres       | PostgreSQL init process complete; ready for start up.
+app-postgres       | 
+app-postgres       | 2025-10-21 20:48:48.145 UTC [1] LOG:  starting PostgreSQL 16.9 (Debian 16.9-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+app-postgres       | 2025-10-21 20:48:48.146 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+app-postgres       | 2025-10-21 20:48:48.146 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+app-postgres       | 2025-10-21 20:48:48.148 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+app-postgres       | 2025-10-21 20:48:48.151 UTC [71] LOG:  database system was shut down at 2025-10-21 20:48:48 UTC
+app-postgres       | 2025-10-21 20:48:48.157 UTC [1] LOG:  database system is ready to accept connections
+keycloak           | Invalid value for option 'KC_DB': postgresql. Expected values are: dev-file, dev-mem, mariadb, mssql, mysql, oracle, postgres, tidb
+[Kkeycloak exited with code 2 (restarting)
+keycloak           | Invalid value for option 'KC_DB': postgresql. Expected values are: dev-file, dev-mem, mariadb, mssql, mysql, oracle, postgres, tidb
+[Kkeycloak exited with code 2 (restarting)
+keycloak           | Invalid value for option 'KC_DB': postgresql. Expected values are: dev-file, dev-mem, mariadb, mssql, mysql, oracle, postgres, tidb
+[Kkeycloak exited with code 2 (restarting)
+keycloak           | Invalid value for option 'KC_DB': postgresql. Expected values are: dev-file, dev-mem, mariadb, mssql, mysql, oracle, postgres, tidb
+[Kkeycloak exited with code 2 (restarting)
+keycloak           | Invalid value for option 'KC_DB': postgresql. Expected values are: dev-file, dev-mem, mariadb, mssql, mysql, oracle, postgres, tidb
+[Kkeycloak exited with code 2 (restarting)
+keycloak           | Invalid value for option 'KC_DB': postgresql. Expected values are: dev-file, dev-mem, mariadb, mssql, mysql, oracle, postgres, tidb
+[Kkeycloak exited with code 2 (restarting)
+keycloak           | Invalid value for option 'KC_DB': postgresql. Expected values are: dev-file, dev-mem, mariadb, mssql, mysql, oracle, postgres, tidb
+[Kkeycloak exited with code 2 (restarting)
+dependency failed to start: container keycloak is unhealthy
