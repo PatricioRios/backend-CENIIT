@@ -1,0 +1,422 @@
+===============================================================================
+POSIBLES MEJORAS: findReservasByRecursoAndRange()
+===============================================================================
+Fecha: 2025-10-25
+Ubicación: ReservasPersistenceAdapter.java
+Estado: Implementación actual funcional - Mejoras opcionales
+===============================================================================
+
+═══════════════════════════════════════════════════════════════════════════════
+CONTEXTO ACTUAL
+═══════════════════════════════════════════════════════════════════════════════
+
+La implementación actual de findReservasByRecursoAndRange() funciona correctamente
+y devuelve todas las reservas asociadas a un recurso sin validar su existencia.
+
+COMPORTAMIENTO ACTUAL:
+- Si recursoId existe → Devuelve lista de reservas (puede estar vacía)
+- Si recursoId NO existe → Devuelve lista vacía (HTTP 200 con data=[])
+- No se consulta tabla/servicio de recursos
+- No se valida estado del recurso
+
+═══════════════════════════════════════════════════════════════════════════════
+MEJORA #1: VALIDAR EXISTENCIA DEL RECURSO
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PROBLEMA ACTUAL                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Si un cliente hace GET /recursos/999999/agenda (recurso inexistente):
+- HTTP 200 OK
+- Response: { "content": [], "totalElements": 0, ... }
+
+AMBIGÜEDAD: ¿El recurso existe pero no tiene reservas, o el recurso no existe?
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SOLUCIÓN PROPUESTA                                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Validar existencia del recurso ANTES de buscar reservas:
+- Si recurso NO existe → HTTP 404 Not Found
+- Si recurso existe pero sin reservas → HTTP 200 OK con lista vacía
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ IMPLEMENTACIÓN                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+OPCIÓN A: Consultar tabla local recursos_schema.recursos
+─────────────────────────────────────────────────────────────
+
+VENTAJAS:
+✓ Sin latencia de red (misma BD)
+✓ Aprovechar FK existente
+✓ Más rápido
+
+DESVENTAJAS:
+✗ Acopla este microservicio a tabla de otro dominio
+✗ Si recursos está en microservicio separado, es antipatrón
+
+CÓDIGO:
+────────
+// 1. Crear RecursoRepository (opcional, solo para validación)
+@Repository
+public interface RecursoRepository extends JpaRepository<RecursoEntity, Integer> {
+    boolean existsById(Integer id);
+}
+
+// 2. En ReservasPersistenceAdapter
+private final RecursoRepository recursoRepository; // Inyectar
+
+@Override
+public PagedResult<Reserva> findReservasByRecursoAndRange(...) {
+    // Validar existencia
+    if (!recursoRepository.existsById(recursoId.intValue())) {
+        throw new RecursoNotFoundException("Recurso con ID " + recursoId + " no existe");
+    }
+    
+    // ... resto de la implementación actual
+}
+
+// 3. Manejar excepción en controller
+@ExceptionHandler(RecursoNotFoundException.class)
+public ResponseEntity<?> handleRecursoNotFound(RecursoNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(new ErrorResponse(ex.getMessage()));
+}
+
+
+OPCIÓN B: Llamar a microservicio de recursos (REST/gRPC)
+──────────────────────────────────────────────────────────
+
+VENTAJAS:
+✓ Desacoplamiento entre servicios
+✓ Respeta arquitectura de microservicios
+✓ Recurso siempre actualizado
+
+DESVENTAJAS:
+✗ Latencia adicional (llamada HTTP)
+✗ Punto de fallo adicional
+✗ Necesita circuit breaker/fallback
+
+CÓDIGO:
+────────
+// 1. Crear cliente REST para servicio de recursos
+@FeignClient(name = "recursos-service", url = "${recursos.service.url}")
+public interface RecursosClient {
+    @GetMapping("/recursos/{id}/exists")
+    Boolean existsRecurso(@PathVariable("id") Long id);
+}
+
+// O usando RestTemplate:
+@Component
+public class RecursosServiceClient {
+    private final RestTemplate restTemplate;
+    
+    @Value("${recursos.service.url}")
+    private String recursosServiceUrl;
+    
+    public boolean existsRecurso(Long recursoId) {
+        try {
+            String url = recursosServiceUrl + "/recursos/" + recursoId + "/exists";
+            Boolean exists = restTemplate.getForObject(url, Boolean.class);
+            return exists != null && exists;
+        } catch (HttpClientErrorException.NotFound e) {
+            return false;
+        } catch (Exception e) {
+            // Log error y decidir: fallar o continuar
+            // Opción 1: Lanzar excepción (fail-fast)
+            throw new RecursoServiceUnavailableException();
+            // Opción 2: Asumir que existe (resiliente)
+            // return true;
+        }
+    }
+}
+
+// 2. En ReservasPersistenceAdapter o mejor en UseCaseImpl
+private final RecursosServiceClient recursosClient; // Inyectar
+
+@Override
+public PagedResult<Reserva> findReservasByRecursoAndRange(...) {
+    // Validar existencia
+    if (!recursosClient.existsRecurso(recursoId)) {
+        throw new RecursoNotFoundException("Recurso con ID " + recursoId + " no existe");
+    }
+    
+    // ... resto de la implementación actual
+}
+
+// 3. Configurar circuit breaker (opcional pero recomendado)
+@CircuitBreaker(name = "recursos-service", fallbackMethod = "findReservasFallback")
+public PagedResult<Reserva> findReservasByRecursoAndRange(...) {
+    // ... implementación
+}
+
+private PagedResult<Reserva> findReservasFallback(Long recursoId, ..., Throwable t) {
+    // Opción: Continuar sin validar o devolver error amigable
+    log.warn("Servicio de recursos no disponible, continuando sin validación");
+    return findReservasWithoutValidation(recursoId, ...);
+}
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ RECOMENDACIÓN                                                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+DEPENDE DE TU ARQUITECTURA:
+
+1. Si recursos está en MISMA BD pero es "conceptualmente" otro módulo:
+   → OPCIÓN A (más simple, mejor performance)
+
+2. Si recursos está en MICROSERVICIO SEPARADO:
+   → OPCIÓN B con circuit breaker
+   
+3. Si NO estás seguro:
+   → Empezar con OPCIÓN A, refactorizar después si es necesario
+
+
+═══════════════════════════════════════════════════════════════════════════════
+MEJORA #2: VERIFICAR DISPONIBILIDAD DEL RECURSO (ESCENARIO 3)
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PROBLEMA ACTUAL                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Si un recurso está EN_MANTENIMIENTO o INACTIVO, se devuelven sus reservas
+normalmente. Esto puede causar confusión:
+
+- Usuario ve reservas de un recurso que no está disponible
+- Frontend debe validar estado por separado
+- Posibles inconsistencias en UI
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SOLUCIÓN PROPUESTA                                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+OPCIÓN 1: Filtrar reservas según estado del recurso
+OPCIÓN 2: Agregar metadatos del recurso en respuesta
+OPCIÓN 3: Lanzar error si recurso no disponible
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ IMPLEMENTACIÓN - OPCIÓN 1: FILTRAR RESERVAS                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Solo mostrar reservas futuras si el recurso está disponible.
+
+CÓDIGO:
+────────
+// 1. Obtener estado del recurso
+EstadoRecurso estadoRecurso = recursoService.getEstado(recursoId);
+
+// 2. Modificar query según estado
+@Override
+public PagedResult<Reserva> findReservasByRecursoAndRange(...) {
+    // Obtener estado del recurso
+    EstadoRecurso estadoRecurso = getEstadoRecurso(recursoId);
+    
+    // Si está en mantenimiento, solo mostrar reservas pasadas
+    OffsetDateTime fechaDesdeAjustada = fechaDesde;
+    OffsetDateTime fechaHastaAjustada = fechaHasta;
+    
+    if (estadoRecurso == EstadoRecurso.EN_MANTENIMIENTO) {
+        // Solo mostrar reservas que ya pasaron
+        fechaHastaAjustada = OffsetDateTime.now();
+    }
+    
+    // Construir query con fechas ajustadas
+    Specification<ReservaEntityTable> baseSpec = (root, query, builder) -> {
+        Predicate recursoIdPredicate = builder.equal(
+            root.get("recursoSolicitadoId"), recursoId.intValue());
+        Predicate fechaInicioPredicate = builder.greaterThanOrEqualTo(
+            root.get("fechaHoraInicio"), fechaDesdeAjustada);
+        Predicate fechaFinPredicate = builder.lessThanOrEqualTo(
+            root.get("fechaHoraFin"), fechaHastaAjustada);
+        
+        return builder.and(recursoIdPredicate, fechaInicioPredicate, fechaFinPredicate);
+    };
+    
+    // ... resto de la implementación
+}
+
+private EstadoRecurso getEstadoRecurso(Long recursoId) {
+    // Opción A: Query directo a tabla recursos
+    return recursoRepository.findById(recursoId.intValue())
+        .map(RecursoEntity::getEstado)
+        .orElse(EstadoRecurso.DISPONIBLE);
+    
+    // Opción B: Llamada a microservicio
+    // return recursosClient.getEstado(recursoId);
+}
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ IMPLEMENTACIÓN - OPCIÓN 2: AGREGAR METADATOS EN RESPUESTA                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Devolver estado del recurso junto con las reservas.
+
+CÓDIGO:
+────────
+// 1. Crear nuevo DTO para respuesta enriquecida
+public class AgendaResponseDTO {
+    private RecursoMetadataDTO recurso;
+    private PagedResult<ReservaResponseDTO> reservas;
+}
+
+public class RecursoMetadataDTO {
+    private Long id;
+    private String nombre;
+    private EstadoRecurso estado;
+    private Boolean disponible;
+}
+
+// 2. Modificar endpoint del controller
+@GetMapping("/{id}/agenda")
+public ResponseEntity<AgendaResponseDTO> getAgenda(...) {
+    // Obtener datos del recurso
+    RecursoMetadataDTO recursoMeta = recursosService.getMetadata(id);
+    
+    // Obtener reservas (implementación actual)
+    PagedResult<Reserva> pagedResult = reservasUseCases.getReservasForRecurso(...);
+    
+    // Mapear y combinar
+    PagedResult<ReservaResponseDTO> reservasDTOs = mapToDTO(pagedResult);
+    
+    AgendaResponseDTO response = new AgendaResponseDTO(recursoMeta, reservasDTOs);
+    
+    return ResponseEntity.ok(response);
+}
+
+// EJEMPLO DE RESPUESTA JSON:
+{
+  "recurso": {
+    "id": 5,
+    "nombre": "Sala de Conferencias A",
+    "estado": "EN_MANTENIMIENTO",
+    "disponible": false
+  },
+  "reservas": {
+    "content": [
+      { "id": 1, "nombre": "Reunión Proyecto X", ... },
+      { "id": 2, "nombre": "Capacitación", ... }
+    ],
+    "totalElements": 15,
+    ...
+  }
+}
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ IMPLEMENTACIÓN - OPCIÓN 3: LANZAR ERROR SI NO DISPONIBLE                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Más restrictivo: no permitir consultar agenda de recursos no disponibles.
+
+CÓDIGO:
+────────
+@Override
+public PagedResult<Reserva> findReservasByRecursoAndRange(...) {
+    // Validar estado del recurso
+    EstadoRecurso estadoRecurso = getEstadoRecurso(recursoId);
+    
+    if (estadoRecurso != EstadoRecurso.DISPONIBLE) {
+        throw new RecursoNoDisponibleException(
+            "No se puede consultar agenda de recurso en estado: " + estadoRecurso
+        );
+    }
+    
+    // ... resto de la implementación actual
+}
+
+// En controller, manejar excepción
+@ExceptionHandler(RecursoNoDisponibleException.class)
+public ResponseEntity<?> handleRecursoNoDisponible(RecursoNoDisponibleException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT) // 409
+        .body(new ErrorResponse(ex.getMessage()));
+}
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ RECOMENDACIÓN                                                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+DEPENDE DEL CASO DE USO:
+
+1. Para ADMINISTRADORES que gestionan reservas:
+   → OPCIÓN 2 (Mostrar todo + metadatos)
+   → Permite ver y gestionar reservas incluso si recurso está en mantenimiento
+
+2. Para USUARIOS FINALES que solo consultan:
+   → OPCIÓN 1 (Filtrar según estado)
+   → Evita confusión mostrando solo lo relevante
+
+3. Para APIs PÚBLICAS estrictas:
+   → OPCIÓN 3 (Error si no disponible)
+   → Fuerza a validar disponibilidad antes de consultar
+
+
+═══════════════════════════════════════════════════════════════════════════════
+CONFIGURACIÓN NECESARIA
+═══════════════════════════════════════════════════════════════════════════════
+
+Si decides implementar llamadas al servicio de recursos, agregar a 
+application.properties:
+
+# Configuración del servicio de recursos
+recursos.service.url=http://localhost:8080/api/v1
+recursos.service.timeout=5000
+
+# Circuit Breaker (Resilience4j)
+resilience4j.circuitbreaker.instances.recursos-service.failureRateThreshold=50
+resilience4j.circuitbreaker.instances.recursos-service.waitDurationInOpenState=10000
+resilience4j.circuitbreaker.instances.recursos-service.slidingWindowSize=10
+
+
+═══════════════════════════════════════════════════════════════════════════════
+DEPENDENCIAS ADICIONALES (si se necesitan)
+═══════════════════════════════════════════════════════════════════════════════
+
+Para comunicación con microservicios:
+
+<!-- OpenFeign (cliente REST declarativo) -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+
+<!-- Circuit Breaker (resiliencia) -->
+<dependency>
+    <groupId>io.github.resilience4j</groupId>
+    <artifactId>resilience4j-spring-boot3</artifactId>
+</dependency>
+
+
+═══════════════════════════════════════════════════════════════════════════════
+RESUMEN DE DECISIONES
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────┬─────────────┬─────────────┬─────────────┬──────────────┐
+│ Mejora          │ Complejidad │ Latencia    │ Resiliencia │ Recomendado  │
+├─────────────────┼─────────────┼─────────────┼─────────────┼──────────────┤
+│ Validar con BD  │ Baja        │ Mínima      │ Alta        │ ✓ Si misma BD│
+│ Validar con API │ Media       │ +50-200ms   │ Media       │ ✓ Microserv. │
+│ Estado en resp. │ Media       │ +50-200ms   │ Media       │ ✓ Admin UI   │
+│ Filtrar por est.│ Alta        │ +50-200ms   │ Media       │ ✓ User UI    │
+│ Error si no disp│ Baja        │ +50-200ms   │ Baja        │ APIs públicas│
+└─────────────────┴─────────────┴─────────────┴─────────────┴──────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+PRÓXIMOS PASOS SUGERIDOS
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Decidir arquitectura: ¿Monolito modular o microservicios?
+2. Si monolito: Implementar Mejora #1 con Opción A (query BD)
+3. Si microservicios: Implementar Mejora #1 con Opción B + Circuit Breaker
+4. Para Mejora #2: Empezar con Opción 2 (más flexible)
+5. Agregar tests de integración para validar comportamiento
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DEL DOCUMENTO DE MEJORAS
+═══════════════════════════════════════════════════════════════════════════════

@@ -2,11 +2,13 @@ package usecases
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/evrone/go-clean-template/config"
 	"github.com/evrone/go-clean-template/internal/entity"
 	"github.com/evrone/go-clean-template/internal/usecase/errorlog/ports"
+	"github.com/pkg/errors"
 )
 
 // LogErrorUseCaseImpl es la implementación del caso de uso para registrar errores.
@@ -25,13 +27,22 @@ func NewLogErrorUseCase(repo ports.ErrorLogRepository, cfg *config.Config) *LogE
 
 // Execute maneja la lógica para registrar un error.
 func (uc *LogErrorUseCaseImpl) Execute(ctx context.Context, input ports.LogErrorInput) error {
+	// stackTracer es una interfaz para errores que tienen un stack trace.
+	type stackTracer interface {
+		StackTrace() errors.StackTrace
+	}
+
+	// ... en Execute ...
 	errorLog := &entity.ErrorLog{
 		Timestamp:     time.Now(),
 		ServiceName:   uc.cfg.App.Name,
 		ErrorMessage:  input.Err.Error(),
 		RequestPath:   input.RequestPath,
 		RequestMethod: input.RequestMethod,
-		// StackTrace se puede añadir aquí si se utiliza una librería que los capture.
+	}
+
+	if st, ok := input.Err.(stackTracer); ok {
+		errorLog.StackTrace = fmt.Sprintf("%+v", st.StackTrace())
 	}
 
 	// Guardamos el error de forma asíncrona para no bloquear la respuesta al cliente.

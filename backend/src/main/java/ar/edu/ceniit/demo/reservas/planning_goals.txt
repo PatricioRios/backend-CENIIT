@@ -1,0 +1,21 @@
+# Registro de Avances: Búsqueda y Disponibilidad de Recursos
+
+## Plan de Implementación
+
+- [X] **Paso 1: Extender el Contrato del API (DTOs)**
+  - [X] 1.1. Crear `DisponibilidadFilterDTO`.
+  - [X] 1.2. Registrar el nuevo DTO de Filtro en `FilterDTO`.
+  - [X] 1.3. Crear `enum EstadoDisponibilidad`.
+  - [X] 1.4. Enriquecer `RecursoResponseDTO` con el campo `disponibilidad`.
+
+- [X] **Paso 2: Extender el Modelo de Dominio de `Criteria`**
+  - [X] 2.1. Crear `DisponibilidadCriteria`.
+  - [X] 2.2. Actualizar `CriteriaVisitor`.
+  - [X] 2.3. Actualizar el `RecursoDTOMapper`.
+
+- [X] **Paso 3: Rediseñar el Caso de Uso para la Orquestación**
+  - [X] 3.1. Implementar lógica de orquestación en `ReservasUseCasesImpl`.
+
+- [X] **Paso 4: Crear un Nuevo Puerto para Consultas de Reservas Locales**
+  - [X] 4.1. Definir la interfaz `ReservasRepositoryPort`.
+  - [X] 4.2. Implementar el adaptador `ReservasRepositoryAdapter`.

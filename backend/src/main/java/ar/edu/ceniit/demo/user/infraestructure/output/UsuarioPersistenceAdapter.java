@@ -3,7 +3,7 @@ package ar.edu.ceniit.demo.user.infraestructure.output;
 import ar.edu.ceniit.demo.auth.aplication.ports.input.dto.UserForDomain;
 import ar.edu.ceniit.demo.auth.aplication.ports.output.CreateUserOnDomainOutput;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.*;
-import ar.edu.ceniit.demo.user.aplication.entitys.objects.PagedResult;
+import ar.edu.ceniit.demo.common.entitys.PagedResult;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.SortOrder;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.criteria.Criteria;

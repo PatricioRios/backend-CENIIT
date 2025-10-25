@@ -31,3 +31,4 @@ build/
 
 ### VS Code ###
 .vscode/
+!/src/main/java/ar/edu/ceniit/demo/reservas/planning.txt

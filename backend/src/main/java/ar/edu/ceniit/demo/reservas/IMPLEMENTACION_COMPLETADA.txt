@@ -1,0 +1,341 @@
+===============================================================================
+IMPLEMENTACIÓN COMPLETADA: CRUD de Reservas
+===============================================================================
+Fecha: 2025-10-25
+Estado: ✅ COMPLETADO Y COMPILANDO
+===============================================================================
+
+═══════════════════════════════════════════════════════════════════════════════
+RESUMEN DE IMPLEMENTACIÓN
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ FASE 1: PERSISTENCE LAYER - COMPLETADA
+✅ FASE 2: DTOs Y EXCEPCIONES - COMPLETADA  
+✅ FASE 3: CONTROLLER LAYER - COMPLETADA
+✅ COMPILACIÓN EXITOSA
+
+═══════════════════════════════════════════════════════════════════════════════
+ARCHIVOS CREADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+[1] ReservaNotFoundException.java
+    📍 application/entitys/exceptions/ReservaNotFoundException.java
+    ✅ Excepción para reservas no encontradas
+
+[2] CreateReservaRequestDTO.java
+    📍 infraestructure/input/dto/CreateReservaRequestDTO.java
+    ✅ DTO de request con validaciones:
+       - @NotBlank nombre (max 200)
+       - @Size descripcion (max 500)
+       - @NotNull fechaHoraInicio
+       - @NotNull fechaHoraFin
+       - @AssertTrue validación fechaInicio < fechaFin
+
+[3] ReservaEntityTable.java
+    📍 infraestructure/output/schema/ReservaEntityTable.java
+    ✅ Entidad JPA mapeando tabla reservas_schema.reserva
+
+[4] ReservaRepository.java
+    📍 infraestructure/output/repository/ReservaRepository.java
+    ✅ Interface Spring Data JPA con JpaSpecificationExecutor
+
+[5] ReservaMapper.java
+    📍 infraestructure/output/mapper/ReservaMapper.java
+    ✅ Mapper Domain ↔ Entity
+
+[6] ReservaSpecificationVisitor.java
+    📍 infraestructure/output/visitor/ReservaSpecificationVisitor.java
+    ✅ Visitor para convertir ReservaCriteria a Specification<T>
+
+[7] ReservaDTOMapperImpl.java
+    📍 infraestructure/input/mapper/ReservaDTOMapperImpl.java
+    ✅ Implementación del mapper de DTOs
+
+═══════════════════════════════════════════════════════════════════════════════
+MÉTODOS IMPLEMENTADOS
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ PERSISTENCE LAYER (ReservasPersistenceAdapter.java)                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+✅ existeReserva(Integer recursoId, OffsetDateTime fechaHora)
+   - Query con Specification para validar si existe reserva en fecha exacta
+   - Excluye reservas canceladas
+   - Retorna: boolean
+
+✅ existeReservaInRange(Integer recursoId, OffsetDateTime inicio, OffsetDateTime fin)
+   - Lógica de solapamiento de rangos:
+     * (existente.fin > nuevo.inicio) AND (existente.inicio < nuevo.fin)
+   - Excluye reservas canceladas
+   - Usado para validar conflictos antes de crear reserva
+   - Retorna: boolean
+
+✅ createReserva(Reserva reserva, Integer solicitanteId)
+   - Mapea domain → entity
+   - Establece estado PENDIENTE por defecto
+   - Guarda en BD con save()
+   - Retorna: Reserva (domain) con ID generado
+
+✅ updateReserva(Reserva reserva)
+   - Busca reserva existente por ID
+   - Lanza ReservaNotFoundException si no existe
+   - Actualiza solo campos presentes (estado, aprobadorId)
+   - Guarda cambios
+   - Retorna: Reserva actualizada
+
+✅ findReservasByRecursoAndRange(...) [YA IMPLEMENTADO ANTES]
+   - Query paginada con filtros de recurso y rango de fechas
+   - Soporta criterios adicionales (solicitante, aprobador)
+   - Retorna: PagedResult<Reserva>
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CONTROLLER LAYER (ReservasController.java)                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+✅ POST /recursos/{recursoId}/reservas
+   - Endpoint: createReserva()
+   - Auth: @PreAuthorize("isAuthenticated()")
+   - Request: CreateReservaRequestDTO (validado con @Valid)
+   - Response: 201 Created + ReservaResponseDTO
+   - Lógica:
+     * Obtiene userId del token (TEMPORAL: hardcoded 1)
+     * Crea Reserva en estado PENDIENTE
+     * Llama a useCase.createReserva()
+     * Mapea a DTO y retorna
+
+✅ PATCH /reservas/{id}/aprobar
+   - Endpoint: aprobarReserva()
+   - Auth: @PreAuthorize("isAuthenticated()") 
+   - Request: Solo path parameter (id)
+   - Response: 200 OK + ReservaResponseDTO con estado CONFIRMADA
+   - Lógica:
+     * Obtiene approverId del token (TEMPORAL: hardcoded 1)
+     * Llama a useCase.aprovarReserva()
+     * Mapea y retorna
+
+✅ PATCH /reservas/{id}/cancelar
+   - Endpoint: cancelarReserva()
+   - Auth: @PreAuthorize("isAuthenticated()")
+   - Request: Solo path parameter (id)
+   - Response: 200 OK + ReservaResponseDTO con estado CANCELADA
+   - Lógica:
+     * Obtiene userId del token (TEMPORAL: hardcoded 1)
+     * TODO: Validar propiedad (que sea el solicitante o admin)
+     * Llama a useCase.cancelarReserva()
+     * Mapea y retorna
+
+✅ GET /recursos/{id}/agenda [YA IMPLEMENTADO ANTES]
+   - Query paginada de reservas por recurso
+
+═══════════════════════════════════════════════════════════════════════════════
+FLUJO COMPLETO DE OPERACIONES
+═══════════════════════════════════════════════════════════════════════════════
+
+CREAR RESERVA:
+┌──────────────────────────────────────────────────────────────────────────┐
+│ POST /recursos/5/reservas                                                │
+│ Body: { nombre, descripcion, fechaHoraInicio, fechaHoraFin }            │
+│   ↓                                                                      │
+│ Controller valida DTO (@Valid)                                          │
+│   ↓                                                                      │
+│ Controller crea Reserva (estado: PENDIENTE)                             │
+│   ↓                                                                      │
+│ UseCase valida: existeReservaInRange()                                  │
+│   ├─ Si solapa → throw RecursoYaReservado (HTTP 409)                   │
+│   └─ Si OK → continúa                                                   │
+│   ↓                                                                      │
+│ Repository.createReserva()                                              │
+│   ├─ Mapea domain → entity                                             │
+│   ├─ Establece solicitanteId                                           │
+│   ├─ Guarda en BD                                                      │
+│   └─ Retorna entity mapeada a domain                                   │
+│   ↓                                                                      │
+│ Response: 201 Created + reserva con ID generado                         │
+└──────────────────────────────────────────────────────────────────────────┘
+
+APROBAR RESERVA:
+┌──────────────────────────────────────────────────────────────────────────┐
+│ PATCH /reservas/15/aprobar                                               │
+│   ↓                                                                      │
+│ Controller obtiene approverId                                            │
+│   ↓                                                                      │
+│ UseCase crea Reserva parcial (id, approverId, CONFIRMADA)               │
+│   ↓                                                                      │
+│ Repository.updateReserva()                                               │
+│   ├─ Busca reserva por ID                                               │
+│   │   └─ Si no existe → throw ReservaNotFoundException (HTTP 404)      │
+│   ├─ Actualiza estado y aprobadorId                                     │
+│   └─ Guarda cambios                                                     │
+│   ↓                                                                      │
+│ Response: 200 OK + reserva actualizada                                   │
+└──────────────────────────────────────────────────────────────────────────┘
+
+CANCELAR RESERVA:
+┌──────────────────────────────────────────────────────────────────────────┐
+│ PATCH /reservas/15/cancelar                                              │
+│   ↓                                                                      │
+│ Controller obtiene userId                                                │
+│   ↓                                                                      │
+│ UseCase crea Reserva parcial (id, userId, CANCELADA)                    │
+│   ↓                                                                      │
+│ Repository.updateReserva()                                               │
+│   ├─ Busca reserva por ID                                               │
+│   │   └─ Si no existe → throw ReservaNotFoundException (HTTP 404)      │
+│   ├─ Actualiza estado y aprobadorId                                     │
+│   └─ Guarda cambios                                                     │
+│   ↓                                                                      │
+│ Response: 200 OK + reserva cancelada                                     │
+└──────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTING CON CURL
+═══════════════════════════════════════════════════════════════════════════════
+
+1. CREAR RESERVA:
+────────────────
+curl -X POST http://localhost:8080/recursos/5/reservas \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombre": "Reunión Equipo",
+    "descripcion": "Reunión semanal del proyecto",
+    "fechaHoraInicio": "2024-12-01T10:00:00-03:00",
+    "fechaHoraFin": "2024-12-01T12:00:00-03:00"
+  }'
+
+RESPONSE ESPERADO (201):
+{
+  "id": 1,
+  "nombre": "Reunión Equipo",
+  "descripcion": "Reunión semanal del proyecto",
+  "fechaHoraInicio": "2024-12-01T10:00:00-03:00",
+  "fechaHoraFin": "2024-12-01T12:00:00-03:00",
+  "estado": "PENDIENTE",
+  "recursoSolicitadoId": 5,
+  "usuarioSolicitanteId": 1
+}
+
+2. APROBAR RESERVA:
+───────────────────
+curl -X PATCH http://localhost:8080/reservas/1/aprobar \
+  -H "Authorization: Bearer ADMIN_TOKEN"
+
+RESPONSE ESPERADO (200):
+{
+  "id": 1,
+  "nombre": "Reunión Equipo",
+  ...
+  "estado": "CONFIRMADA",
+  ...
+}
+
+3. CANCELAR RESERVA:
+────────────────────
+curl -X PATCH http://localhost:8080/reservas/1/cancelar \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+RESPONSE ESPERADO (200):
+{
+  "id": 1,
+  "nombre": "Reunión Equipo",
+  ...
+  "estado": "CANCELADA",
+  ...
+}
+
+4. OBTENER AGENDA:
+──────────────────
+curl -X GET "http://localhost:8080/recursos/5/agenda?\
+fechaDesde=2024-12-01T00:00:00-03:00&\
+fechaHasta=2024-12-31T23:59:59-03:00&\
+offset=0&limit=10" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+═══════════════════════════════════════════════════════════════════════════════
+VALIDACIONES IMPLEMENTADAS
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ CreateReservaRequestDTO:
+   - nombre: @NotBlank, max 200 caracteres
+   - descripcion: max 500 caracteres (opcional)
+   - fechaHoraInicio: @NotNull
+   - fechaHoraFin: @NotNull
+   - fechaInicio < fechaFin: @AssertTrue
+
+✅ Validación de solapamiento:
+   - Before creating: existeReservaInRange()
+   - Excluye reservas canceladas
+
+✅ Validación de existencia:
+   - updateReserva lanza ReservaNotFoundException si no existe
+
+═══════════════════════════════════════════════════════════════════════════════
+PENDIENTES (TODOs)
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️  CRÍTICO - AUTENTICACIÓN:
+   Los 3 endpoints usan userId hardcoded = 1 (TEMPORAL)
+   
+   SOLUCIÓN: Integrar con Keycloak para obtener userId real del token JWT
+   
+   Ejemplo:
+   @PostMapping("/{recursoId}/reservas")
+   public ResponseEntity<...> createReserva(
+       ...,
+       @AuthenticationPrincipal KeycloakPrincipal principal) {
+       
+       // Obtener ID del token
+       KeycloakSecurityContext context = principal.getKeycloakSecurityContext();
+       AccessToken token = context.getToken();
+       String userId = token.getSubject(); // O claim personalizado
+       
+       ...
+   }
+
+⚠️  RECOMENDADO - AUTORIZACIÓN:
+   - aprobarReserva: Cambiar a @PreAuthorize("hasRole('ADMIN')")
+   - cancelarReserva: Validar que usuario sea propietario o admin
+   
+   Ejemplo validación de propiedad:
+   Reserva existing = reservaRepository.findById(id)...;
+   if (!existing.getUsuarioSolicitanteId().equals(userId) && !isAdmin()) {
+       throw new ForbiddenException("No autorizado");
+   }
+
+⚠️  OPCIONAL - MANEJO DE EXCEPCIONES:
+   Agregar @ExceptionHandler en controller o GlobalExceptionHandler:
+   - RecursoYaReservado → 409 Conflict
+   - ReservaNotFoundException → 404 Not Found
+   - MethodArgumentNotValidException → 400 Bad Request
+
+═══════════════════════════════════════════════════════════════════════════════
+ESTADO DE ENDPOINTS
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ GET  /recursos/{id}/agenda            - Obtener agenda (paginado)
+✅ POST /recursos/{recursoId}/reservas   - Crear reserva
+✅ PATCH /reservas/{id}/aprobar          - Aprobar reserva
+✅ PATCH /reservas/{id}/cancelar         - Cancelar reserva
+❌ GET  /reservas/{id}                   - Obtener detalle (NO IMPLEMENTADO)
+❌ GET  /reservas                        - Listar todas (NO IMPLEMENTADO)
+
+═══════════════════════════════════════════════════════════════════════════════
+COMPILACIÓN Y TESTS
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ Compilación: EXITOSA (mvn clean compile)
+⚠️  Tests unitarios: NO EJECUTADOS (usar -DskipTests)
+⚠️  Tests de integración: PENDIENTES
+
+PRÓXIMOS PASOS SUGERIDOS:
+1. Integrar autenticación real con Keycloak
+2. Agregar validación de autorización
+3. Implementar @ExceptionHandler
+4. Agregar tests unitarios
+5. Probar con Postman/curl contra BD real
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DE IMPLEMENTACIÓN
+═══════════════════════════════════════════════════════════════════════════════

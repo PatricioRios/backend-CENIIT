@@ -1,0 +1,74 @@
+# Plan de Implementación para el Endpoint de Agenda de Recurso Específico
+
+## 1. Objetivo General
+
+El objetivo es implementar un nuevo endpoint `GET /recursos/{id}/agenda` que permita a los clientes obtener la agenda de reservas de un recurso específico dentro de un rango de fechas determinado. Este endpoint está diseñado para soportar eficientemente la "Opción 2" de visualización de disponibilidad (recursos hacia horarios), donde el usuario selecciona primero un recurso y luego consulta su calendario de reservas.
+
+## 2. Plan de Implementación Detallado
+
+---
+
+### **Paso 1: Definir el Contrato del API (Controller)**
+
+- **1.1. Añadir Nuevo Endpoint en `ReservasController`:**
+  - **Qué:** Se agregará un nuevo método al `ReservasController.java`.
+  - **Por qué:** Para exponer la funcionalidad de consulta de agenda de un recurso específico a través de una interfaz RESTful.
+  - **Detalles:**
+    - Anotación: `@GetMapping("/{id}/agenda")`.
+    - Parámetros: `@PathVariable Long id` (para identificar el recurso), `@RequestParam OffsetDateTime fechaDesde` y `@RequestParam OffsetDateTime fechaHasta` (para definir el rango de la agenda).
+    - Retorno: `ResponseEntity<List<ReservaResponseDTO>>` (o un `PagedModel` si se considera que la agenda puede ser muy extensa y requerir paginación, aunque para una agenda de un solo recurso, una lista simple suele ser suficiente).
+    - Este método llamará a un nuevo método en el caso de uso.
+
+---
+
+### **Paso 2: Extender el Caso de Uso (`ReservasUseCases`)**
+
+- **2.1. Definir Nuevo Método en `ReservasUseCases`:**
+  - **Qué:** Se añadirá una nueva firma de método a la interfaz `ReservasUseCases.java`.
+  - **Por qué:** Para definir la operación de negocio de obtener las reservas de un recurso específico.
+  - **Detalles:** `List<Reserva> getReservasForRecurso(Long recursoId, OffsetDateTime fechaDesde, OffsetDateTime fechaHasta);`.
+
+- **2.2. Implementar el Nuevo Método en `ReservasUseCasesImpl`:**
+  - **Qué:** Se implementará el método `getReservasForRecurso` en `ReservasUseCasesImpl.java`.
+  - **Por qué:** Para orquestar la obtención de las reservas delegando la consulta al puerto de repositorio.
+  - **Detalles:** Esta implementación simplemente llamará al nuevo método correspondiente en el `ReservasRepositoryPort`.
+
+---
+
+### **Paso 3: Extender el Puerto de Repositorio (`ReservasRepositoryPort`)**
+
+- **3.1. Añadir Nuevo Método en `ReservasRepositoryPort`:**
+  - **Qué:** Se agregará una nueva firma de método a la interfaz `ReservasRepositoryPort.java`.
+  - **Por qué:** Para definir la operación de acceso a datos que recupera las reservas de un recurso dentro de un rango de tiempo.
+  - **Detalles:** `List<Reserva> findReservasByRecursoAndRange(Long recursoId, OffsetDateTime fechaDesde, OffsetDateTime fechaHasta);`.
+
+- **3.2. Implementar el Nuevo Método en `ReservasRepositoryAdapter`:**
+  - **Qué:** Se implementará el método `findReservasByRecursoAndRange` en `ReservasRepositoryAdapter.java`.
+  - **Por qué:** Para proporcionar la lógica concreta de consulta a la base de datos.
+  - **Detalles:**
+    - **Implementación Dummy (Inicial):** Por ahora, devolverá una `List` vacía.
+    - **Implementación Real (Futura):** Se inyectará un `ReservaRepository` (interfaz JPA) y se realizará una consulta para encontrar todas las entidades `Reserva` para el `recursoId` dado, donde el rango de la reserva se solape con `fechaDesde` y `fechaHasta`.
+
+---
+
+### **Paso 4: Crear DTOs y Mappers para la Respuesta**
+
+- **4.1. Crear `ReservaResponseDTO`:**
+  - **Qué:** Se creará una nueva clase DTO en `.../infraestructure/input/dto/ReservaResponseDTO.java`.
+  - **Por qué:** Para encapsular los datos de una reserva que se enviarán al cliente, incluyendo solo la información relevante para la agenda (ej. ID de reserva, `fechaInicio`, `fechaFin`, `estado`).
+
+- **4.2. Crear `ReservaDTOMapper` (o Extender `RecursoDTOMapper`):**
+  - **Qué:** Se creará una nueva clase `ReservaDTOMapper.java` (o se añadirá la lógica a `RecursoDTOMapper` si se considera que las responsabilidades son muy cercanas).
+  - **Por qué:** Para convertir los objetos de dominio `Reserva` a `ReservaResponseDTO` antes de enviarlos al cliente.
+
+---
+
+### **Paso 5: Actualizar el `ReservasController` para el Nuevo Endpoint**
+
+- **5.1. Conectar el Controlador con el Caso de Uso:**
+  - **Qué:** El método `getAgendaRecurso` en `ReservasController` llamará a `reservasUseCases.getReservasForRecurso(...)`.
+  - **Por qué:** Para obtener la lista de reservas del recurso.
+  - **Detalles:** Utilizará el `ReservaDTOMapper` para convertir la lista de `Reserva` a `List<ReservaResponseDTO>` y devolverá un `ResponseEntity.ok()` con esta lista.
+
+El objetivo de todo esto es que yo pueda ingresar un recurso, y tener diferentes (en el frontend), en donde primero vea un calendario (de todos los dias dle mes), y me aparezca cuantas reservas tiene dicho recurso en ese dia, Luego quiero poder tener una vista de dia en donde vea las horas en donde fue reservado un recurso.
+

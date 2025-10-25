@@ -60,7 +60,7 @@ func (r *RecursoRepository) Delete(ctx context.Context, id int64) error {
 		return fmt.Errorf("%w: %v", apperror.ErrInternal, err)
 	}
 	if commandTag.RowsAffected() == 0 {
-		return apperror.ErrNotFound
+		return fmt.Errorf("al eliminar, %w: id %d", apperror.ErrNotFound, id)
 	}
 	return nil
 }
@@ -82,7 +82,7 @@ func (r *RecursoRepository) GetByID(ctx context.Context, id int64) (*entity.Recu
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, apperror.ErrNotFound
+			return nil, fmt.Errorf("al buscar por id, %w: id %d", apperror.ErrNotFound, id)
 		}
 		return nil, fmt.Errorf("%w: %v", apperror.ErrInternal, err)
 	}
@@ -106,7 +106,7 @@ func (r *RecursoRepository) Update(ctx context.Context, recurso *entity.Recurso)
 	err = r.Pool.QueryRow(ctx, sql, args...).Scan(&recurso.UpdatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return apperror.ErrNotFound
+			return fmt.Errorf("al actualizar, %w: id %d", apperror.ErrNotFound, recurso.ID)
 		}
 		return fmt.Errorf("%w: %v", apperror.ErrInternal, err)
 	}

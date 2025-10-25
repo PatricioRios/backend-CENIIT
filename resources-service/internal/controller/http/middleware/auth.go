@@ -19,20 +19,6 @@ var (
 // AuthMiddleware creates a new authentication middleware.
 func AuthMiddleware(cfg *config.Keycloak, l logger.Interface) (fiber.Handler, error) {
 
-	/* MANERA ANTIGUA
-			provider, err := oidc.NewProvider(context.Background(), cfg.IssuerURL)
-	if err != nil {
-		l.Info(fmt.Sprintf("failed to create provider: ", err))
-
-		return nil, err
-	}
-
-	verifier := provider.Verifier(&oidc.Config{ClientID: cfg.ClientID})
-	*/
-
-	l.Info(fmt.Sprint("clientID :", cfg.ClientID,
-		", issuerURL :", cfg.IssuerURL, ", JwksURL: ", cfg.JwksURL))
-
 	keySet := oidc.NewRemoteKeySet(context.Background(), cfg.JwksURL)
 	verifier := oidc.NewVerifier(cfg.IssuerURL, keySet, &oidc.Config{ClientID: cfg.ClientID})
 
@@ -51,7 +37,7 @@ func AuthMiddleware(cfg *config.Keycloak, l logger.Interface) (fiber.Handler, er
 
 		idToken, err := verifier.Verify(c.Context(), tokenString)
 		if err != nil {
-			l.Info(fmt.Sprintf("failed to verify token: ", err))
+			l.Info(fmt.Sprintf("failed to verify token: %v", err))
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid or Expired Token"})
 		}
 

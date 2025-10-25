@@ -2,7 +2,7 @@ package ar.edu.ceniit.demo.user.infraestructure.input;
 
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.*;
 
-import ar.edu.ceniit.demo.user.aplication.entitys.objects.PagedResult;
+import ar.edu.ceniit.demo.common.entitys.PagedResult;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.SortOrder;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.criteria.Criteria;
@@ -18,7 +18,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.*;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;

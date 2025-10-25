@@ -11,10 +11,10 @@ SET standard_conforming_strings = on;
 -- Drop databases (except postgres and template1)
 --
 
---DROP DATABASE "TP";
---DROP DATABASE app_db;
---DROP DATABASE paradigmas;
---DROP DATABASE test_1;
+DROP DATABASE IF EXISTS "TP";
+DROP DATABASE IF EXISTS app_db;
+DROP DATABASE IF EXISTS paradigmas;
+DROP DATABASE IF EXISTS test_1;
 
 
 
@@ -23,9 +23,9 @@ SET standard_conforming_strings = on;
 -- Drop roles
 --
 
---DROP ROLE app_user;
---DROP ROLE recursos_user;
---DROP ROLE reservas_user;
+DROP ROLE IF EXISTS app_user;
+DROP ROLE IF EXISTS recursos_user;
+DROP ROLE IF EXISTS reservas_user;
 
 
 --
@@ -304,11 +304,11 @@ ALTER TYPE reservas_schema.estado_reserva OWNER TO app_user;
 
 CREATE FUNCTION recursos_schema.set_timestamp_on_update() RETURNS trigger
     LANGUAGE plpgsql
-    AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
+    AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
 $$;
 
 
@@ -361,88 +361,6 @@ ALTER SEQUENCE logging_schema.error_logs_id_seq OWNER TO app_user;
 --
 
 ALTER SEQUENCE logging_schema.error_logs_id_seq OWNED BY logging_schema.error_logs.id;
-
-
---
--- Name: error_logs; Type: TABLE; Schema: public; Owner: app_user
---
-
-CREATE TABLE public.error_logs (
-    id bigint NOT NULL,
-    "timestamp" timestamp with time zone DEFAULT now() NOT NULL,
-    service_name character varying(255) NOT NULL,
-    error_message text NOT NULL,
-    stack_trace text,
-    request_path text,
-    request_method character varying(10)
-);
-
-
-ALTER TABLE public.error_logs OWNER TO app_user;
-
---
--- Name: TABLE error_logs; Type: COMMENT; Schema: public; Owner: app_user
---
-
-COMMENT ON TABLE public.error_logs IS 'Registra errores internos inesperados de la aplicación para auditoría y depuración.';
-
-
---
--- Name: error_logs_id_seq; Type: SEQUENCE; Schema: public; Owner: app_user
---
-
-CREATE SEQUENCE public.error_logs_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.error_logs_id_seq OWNER TO app_user;
-
---
--- Name: error_logs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: app_user
---
-
-ALTER SEQUENCE public.error_logs_id_seq OWNED BY public.error_logs.id;
-
-
---
--- Name: history; Type: TABLE; Schema: public; Owner: app_user
---
-
-CREATE TABLE public.history (
-    id integer NOT NULL,
-    source character varying(255),
-    destination character varying(255),
-    original character varying(255),
-    translation character varying(255)
-);
-
-
-ALTER TABLE public.history OWNER TO app_user;
-
---
--- Name: history_id_seq; Type: SEQUENCE; Schema: public; Owner: app_user
---
-
-CREATE SEQUENCE public.history_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.history_id_seq OWNER TO app_user;
-
---
--- Name: history_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: app_user
---
-
-ALTER SEQUENCE public.history_id_seq OWNED BY public.history.id;
 
 
 --
@@ -548,7 +466,13 @@ CREATE TABLE reservas_schema.reserva (
     nombre character varying(200),
     descripcion character varying,
     estado reservas_schema.estado_reserva NOT NULL,
-    usuario_id integer NOT NULL
+    solicitante_id integer NOT NULL,
+    aprobador_o_cancelador_id integer,
+    recurso_id integer,
+    updated_at timestamp with time zone DEFAULT now(),
+    created_at timestamp with time zone DEFAULT now(),
+    fecha_hora_inicio timestamp with time zone,
+    fecha_hora_fin timestamp with time zone
 );
 
 
@@ -640,20 +564,6 @@ ALTER TABLE ONLY logging_schema.error_logs ALTER COLUMN id SET DEFAULT nextval('
 
 
 --
--- Name: error_logs id; Type: DEFAULT; Schema: public; Owner: app_user
---
-
-ALTER TABLE ONLY public.error_logs ALTER COLUMN id SET DEFAULT nextval('public.error_logs_id_seq'::regclass);
-
-
---
--- Name: history id; Type: DEFAULT; Schema: public; Owner: app_user
---
-
-ALTER TABLE ONLY public.history ALTER COLUMN id SET DEFAULT nextval('public.history_id_seq'::regclass);
-
-
---
 -- Name: usuario id; Type: DEFAULT; Schema: public; Owner: app_user
 --
 
@@ -693,22 +603,6 @@ ALTER TABLE ONLY reservas_schema.reserva_recursos ALTER COLUMN recursos_id SET D
 --
 
 COPY logging_schema.error_logs (id, "timestamp", service_name, error_message, stack_trace, request_path, request_method) FROM stdin;
-\.
-
-
---
--- Data for Name: error_logs; Type: TABLE DATA; Schema: public; Owner: app_user
---
-
-COPY public.error_logs (id, "timestamp", service_name, error_message, stack_trace, request_path, request_method) FROM stdin;
-\.
-
-
---
--- Data for Name: history; Type: TABLE DATA; Schema: public; Owner: app_user
---
-
-COPY public.history (id, source, destination, original, translation) FROM stdin;
 \.
 
 
@@ -781,7 +675,7 @@ COPY recursos_schema.recursos (id, nombre, descripcion, href_photo, estado, crea
 -- Data for Name: reserva; Type: TABLE DATA; Schema: reservas_schema; Owner: app_user
 --
 
-COPY reservas_schema.reserva (id, nombre, descripcion, estado, usuario_id) FROM stdin;
+COPY reservas_schema.reserva (id, nombre, descripcion, estado, solicitante_id, aprobador_o_cancelador_id, recurso_id, updated_at, created_at, fecha_hora_inicio, fecha_hora_fin) FROM stdin;
 \.
 
 
@@ -798,20 +692,6 @@ COPY reservas_schema.reserva_recursos (reserva_id, recursos_id) FROM stdin;
 --
 
 SELECT pg_catalog.setval('logging_schema.error_logs_id_seq', 1, false);
-
-
---
--- Name: error_logs_id_seq; Type: SEQUENCE SET; Schema: public; Owner: app_user
---
-
-SELECT pg_catalog.setval('public.error_logs_id_seq', 1, false);
-
-
---
--- Name: history_id_seq; Type: SEQUENCE SET; Schema: public; Owner: app_user
---
-
-SELECT pg_catalog.setval('public.history_id_seq', 1, false);
 
 
 --
@@ -863,22 +743,6 @@ ALTER TABLE ONLY logging_schema.error_logs
 
 ALTER TABLE ONLY public.usuario
     ADD CONSTRAINT dni UNIQUE (dni);
-
-
---
--- Name: error_logs error_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: app_user
---
-
-ALTER TABLE ONLY public.error_logs
-    ADD CONSTRAINT error_logs_pkey PRIMARY KEY (id);
-
-
---
--- Name: history history_pkey; Type: CONSTRAINT; Schema: public; Owner: app_user
---
-
-ALTER TABLE ONLY public.history
-    ADD CONSTRAINT history_pkey PRIMARY KEY (id);
 
 
 --
@@ -952,20 +816,6 @@ CREATE INDEX idx_error_logs_timestamp ON logging_schema.error_logs USING btree (
 
 
 --
--- Name: idx_error_logs_service_name; Type: INDEX; Schema: public; Owner: app_user
---
-
-CREATE INDEX idx_error_logs_service_name ON public.error_logs USING btree (service_name);
-
-
---
--- Name: idx_error_logs_timestamp; Type: INDEX; Schema: public; Owner: app_user
---
-
-CREATE INDEX idx_error_logs_timestamp ON public.error_logs USING btree ("timestamp" DESC);
-
-
---
 -- Name: recursos set_timestamp_on_recursos_update; Type: TRIGGER; Schema: recursos_schema; Owner: app_user
 --
 
@@ -977,7 +827,7 @@ CREATE TRIGGER set_timestamp_on_recursos_update BEFORE UPDATE ON recursos_schema
 --
 
 ALTER TABLE ONLY reservas_schema.reserva
-    ADD CONSTRAINT fk_usuario FOREIGN KEY (usuario_id) REFERENCES public.usuario(id);
+    ADD CONSTRAINT fk_usuario FOREIGN KEY (solicitante_id) REFERENCES public.usuario(id);
 
 
 --

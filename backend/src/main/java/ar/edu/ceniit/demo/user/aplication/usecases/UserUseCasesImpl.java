@@ -3,7 +3,7 @@ package ar.edu.ceniit.demo.user.aplication.usecases;
 import ar.edu.ceniit.demo.common.exceptions.FatalErrorException;
 import ar.edu.ceniit.demo.common.exceptions.WarningErrorException;
 import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.*;
-import ar.edu.ceniit.demo.user.aplication.entitys.objects.PagedResult;
+import ar.edu.ceniit.demo.common.entitys.PagedResult;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.SortOrder;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.User;
 import ar.edu.ceniit.demo.user.aplication.entitys.objects.criteria.Criteria;
@@ -15,7 +15,6 @@ import ar.edu.ceniit.demo.user.aplication.ports.output.UserOutputs;
 import ar.edu.ceniit.demo.user.aplication.ports.output.identity_provider.IPOutputs;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 public class UserUseCasesImpl implements UserUseCases {

@@ -18,14 +18,12 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import ar.edu.ceniit.demo.user.aplication.entitys.objects.PagedResult;
+import ar.edu.ceniit.demo.common.entitys.PagedResult;
 
 class UserUseCasesImplTest {
 

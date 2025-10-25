@@ -2,14 +2,13 @@ package usecases
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/evrone/go-clean-template/internal/entity"
 	"github.com/evrone/go-clean-template/internal/usecase/common/apperror"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports"
-	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/criteria"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/DTOs"
+	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/criteria"
+	"github.com/pkg/errors"
 )
 
 // RecursoUseCaseImpl es la implementación del caso de uso para recursos.
@@ -34,7 +33,7 @@ func (uc *RecursoUseCaseImpl) ListResources(ctx context.Context, c criteria.Crit
 			return nil, err
 		}
 		// Para otros errores, sí añadimos contexto porque son inesperados.
-		return nil, fmt.Errorf("error al listar recursos: %w", err)
+		return nil, errors.Wrap(err, "error al listar recursos")
 	}
 
 	// Get the total count of resources matching the criteria (without pagination)
@@ -45,7 +44,7 @@ func (uc *RecursoUseCaseImpl) ListResources(ctx context.Context, c criteria.Crit
 			return nil, err
 		}
 		// Para otros errores, sí añadimos contexto.
-		return nil, fmt.Errorf("error al contar recursos: %w", err)
+		return nil, errors.Wrap(err, "error al contar recursos")
 	}
 
 	// The pagination object can be nil, so we need to handle that.
@@ -74,7 +73,7 @@ func (uc *RecursoUseCaseImpl) CreateResource(ctx context.Context, input DTOs.Cre
 
 	err := uc.repo.Save(ctx, recursoAcrear)
 	if err != nil {
-		return nil, fmt.Errorf("error al guardar el recurso: %w", err)
+		return nil, errors.Wrap(err, "error al guardar el recurso")
 	}
 
 	return recursoAcrear, nil
@@ -84,7 +83,7 @@ func (uc *RecursoUseCaseImpl) CreateResource(ctx context.Context, input DTOs.Cre
 func (uc *RecursoUseCaseImpl) DeleteResource(ctx context.Context, id int64) error {
 	err := uc.repo.Delete(ctx, id)
 	if err != nil {
-		return fmt.Errorf("error al eliminar el recurso: %w", err)
+		return errors.Wrap(err, "error al eliminar el recurso")
 	}
 	return nil
 }
@@ -93,7 +92,7 @@ func (uc *RecursoUseCaseImpl) DeleteResource(ctx context.Context, id int64) erro
 func (uc *RecursoUseCaseImpl) UpdateResource(ctx context.Context, id int64, input DTOs.UpdateResourceInput) (*entity.Recurso, error) {
 	recurso, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("error al obtener recurso para actualizar: %w", err)
+		return nil, errors.Wrap(err, "error al obtener recurso para actualizar")
 	}
 
 	if input.Nombre != nil {
@@ -111,7 +110,7 @@ func (uc *RecursoUseCaseImpl) UpdateResource(ctx context.Context, id int64, inpu
 
 	err = uc.repo.Update(ctx, recurso)
 	if err != nil {
-		return nil, fmt.Errorf("error al guardar cambios del recurso: %w", err)
+		return nil, errors.Wrap(err, "error al guardar cambios del recurso")
 	}
 
 	return recurso, nil
@@ -121,7 +120,7 @@ func (uc *RecursoUseCaseImpl) UpdateResource(ctx context.Context, id int64, inpu
 func (uc *RecursoUseCaseImpl) GetResourceByID(ctx context.Context, id int64) (*entity.Recurso, error) {
 	recurso, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("error al obtener recurso por ID: %w", err)
+		return nil, errors.Wrap(err, "error al obtener recurso por ID")
 	}
 	return recurso, nil
 }

@@ -51,11 +51,13 @@ func NewRecursoRoutes(router fiber.Router, uc recursosports.RecursoUseCase, phot
 func (r *RecursoRoutes) uploadPhoto(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
+		r.logger.Warn("ID de recurso inválido en la URL para subir foto", "error", err.Error(), "path", c.Path())
 		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "ID de recurso inválido", c.Path()))
 	}
 
 	file, err := c.FormFile("foto")
 	if err != nil {
+		r.logger.Warn("No se encontró el archivo 'foto' en la petición para subir foto", "error", err.Error(), "path", c.Path())
 		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "No se encontró el archivo 'foto' en la petición", c.Path()))
 	}
 
@@ -75,6 +77,7 @@ func (r *RecursoRoutes) uploadPhoto(c *fiber.Ctx) error {
 func (r *RecursoRoutes) deletePhoto(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
+		r.logger.Warn("ID de recurso inválido en la URL para eliminar foto", "error", err.Error(), "path", c.Path())
 		return c.Status(http.StatusBadRequest).JSON(common_response.NewErrorResponseDTO(http.StatusBadRequest, "Bad Request", "ID de recurso inválido", c.Path()))
 	}
 
@@ -227,12 +230,13 @@ func (r *RecursoRoutes) handleError(c *fiber.Ctx, err error) error {
 	default:
 		r.logger.Error("Internal Server Error", "error", err.Error(), "path", c.Path())
 
-		// Asynchronously log internal errors to the database (mocked)
-		_ = r.logErrorUseCase.Execute(c.Context(), errorlogports.LogErrorInput{
+		if loggingErr := r.logErrorUseCase.Execute(c.Context(), errorlogports.LogErrorInput{
 			Err:           err,
 			RequestPath:   c.Path(),
 			RequestMethod: c.Method(),
-		})
+		}); loggingErr != nil {
+			r.logger.Error("Fallo al persistir el error interno en la BD", "error_de_logging", loggingErr.Error())
+		}
 
 		return c.Status(http.StatusInternalServerError).JSON(common_response.NewErrorResponseDTO(http.StatusInternalServerError, "Internal Server Error", "Ocurrió un error inesperado", c.Path()))
 	}

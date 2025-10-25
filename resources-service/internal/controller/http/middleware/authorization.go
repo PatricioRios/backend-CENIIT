@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,15 +17,11 @@ func RequireRole(requiredRole string) fiber.Handler {
 		if !ok {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "could not retrieve roles"})
 		}
-		fmt.Println(roles)
-		for index, role := range roles {
-			fmt.Printf("Checking role: %s == %s = %t\n", role, requiredRole, role == requiredRole)
-			fmt.Printf("index: %d\n", index)
+		for _, role := range roles {
 			if role == requiredRole {
 				return c.Next()
 			}
 		}
-
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": ErrForbidden.Error()})
 	}
 }

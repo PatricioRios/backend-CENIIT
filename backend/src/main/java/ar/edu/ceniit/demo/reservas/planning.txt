@@ -1,0 +1,108 @@
+
+# Plan de Implementación para la Búsqueda y Verificación de Disponibilidad de Recursos
+
+## 1. Objetivo General
+
+El objetivo es implementar un endpoint `POST /recursos/search` que sirva como una herramienta robusta para que los usuarios puedan buscar recursos y verificar su disponibilidad en una fecha y hora específicas.
+
+Este endpoint debe cumplir con los siguientes requisitos clave:
+
+- **Búsqueda Multifacética:** Permitir el filtrado de recursos basado en sus atributos intrínsecos (ej. nombre, descripción, tipo) utilizando el patrón de diseño `Criteria` ya establecido.
+- **Verificación de Disponibilidad:** La función principal es determinar si un recurso está disponible para ser reservado en un momento concreto.
+- **Múltiples Fuentes de Verdad:** La disponibilidad de un recurso depende de dos factores que provienen de distintas fuentes:
+    1.  **Estado Propio del Recurso:** Un recurso puede no estar disponible si su estado inherente es `EN_MANTENIMIENTO`, `FUERA_DE_SERVICIO`, etc. Esta información se considera "maestra" y provendrá de un microservicio externo de gestión de recursos.
+    2.  **Conflictos de Reservas:** Un recurso no está disponible si ya existe una reserva para él en la base de datos local del microservicio de reservas que se solape con la fecha y hora consultadas.
+- **Respuesta Enriquecida:** La respuesta del API debe incluir, para cada recurso, un campo calculado que indique claramente su estado de disponibilidad: `DISPONIBLE`, `RESERVADO` o `NO_DISPONIBLE`.
+
+## 2. Plan de Implementación Detallado
+
+Para lograr este objetivo, se seguirá un plan de 4 pasos que modifica y extiende la arquitectura actual de forma limpia y escalable.
+
+---
+
+### **Paso 1: Extender el Contrato del API (DTOs)**
+
+El primer paso es modificar las estructuras de datos que definen la comunicación con el cliente.
+
+- **1.1. Crear `DisponibilidadFilterDTO`:**
+  - **Qué:** Crear una nueva clase DTO en `.../infraestructure/input/dto/DisponibilidadFilterDTO.java`.
+  - **Por qué:** Para permitir que el cliente especifique la fecha y hora exactas para la cual desea verificar la disponibilidad.
+  - **Detalles:** Heredará de `FilterDTO` y contendrá un campo `private OffsetDateTime fechaHora;`.
+
+- **1.2. Registrar el nuevo DTO de Filtro:**
+  - **Qué:** Actualizar la anotación `@JsonSubTypes` en la clase base `FilterDTO.java`.
+  - **Por qué:** Para que Jackson (el serializador JSON) sepa cómo interpretar un objeto JSON con `type: "DISPONIBILIDAD"` y mapearlo a nuestra nueva clase `DisponibilidadFilterDTO`.
+  - **Detalles:** Se añadirá la línea `@JsonSubTypes.Type(value = DisponibilidadFilterDTO.class, name = "DISPONIBILIDAD")`.
+
+- **1.3. Enriquecer el DTO de Respuesta:**
+  - **Qué:** Crear un `enum` `EstadoDisponibilidad` y añadirlo como campo al `RecursoResponseDTO`.
+  - **Por qué:** Para comunicar de forma clara y estandarizada el estado de disponibilidad calculado de cada recurso al cliente.
+  - **Detalles:**
+    - El `enum` se creará en `.../infraestructure/input/dto/EstadoDisponibilidad.java` con valores: `DISPONIBLE`, `RESERVADO`, `NO_DISPONIBLE`.
+    - Se añadirá el campo `private EstadoDisponibilidad disponibilidad;` a `RecursoResponseDTO.java`.
+
+---
+
+### **Paso 2: Extender el Modelo de Dominio de `Criteria`**
+
+A continuación, adaptamos nuestro patrón de diseño de dominio para que entienda el nuevo tipo de filtro.
+
+- **2.1. Crear `DisponibilidadCriteria`:**
+  - **Qué:** Crear la clase `.../application/entitys/criteria/DisponibilidadCriteria.java`.
+  - **Por qué:** Para representar el filtro de disponibilidad dentro de nuestro modelo de dominio, desacoplando la lógica de negocio de los DTOs de infraestructura.
+  - **Detalles:** Implementará la interfaz `Criteria` y contendrá el `OffsetDateTime` de la consulta.
+
+- **2.2. Actualizar `CriteriaVisitor`:**
+  - **Qué:** Añadir un nuevo método `visit` a la interfaz `CriteriaVisitor.java`.
+  - **Por qué:** Para que el patrón Visitor pueda manejar el nuevo tipo de criterio.
+  - **Detalles:** Se añadirá la firma `T visit(DisponibilidadCriteria criteria);`.
+
+- **2.3. Actualizar el `RecursoDTOMapper`:**
+  - **Qué:** Modificar el método `toDomain(FilterDTO dto)`.
+  - **Por qué:** Para enseñar al mapper a convertir el nuevo `DisponibilidadFilterDTO` de la capa de infraestructura a un `DisponibilidadCriteria` de la capa de dominio.
+
+---
+
+### **Paso 3: Rediseñar el Caso de Uso para la Orquestación**
+
+El corazón de la nueva lógica residirá aquí. El caso de uso se convierte en un orquestador inteligente.
+
+- **3.1. Lógica de Orquestación en `ReservasUseCasesImpl.getAllRecursos`:**
+  - **Qué:** El método procesará el `Criteria` recibido para separar los filtros y orquestar las llamadas a los puertos de salida.
+  - **Por qué:** Para combinar la información de las dos fuentes de verdad (microservicio de recursos y base de datos local de reservas) y producir un resultado coherente.
+  - **Detalles del Flujo:**
+    1.  **Separar Criterios:** Recorrer el árbol de `Criteria` para identificar y separar los filtros de atributos del recurso del filtro de disponibilidad.
+    2.  **Fase 1 (Filtrado Base):** Invocar al `ReservasOutputPort` (que apunta al microservicio de recursos) usando solo los filtros de atributos. Esto devuelve una lista paginada de recursos candidatos.
+    3.  **Fase 2 (Enriquecimiento y Verificación):** Iterar sobre cada `Recurso` devuelto:
+        - **Verificar Estado Propio:** Si `recurso.getEstado()` es `EN_MANTENIMIENTO`, el estado de disponibilidad calculado será `NO_DISPONIBLE`.
+        - **Verificar Reservas Locales:** Si el estado del recurso lo permite y se incluyó un filtro de disponibilidad, se llamará al nuevo puerto `ReservasRepositoryPort` con el método `existeReserva(recurso.getId(), fechaHora)`.
+        - **Asignar Estado Final:** Si `existeReserva` devuelve `true`, el estado será `RESERVADO`. Si no, y si el estado propio lo permite, será `DISPONIBLE`.
+    4.  **Retornar Resultado:** Devolver el `PagedResult<Recurso>` con la información de disponibilidad calculada, lista para ser mapeada a DTOs en la capa del controlador.
+
+---
+
+### **Paso 4: Crear un Nuevo Puerto para Consultas de Reservas Locales**
+
+Finalmente, creamos la abstracción y la implementación para acceder a nuestra propia base de datos.
+
+- **4.1. Definir la Interfaz `ReservasRepositoryPort`:**
+  - **Qué:** Crear una nueva interfaz en `.../application/ports/ReservasRepositoryPort.java`.
+  - **Por qué:** Para definir un contrato claro para las operaciones de consulta sobre la entidad `Reserva` local, manteniendo la lógica de negocio independiente de la tecnología de persistencia.
+  - **Detalles:** Contendrá un método como `boolean existeReserva(Long recursoId, OffsetDateTime fechaHora);`.
+
+- **4.2. Implementar el Adaptador `ReservasRepositoryAdapter`:**
+  - **Qué:** Crear la implementación de `ReservasRepositoryPort` en `.../infraestructure/output/`.
+  - **Por qué:** Para proporcionar la implementación concreta que interactúa con la base de datos.
+  - **Detalles:** Usará Spring Data JPA. Inyectará un `ReservaRepository` (interfaz JPA estándar) y ejecutará una consulta para buscar reservas activas para un `recursoId` que se solapen con el `fechaHora` proporcionado.
+
+
+
+estoy pensando las maneras en las que se puede implementar la funcionalidad y tendriamos tipo 2 "vistas posibles"
+- Opcion 1 (horario hacia recursos):
+    - Poner una hora en especifo y ver un listado de los recursos disponibles para alquilar en esa hora.
+- Opcion 2 (recursos hacia horarios):
+    - Primero apretar en un recurso.
+    - Luego ahi aparece una vista en donde te aparezcan dias (el calendario). (ahi podria aparecer que hay x reservas de ese recurso en cierto dia).
+    - Luego al apretar en un dia del calendario aparecen las horas.
+        - Desde esa vista (la vista de horas) aparecen las horas en donde ya fue reservado un recurso. Luego apartir de ahi se puede seleccionar la hora en la que se quiere reservar un recurso
+

@@ -8,6 +8,7 @@ import (
 	"github.com/evrone/go-clean-template/internal/entity"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/DTOs"
+	"github.com/pkg/errors"
 )
 
 // PhotoUseCaseImpl is the implementation of the PhotoUseCase interface.
@@ -28,7 +29,7 @@ func NewPhotoUseCase(recursoRepo ports.RecursoRepository, fileRepo ports.FileSto
 func (uc *PhotoUseCaseImpl) UploadPhoto(ctx context.Context, input DTOs.UploadPhotoInput) (*entity.Recurso, error) {
 	recurso, err := uc.recursoRepo.GetByID(ctx, input.ResourceID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get resource: %w", err)
+		return nil, errors.Wrap(err, "failed to get resource")
 	}
 
 	// If the resource already has a photo, delete the old one.
@@ -46,16 +47,16 @@ func (uc *PhotoUseCaseImpl) UploadPhoto(ctx context.Context, input DTOs.UploadPh
 	}
 
 	// Upload the new photo.
-	fileURL, err := uc.fileRepo.Upload(ctx, input.File)
+	fileURL, err := uc.fileRepo.Upload(ctx, input.File, input.ResourceID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to upload photo: %w", err)
+		return nil, errors.Wrap(err, "failed to upload photo")
 	}
 
 	// Update the resource with the new photo URL.
 	recurso.HrefPhoto = fileURL
 	err = uc.recursoRepo.Update(ctx, recurso)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update resource with new photo: %w", err)
+		return nil, errors.Wrap(err, "failed to update resource with new photo")
 	}
 
 	return recurso, nil
@@ -65,7 +66,7 @@ func (uc *PhotoUseCaseImpl) UploadPhoto(ctx context.Context, input DTOs.UploadPh
 func (uc *PhotoUseCaseImpl) DeletePhoto(ctx context.Context, resourceID int64) error {
 	recurso, err := uc.recursoRepo.GetByID(ctx, resourceID)
 	if err != nil {
-		return fmt.Errorf("failed to get resource: %w", err)
+		return errors.Wrap(err, "failed to get resource")
 	}
 
 	if recurso.HrefPhoto == "" {
@@ -79,7 +80,7 @@ func (uc *PhotoUseCaseImpl) DeletePhoto(ctx context.Context, resourceID int64) e
 		objectName := parts[len(parts)-1]
 		err = uc.fileRepo.Delete(ctx, objectName)
 		if err != nil {
-			return fmt.Errorf("failed to delete photo from storage: %w", err)
+			return errors.Wrap(err, "failed to delete photo from storage")
 		}
 	}
 
@@ -87,7 +88,7 @@ func (uc *PhotoUseCaseImpl) DeletePhoto(ctx context.Context, resourceID int64) e
 	recurso.HrefPhoto = ""
 	err = uc.recursoRepo.Update(ctx, recurso)
 	if err != nil {
-		return fmt.Errorf("failed to update resource after deleting photo: %w", err)
+		return errors.Wrap(err, "failed to update resource after deleting photo")
 	}
 
 	return nil

@@ -14,6 +14,15 @@ services:
       - trabajo_final_keycloak_db_data:/var/lib/postgresql/data
     networks:
       - app-network
+  
+  minio-setup:
+    build:
+      context: ./minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - app-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.4.1
@@ -128,6 +137,7 @@ services:
     extra_hosts:
       - "keycloak.local:host-gateway"
     environment:
+      - SWAGGER_ENABLED=true
       - APP_NAME=resources-service
       - APP_VERSION=1.0.0
       - HTTP_PORT=8082
@@ -138,7 +148,7 @@ services:
       - KEYCLOAK_JWKS_URL=http://keycloak.local:3030/realms/develop-spring-realm/protocol/openid-connect/certs
       - KEYCLOAK_CLIENT_ID=backend-recursos
       - KEYCLOAK_CLIENT_SECRET=GdLt1pXeZRogkLal1HzJ8t0CsONHv0dG
-      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ENDPOINT=http://minio:9000
       - MINIO_ACCESS_KEY_ID=minioadmin
       - MINIO_SECRET_ACCESS_KEY=minioadminsecret
       - MINIO_BUCKET_NAME=recursos

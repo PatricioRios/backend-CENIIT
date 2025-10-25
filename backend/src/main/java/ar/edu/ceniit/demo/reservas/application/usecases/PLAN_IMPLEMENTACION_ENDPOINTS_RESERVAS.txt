@@ -1,0 +1,599 @@
+===============================================================================
+PLAN DE IMPLEMENTACIÓN: Endpoints y Persistencia para Reservas
+===============================================================================
+Fecha: 2025-10-25
+Ubicación: ReservasController.java y ReservasPersistenceAdapter.java
+Objetivo: Implementar endpoints y persistencia para createReserva, aprovarReserva, cancelarReserva
+===============================================================================
+
+═══════════════════════════════════════════════════════════════════════════════
+ANÁLISIS ACTUAL
+═══════════════════════════════════════════════════════════════════════════════
+
+CASOS DE USO EXISTENTES (ReservasUseCasesImpl.java):
+✅ createReserva(Reserva, Integer solicitanteId)      → líneas 59-70
+✅ aprovarReserva(Integer reservaId, Integer approverId) → líneas 73-81
+✅ cancelarReserva(Integer reservaId, Integer cancelerId) → líneas 84-92
+
+PUERTOS REPOSITORY (ReservasRepositoryPort.java):
+❌ createReserva() → NO IMPLEMENTADO (ReservasPersistenceAdapter línea 28-31)
+❌ updateReserva() → NO IMPLEMENTADO (ReservasPersistenceAdapter línea 34-37)
+✅ existeReservaInRange() → NO IMPLEMENTADO (usado en validación de createReserva)
+
+ENDPOINTS (ReservasController.java):
+❌ POST /recursos/{id}/reservas → NO EXISTE
+❌ PATCH /reservas/{id}/aprobar → NO EXISTE  
+❌ PATCH /reservas/{id}/cancelar → NO EXISTE
+
+═══════════════════════════════════════════════════════════════════════════════
+COMPONENTES A IMPLEMENTAR
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. PERSISTENCE LAYER (ReservasPersistenceAdapter.java)                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Implementar 3 métodos:
+├─ createReserva(Reserva reserva, Integer solicitanteId)
+├─ updateReserva(Reserva reserva)
+└─ existeReservaInRange(Integer recursoId, OffsetDateTime inicio, OffsetDateTime fin)
+
+DETALLES:
+
+1.1. existeReservaInRange()
+────────────────────────────
+PROPÓSITO: Validar que no exista solapamiento de reservas
+
+LÓGICA DE SOLAPAMIENTO:
+Dos reservas se solapan si:
+  (nuevaInicio < existenteFin) AND (nuevaFin > existenteInicio)
+
+SQL EQUIVALENTE:
+  SELECT COUNT(*) > 0
+  FROM reservas_schema.reserva
+  WHERE recurso_solicitado_id = ?
+    AND estado != 'CANCELADA'
+    AND fecha_hora_inicio < ?  -- nuevaFin
+    AND fecha_hora_fin > ?     -- nuevaInicio
+
+IMPLEMENTACIÓN:
+@Override
+public boolean existeReservaInRange(Integer recursoId, 
+                                    OffsetDateTime fechaHoraInicio, 
+                                    OffsetDateTime fechaHoraFin) {
+    Specification<ReservaEntityTable> spec = (root, query, builder) -> {
+        Predicate recursoMatch = builder.equal(
+            root.get("recursoSolicitadoId"), recursoId);
+        
+        Predicate noEstaCancelada = builder.notEqual(
+            root.get("estado"), EstadoReserva.CANCELADA);
+        
+        // Lógica de solapamiento:
+        // La reserva existente termina DESPUÉS de que empieza la nueva
+        Predicate finDespuesDeNuevoInicio = builder.greaterThan(
+            root.get("fechaHoraFin"), fechaHoraInicio);
+        
+        // La reserva existente empieza ANTES de que termine la nueva  
+        Predicate inicioAntesDenNuevoFin = builder.lessThan(
+            root.get("fechaHoraInicio"), fechaHoraFin);
+        
+        return builder.and(
+            recursoMatch, 
+            noEstaCancelada,
+            finDespuesDeNuevoInicio,
+            inicioAntesDenNuevoFin
+        );
+    };
+    
+    return reservaRepository.count(spec) > 0;
+}
+
+CASOS DE PRUEBA:
+✓ Reserva existente: 10:00-12:00, Nueva: 11:00-13:00 → TRUE (solapa)
+✓ Reserva existente: 10:00-12:00, Nueva: 12:00-14:00 → FALSE (no solapa)
+✓ Reserva existente: 10:00-12:00, Nueva: 08:00-10:00 → FALSE (no solapa)
+✓ Reserva existente: 10:00-12:00, Nueva: 09:00-11:00 → TRUE (solapa)
+✓ Reserva cancelada no cuenta
+
+
+1.2. createReserva()
+────────────────────
+PROPÓSITO: Crear nueva reserva en estado PENDIENTE
+
+LÓGICA:
+1. Mapear Reserva (domain) → ReservaEntityTable (entity)
+2. Establecer estado = PENDIENTE (si no viene)
+3. Establecer solicitanteId
+4. Guardar en BD
+5. Mapear ReservaEntityTable → Reserva (domain)
+6. Retornar
+
+IMPLEMENTACIÓN:
+@Override
+public Reserva createReserva(Reserva reserva, Integer solicitanteId) {
+    ReservaEntityTable entity = reservaMapper.toEntity(reserva);
+    
+    // Establecer campos de creación
+    entity.setSolicitanteId(solicitanteId);
+    entity.setEstado(reserva.getEstado() != null ? 
+                     reserva.getEstado() : EstadoReserva.PENDIENTE);
+    
+    // Guardar en BD
+    ReservaEntityTable savedEntity = reservaRepository.save(entity);
+    
+    // Mapear de vuelta a dominio
+    return reservaMapper.toDomain(savedEntity);
+}
+
+VALIDACIONES:
+- solicitanteId NOT NULL (campo obligatorio en BD)
+- recursoSolicitadoId NOT NULL
+- fechaHoraInicio y fechaHoraFin NOT NULL
+- nombre NOT NULL
+
+EXCEPCIONES POSIBLES:
+- DataIntegrityViolationException: Si FK no válida (usuario/recurso no existe)
+- ConstraintViolationException: Si campos obligatorios nulos
+
+
+1.3. updateReserva()
+────────────────────
+PROPÓSITO: Actualizar estado de reserva (aprobar/cancelar)
+
+LÓGICA ACTUAL DEL USE CASE:
+- aprovarReserva() → Crea Reserva parcial con (id, approverId, CONFIRMADA)
+- cancelarReserva() → Crea Reserva parcial con (id, cancelerId, CANCELADA)
+
+Solo se actualiza:
+  - estado
+  - aprobador_o_cancelador_id
+
+IMPLEMENTACIÓN:
+@Override
+public Reserva updateReserva(Reserva reserva) {
+    // 1. Buscar reserva existente
+    ReservaEntityTable existing = reservaRepository.findById(reserva.getId())
+        .orElseThrow(() -> new ReservaNotFoundException(
+            "Reserva con ID " + reserva.getId() + " no encontrada"));
+    
+    // 2. Actualizar solo campos necesarios
+    if (reserva.getEstado() != null) {
+        existing.setEstado(reserva.getEstado());
+    }
+    
+    if (reserva.getAprobadorOCanceladorId() != null) {
+        existing.setAprobadorOCanceladorId(reserva.getAprobadorOCanceladorId());
+    }
+    
+    // 3. Guardar cambios
+    ReservaEntityTable updated = reservaRepository.save(existing);
+    
+    // 4. Mapear a dominio
+    return reservaMapper.toDomain(updated);
+}
+
+VALIDACIONES:
+- reservaId debe existir (lanzar ReservaNotFoundException si no)
+- Opcionalmente validar transiciones de estado:
+  * PENDIENTE → CONFIRMADA (aprobar)
+  * PENDIENTE → CANCELADA (cancelar)
+  * CONFIRMADA → CANCELADA (cancelar después de aprobar)
+  * NO permitir: CANCELADA → CONFIRMADA
+
+EXCEPCIONES:
+- ReservaNotFoundException: Si reservaId no existe
+- InvalidStateTransitionException: Si cambio de estado no permitido (opcional)
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 2. CONTROLLER LAYER (ReservasController.java)                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Agregar 3 endpoints REST:
+
+2.1. POST /recursos/{recursoId}/reservas - Crear reserva
+─────────────────────────────────────────────────────────
+REQUEST:
+{
+  "nombre": "Reunión Proyecto X",
+  "descripcion": "Reunión semanal del equipo",
+  "fechaHoraInicio": "2024-11-01T10:00:00-03:00",
+  "fechaHoraFin": "2024-11-01T12:00:00-03:00"
+}
+
+RESPONSE (201 Created):
+{
+  "id": 15,
+  "nombre": "Reunión Proyecto X",
+  "descripcion": "Reunión semanal del equipo",
+  "fechaHoraInicio": "2024-11-01T10:00:00-03:00",
+  "fechaHoraFin": "2024-11-01T12:00:00-03:00",
+  "estado": "PENDIENTE",
+  "recursoSolicitadoId": 5,
+  "usuarioSolicitanteId": 42
+}
+
+CÓDIGO:
+@PostMapping("/{recursoId}/reservas")
+@PreAuthorize("isAuthenticated()")
+public ResponseEntity<ReservaResponseDTO> createReserva(
+        @PathVariable Long recursoId,
+        @RequestBody CreateReservaRequestDTO request,
+        @AuthenticationPrincipal KeycloakPrincipal principal) {
+    
+    // Obtener ID del usuario autenticado
+    Integer userId = getUserIdFromPrincipal(principal);
+    
+    // Crear objeto de dominio
+    Reserva reserva = new Reserva(
+        null, // ID será generado por BD
+        request.getNombre(),
+        request.getDescripcion(),
+        request.getFechaHoraInicio(),
+        request.getFechaHoraFin(),
+        EstadoReserva.PENDIENTE,
+        recursoId.intValue(),
+        userId,
+        null
+    );
+    
+    // Llamar al caso de uso
+    Reserva created = reservasUseCases.createReserva(reserva, userId);
+    
+    // Mapear a DTO de respuesta
+    ReservaResponseDTO response = reservaDTOMapper.toDTO(created);
+    
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+}
+
+VALIDACIONES:
+- @Valid en request body
+- fechaHoraInicio < fechaHoraFin
+- fechaHoraInicio > ahora (no crear reservas en el pasado)
+- nombre: @NotBlank, max 200 caracteres
+
+
+2.2. PATCH /reservas/{id}/aprobar - Aprobar reserva
+────────────────────────────────────────────────────
+REQUEST: (sin body, datos en path y token)
+
+RESPONSE (200 OK):
+{
+  "id": 15,
+  "nombre": "Reunión Proyecto X",
+  "descripcion": "Reunión semanal del equipo",
+  "fechaHoraInicio": "2024-11-01T10:00:00-03:00",
+  "fechaHoraFin": "2024-11-01T12:00:00-03:00",
+  "estado": "CONFIRMADA",
+  "recursoSolicitadoId": 5,
+  "usuarioSolicitanteId": 42
+}
+
+CÓDIGO:
+@PatchMapping("/reservas/{id}/aprobar")
+@PreAuthorize("hasRole('ADMIN')") // Solo administradores pueden aprobar
+public ResponseEntity<ReservaResponseDTO> aprobarReserva(
+        @PathVariable Integer id,
+        @AuthenticationPrincipal KeycloakPrincipal principal) {
+    
+    // Obtener ID del aprobador
+    Integer approverId = getUserIdFromPrincipal(principal);
+    
+    // Llamar al caso de uso
+    Reserva approved = reservasUseCases.aprovarReserva(id, approverId);
+    
+    // Mapear a DTO de respuesta
+    ReservaResponseDTO response = reservaDTOMapper.toDTO(approved);
+    
+    return ResponseEntity.ok(response);
+}
+
+AUTORIZACIÓN:
+- Requiere rol ADMIN o GESTOR_RESERVAS
+- Validar que el usuario tenga permisos
+
+
+2.3. PATCH /reservas/{id}/cancelar - Cancelar reserva
+──────────────────────────────────────────────────────
+REQUEST: (sin body, datos en path y token)
+
+RESPONSE (200 OK):
+{
+  "id": 15,
+  "nombre": "Reunión Proyecto X",
+  "descripcion": "Reunión semanal del equipo",
+  "fechaHoraInicio": "2024-11-01T10:00:00-03:00",
+  "fechaHoraFin": "2024-11-01T12:00:00-03:00",
+  "estado": "CANCELADA",
+  "recursoSolicitadoId": 5,
+  "usuarioSolicitanteId": 42
+}
+
+CÓDIGO:
+@PatchMapping("/reservas/{id}/cancelar")
+@PreAuthorize("isAuthenticated()")
+public ResponseEntity<ReservaResponseDTO> cancelarReserva(
+        @PathVariable Integer id,
+        @AuthenticationPrincipal KeycloakPrincipal principal) {
+    
+    // Obtener ID del usuario
+    Integer userId = getUserIdFromPrincipal(principal);
+    
+    // TODO: Validar que el usuario sea el solicitante o admin
+    // (requiere consultar reserva primero)
+    
+    // Llamar al caso de uso
+    Reserva cancelled = reservasUseCases.cancelarReserva(id, userId);
+    
+    // Mapear a DTO de respuesta
+    ReservaResponseDTO response = reservaDTOMapper.toDTO(cancelled);
+    
+    return ResponseEntity.ok(response);
+}
+
+AUTORIZACIÓN:
+- Usuario autenticado puede cancelar SUS PROPIAS reservas
+- Admins pueden cancelar CUALQUIER reserva
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 3. DTOs NECESARIOS                                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+3.1. CreateReservaRequestDTO.java
+──────────────────────────────────
+package ar.edu.ceniit.demo.reservas.infraestructure.input.dto;
+
+import jakarta.validation.constraints.*;
+import lombok.Data;
+import java.time.OffsetDateTime;
+
+@Data
+public class CreateReservaRequestDTO {
+    
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 200, message = "El nombre no puede exceder 200 caracteres")
+    private String nombre;
+    
+    @Size(max = 500, message = "La descripción no puede exceder 500 caracteres")
+    private String descripcion;
+    
+    @NotNull(message = "La fecha de inicio es obligatoria")
+    @Future(message = "La fecha de inicio debe ser futura")
+    private OffsetDateTime fechaHoraInicio;
+    
+    @NotNull(message = "La fecha de fin es obligatoria")
+    private OffsetDateTime fechaHoraFin;
+    
+    @AssertTrue(message = "La fecha de inicio debe ser anterior a la fecha de fin")
+    public boolean isFechaInicioAntesDeFin() {
+        if (fechaHoraInicio == null || fechaHoraFin == null) {
+            return true; // Dejamos que @NotNull maneje los nulos
+        }
+        return fechaHoraInicio.isBefore(fechaHoraFin);
+    }
+}
+
+NOTA: NO incluir recursoId ni solicitanteId, vienen del path y token
+
+
+3.2. ReservaResponseDTO (YA EXISTE)
+────────────────────────────────────
+✅ Ya existe en: infraestructure/input/dto/ReservaResponseDTO.java
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 4. EXCEPCIONES A CREAR                                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+4.1. ReservaNotFoundException.java
+───────────────────────────────────
+package ar.edu.ceniit.demo.reservas.application.entitys.exceptions;
+
+public class ReservaNotFoundException extends RuntimeException {
+    public ReservaNotFoundException(String message) {
+        super(message);
+    }
+}
+
+4.2. RecursoYaReservado.java
+────────────────────────────
+✅ YA EXISTE (línea 5 de ReservasUseCasesImpl)
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 5. MANEJO DE EXCEPCIONES EN CONTROLLER                                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Agregar @ExceptionHandler en ReservasController o GlobalExceptionHandler:
+
+@ExceptionHandler(RecursoYaReservado.class)
+public ResponseEntity<ErrorResponse> handleRecursoYaReservado(
+        RecursoYaReservado ex) {
+    ErrorResponse error = new ErrorResponse(
+        "RECURSO_YA_RESERVADO",
+        ex.getMessage(),
+        HttpStatus.CONFLICT.value()
+    );
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+}
+
+@ExceptionHandler(ReservaNotFoundException.class)
+public ResponseEntity<ErrorResponse> handleReservaNotFound(
+        ReservaNotFoundException ex) {
+    ErrorResponse error = new ErrorResponse(
+        "RESERVA_NOT_FOUND",
+        ex.getMessage(),
+        HttpStatus.NOT_FOUND.value()
+    );
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+}
+
+@ExceptionHandler(MethodArgumentNotValidException.class)
+public ResponseEntity<ErrorResponse> handleValidationErrors(
+        MethodArgumentNotValidException ex) {
+    Map<String, String> errors = ex.getBindingResult()
+        .getFieldErrors()
+        .stream()
+        .collect(Collectors.toMap(
+            FieldError::getField,
+            FieldError::getDefaultMessage
+        ));
+    
+    ErrorResponse error = new ErrorResponse(
+        "VALIDATION_ERROR",
+        "Errores de validación",
+        HttpStatus.BAD_REQUEST.value(),
+        errors
+    );
+    return ResponseEntity.badRequest().body(error);
+}
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ORDEN DE IMPLEMENTACIÓN
+═══════════════════════════════════════════════════════════════════════════════
+
+FASE 1: PERSISTENCE (Base de datos)
+  [1] Implementar existeReservaInRange() en ReservasPersistenceAdapter
+  [2] Implementar createReserva() en ReservasPersistenceAdapter
+  [3] Implementar updateReserva() en ReservasPersistenceAdapter
+  [4] Crear ReservaNotFoundException
+
+FASE 2: DTOs y Validaciones
+  [5] Crear CreateReservaRequestDTO con validaciones
+
+FASE 3: CONTROLLER (Endpoints REST)
+  [6] Implementar POST /recursos/{id}/reservas
+  [7] Implementar PATCH /reservas/{id}/aprobar
+  [8] Implementar PATCH /reservas/{id}/cancelar
+  [9] Agregar @ExceptionHandler para las excepciones
+
+FASE 4: TESTING (Opcional pero recomendado)
+  [10] Probar con Postman/curl
+  [11] Verificar validaciones
+  [12] Verificar transacciones y rollbacks
+
+
+═══════════════════════════════════════════════════════════════════════════════
+CONSIDERACIONES DE SEGURIDAD
+═══════════════════════════════════════════════════════════════════════════════
+
+1. AUTENTICACIÓN:
+   - Todos los endpoints requieren usuario autenticado
+   - Obtener userId del token JWT (KeycloakPrincipal)
+
+2. AUTORIZACIÓN:
+   - Crear reserva: Cualquier usuario autenticado
+   - Aprobar reserva: Solo ADMIN o GESTOR_RESERVAS
+   - Cancelar reserva: 
+     * Propietario de la reserva
+     * O ADMIN
+
+3. VALIDACIÓN DE PROPIEDAD:
+   Antes de cancelar, validar que el usuario sea el solicitante:
+   
+   Reserva reserva = getReservaById(id);
+   if (!reserva.getUsuarioSolicitanteId().equals(userId) && !isAdmin(principal)) {
+       throw new ForbiddenException("No tienes permiso para cancelar esta reserva");
+   }
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FLUJOS COMPLETOS
+═══════════════════════════════════════════════════════════════════════════════
+
+FLUJO: CREAR RESERVA
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. POST /recursos/5/reservas                                                │
+│    Body: { nombre, descripcion, fechaHoraInicio, fechaHoraFin }             │
+│                                                                              │
+│ 2. Controller valida DTO (@Valid)                                           │
+│                                                                              │
+│ 3. Controller obtiene userId del token JWT                                  │
+│                                                                              │
+│ 4. Controller llama: createReserva(reserva, userId)                         │
+│                                                                              │
+│ 5. UseCase valida: existeReservaInRange()                                   │
+│    └─ Si existe → throw RecursoYaReservado                                  │
+│                                                                              │
+│ 6. UseCase llama: repositoryPort.createReserva()                            │
+│                                                                              │
+│ 7. PersistenceAdapter mapea y guarda en BD                                  │
+│                                                                              │
+│ 8. Response: 201 Created con reserva creada                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+FLUJO: APROBAR RESERVA
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. PATCH /reservas/15/aprobar                                               │
+│                                                                              │
+│ 2. Controller valida rol ADMIN                                              │
+│                                                                              │
+│ 3. Controller obtiene approverId del token                                  │
+│                                                                              │
+│ 4. Controller llama: aprovarReserva(15, approverId)                         │
+│                                                                              │
+│ 5. UseCase crea Reserva parcial (id, approverId, CONFIRMADA)                │
+│                                                                              │
+│ 6. UseCase llama: repositoryPort.updateReserva()                            │
+│                                                                              │
+│ 7. PersistenceAdapter busca reserva existente                               │
+│    └─ Si no existe → throw ReservaNotFoundException                         │
+│                                                                              │
+│ 8. PersistenceAdapter actualiza estado y aprobadorId                        │
+│                                                                              │
+│ 9. Response: 200 OK con reserva actualizada                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+FLUJO: CANCELAR RESERVA
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1. PATCH /reservas/15/cancelar                                              │
+│                                                                              │
+│ 2. Controller valida autenticación                                          │
+│                                                                              │
+│ 3. Controller obtiene userId del token                                      │
+│                                                                              │
+│ 4. Controller valida propiedad (opcional pero recomendado)                  │
+│                                                                              │
+│ 5. Controller llama: cancelarReserva(15, userId)                            │
+│                                                                              │
+│ 6. UseCase crea Reserva parcial (id, userId, CANCELADA)                     │
+│                                                                              │
+│ 7. UseCase llama: repositoryPort.updateReserva()                            │
+│                                                                              │
+│ 8. PersistenceAdapter busca y actualiza                                     │
+│                                                                              │
+│ 9. Response: 200 OK con reserva cancelada                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+TESTS DE POSTMAN/CURL
+═══════════════════════════════════════════════════════════════════════════════
+
+1. CREAR RESERVA:
+curl -X POST http://localhost:8080/recursos/5/reservas \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombre": "Reunión Equipo",
+    "descripcion": "Reunión semanal",
+    "fechaHoraInicio": "2024-11-15T10:00:00-03:00",
+    "fechaHoraFin": "2024-11-15T12:00:00-03:00"
+  }'
+
+2. APROBAR RESERVA:
+curl -X PATCH http://localhost:8080/reservas/1/aprobar \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+3. CANCELAR RESERVA:
+curl -X PATCH http://localhost:8080/reservas/1/cancelar \
+  -H "Authorization: Bearer $TOKEN"
+
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DEL PLAN DE IMPLEMENTACIÓN
+═══════════════════════════════════════════════════════════════════════════════

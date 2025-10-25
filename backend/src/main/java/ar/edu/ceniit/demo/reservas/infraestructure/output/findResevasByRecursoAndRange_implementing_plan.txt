@@ -1,0 +1,88 @@
+===============================================================================
+PLAN DE IMPLEMENTACIÓN: findReservasByRecursoAndRange()
+===============================================================================
+Fecha: 2025-10-25
+Ubicación: ReservasPersistenceAdapter.java
+Objetivo: Implementar query paginada de reservas por recurso y rango de fechas
+===============================================================================
+
+═══════════════════════════════════════════════════════════════════════════════
+1. ANÁLISIS DEL ESQUEMA DE BASE DE DATOS
+═══════════════════════════════════════════════════════════════════════════════
+
+TABLA: reservas_schema.reservas
+┌──────────────────┬─────────────────────────┬──────────────────────────────┐
+│ Campo            │ Tipo                    │ Descripción                  │
+├──────────────────┼─────────────────────────┼──────────────────────────────┤
+│ id               │ integer (PK)            │ ID autoincremental           │
+│ nombre           │ varchar(100) NOT NULL   │ Nombre de la reserva         │
+│ descripcion      │ varchar(200)            │ Descripción opcional         │
+│ estado           │ estado_reserva NOT NULL │ ENUM del estado              │
+│ solicitante_id   │ integer NOT NULL (FK)   │ ID del usuario solicitante   │
+│ aceptador_id     │ integer                 │ ID del usuario aceptador     │
+│ recurso_id       │ integer (FK)            │ ID del recurso               │
+│ created_at       │ timestamp with tz       │ Fecha de creación            │
+│ updated_at       │ timestamp               │ Fecha de actualización       │
+└──────────────────┴─────────────────────────┴──────────────────────────────┘
+
+⚠️ PROBLEMA DETECTADO EN EL ESQUEMA:
+   - ❌ NO HAY CAMPOS fecha_hora_inicio ni fecha_hora_fin
+   - ❌ El dominio Reserva.java tiene estos campos pero no existen en BD
+   - ⚠️  DECISIÓN: Asumir que estos campos serán agregados al esquema
+   - 📝 NOTA: Se debe crear migración SQL para agregar:
+       * fecha_hora_inicio TIMESTAMP WITH TIME ZONE NOT NULL
+       * fecha_hora_fin TIMESTAMP WITH TIME ZONE NOT NULL
+
+═══════════════════════════════════════════════════════════════════════════════
+2. ARQUITECTURA DEL PATRÓN EXISTENTE (basado en usuarios)
+═══════════════════════════════════════════════════════════════════════════════
+
+ESTRUCTURA USADA EN EL PROYECTO:
+/infraestructure/output/
+├── ReservasPersistenceAdapter.java  (✅ Existe - implementar aquí)
+├── schema/
+│   └── ReservaEntityTable.java      (❌ CREAR - Entidad JPA)
+├── repository/
+│   └── ReservaRepository.java       (❌ CREAR - Interface JPA)
+├── mapper/
+│   └── ReservaMapper.java           (❌ CREAR - Domain ↔ Entity)
+└── visitor/
+    └── ReservaSpecificationVisitor.java (❌ CREAR - Criteria → Specification)
+
+PATRÓN USADO:
+1. Entity Table: Clase @Entity que mapea tabla de BD
+2. JPA Repository: Extiende JpaRepository + JpaSpecificationExecutor
+3. Mapper: Convierte entre Domain (Reserva) y Entity (ReservaEntityTable)
+4. Specification Visitor: Convierte ReservaCriteria a Specification<T>
+5. Adapter: Orquesta todo usando inyección de dependencias
+
+═══════════════════════════════════════════════════════════════════════════════
+3. COMPONENTES A CREAR - ORDEN DE IMPLEMENTACIÓN
+═══════════════════════════════════════════════════════════════════════════════
+
+FASE 1: [1] ReservaEntityTable.java
+FASE 1: [2] ReservaRepository.java
+FASE 2: [3] ReservaMapper.java
+FASE 3: [4] ReservaSpecificationVisitor.java
+FASE 4: [5] Actualizar ReservasPersistenceAdapter.java
+
+Ver detalles de cada componente en secciones siguientes.
+
+═══════════════════════════════════════════════════════════════════════════════
+4. CONSIDERACIONES CRÍTICAS
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️  CAMPOS FALTANTES: fecha_hora_inicio y fecha_hora_fin NO EXISTEN en BD
+    SOLUCIÓN: Crear migración SQL o comentar hasta que se agreguen
+
+✓   ENUM Estado: Usar @Enumerated(EnumType.STRING) si coincide con BD
+
+✓   Time Zone: OffsetDateTime ↔ TIMESTAMP WITH TIME ZONE (automático)
+
+✓   Paginación: page = offset / limit
+
+✓   Microservicio: NO usar @ManyToOne para recursos (están en otro servicio)
+
+═══════════════════════════════════════════════════════════════════════════════
+FIN DEL PLAN - Ver archivo completo para detalles de implementación
+═══════════════════════════════════════════════════════════════════════════════

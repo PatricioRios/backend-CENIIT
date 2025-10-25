@@ -15,13 +15,14 @@ import (
 	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
+	"github.com/swaggo/swag"
 )
 
 // NewRouter -.
 func NewRouter(app *fiber.App, cfg *config.Config, recursoUseCase recursosports.RecursoUseCase, photoUseCase recursosports.PhotoUseCase, logErrorUseCase errorlogports.LogErrorUseCase, l logger.Interface) {
 	// Options
 	app.Use(middleware.Logger(l))
-	app.Use(middleware.Recovery(l))
+	app.Use(middleware.Recovery(l, logErrorUseCase))
 
 	// Prometheus metrics
 	if cfg.Metrics.Enabled {
@@ -33,6 +34,21 @@ func NewRouter(app *fiber.App, cfg *config.Config, recursoUseCase recursosports.
 	// Swagger
 	if cfg.Swagger.Enabled {
 		app.Get("/swagger/*", swagger.HandlerDefault)
+		// Endpoint explícito para doc.json, usando el nombre de la instancia de Swagger
+		app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
+			doc, err := swag.ReadDoc("swagger") // "swagger" es el InfoInstanceName en docs.go
+			if err != nil {
+				// Agregar log de depuración
+				fmt.Printf("DEBUG: Error reading swagger doc: %v\n", err)
+				// Si falla, proporcionamos una documentación mínima
+				doc = `{"swagger":"2.0","info":{"title":"API","version":"1.0"},"paths":{}}`
+			} else {
+				// Agregar log de depuración
+				fmt.Printf("DEBUG: Successfully read swagger doc, length: %d\n", len(doc))
+			}
+			c.Set("Content-Type", "application/json")
+			return c.SendString(doc)
+		})
 	}
 
 	// K8s probe
