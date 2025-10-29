@@ -9,6 +9,7 @@ import java.util.UUID;
 @Relation(collectionRelation = "users")
 public class UserResponseDTO {
 
+    private Long id;
     private UUID uuid;
     private String username;
     private String email;
@@ -21,7 +22,8 @@ public class UserResponseDTO {
     public UserResponseDTO() {
     }
 
-    public UserResponseDTO(UUID uuid, String username, String email, String firstName, String secondName, String surname, String secondSurname, Integer dni) {
+    public UserResponseDTO(Long id, UUID uuid, String username, String email, String firstName, String secondName, String surname, String secondSurname, Integer dni) {
+        this.id = id;
         this.uuid = uuid;
         this.username = username;
         this.email = email;
@@ -32,7 +34,13 @@ public class UserResponseDTO {
         this.dni = dni;
     }
 
+    public Long getId() {
+        return id;
+    }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public UUID getUuid() {
         return uuid;

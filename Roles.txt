@@ -1,0 +1,72 @@
+# Definición de Roles y Grupos para los Microservicios
+
+Este archivo define los roles para los microservicios `backend` y `resources-service`.
+Cada rol está diseñado para corresponder a un endpoint específico, permitiendo un control de acceso granular.
+
+---
+
+## GRUPO: BACKEND_SERVICE_ROLES
+
+### SUBGRUPO: AUTH_CONTROLLER
+- ROL: `PUT_AUTH_ROLES` (Asigna roles a un usuario - `PUT /auth/roles`)
+- ROL: `GET_AUTH_ROLES` (Obtiene todos los roles disponibles - `GET /auth/roles`)
+- ROL: `POST_AUTH_REGISTER` (Registra un nuevo usuario - `POST /auth/register`)
+
+### SUBGRUPO: USER_CONTROLLER
+- ROL: `GET_USER_BY_UUID` (Obtiene un usuario por su UUID - `GET /users/{uuid}`)
+- ROL: `PUT_UPDATE_USER` (Actualiza un usuario - `PUT /users/{uuid}`)
+- ROL: `DELETE_USER` (Elimina un usuario - `DELETE /users/{uuid}`)
+- ROL: `POST_SEARCH_USERS` (Busca usuarios con filtros - `POST /users/search`)
+
+### SUBGRUPO: RESERVAS_CONTROLLER
+- ROL: `GET_RESERVAS_AGENDA` (Obtiene la agenda de reservas - `GET /reservas/agenda`)
+- ROL: `POST_CREATE_RESERVA` (Crea una nueva reserva - `POST /reservas/{recursoId}`)
+- ROL: `PATCH_APROBAR_RESERVA` (Aprueba una reserva - `PATCH /reservas/{id}/aprobar`)
+- ROL: `PATCH_CANCELAR_RESERVA` (Cancela una reserva - `PATCH /reservas/{id}/cancelar`)
+- ROL: `GET_RESERVA_BY_ID` (Obtiene una reserva por ID - `GET /reservas/{id}`)
+- ROL: `POST_SEARCH_RESERVAS` (Busca reservas con filtros - `POST /reservas/search`)
+
+---
+
+## GRUPO: RESOURCES_SERVICE_ROLES
+
+### SUBGRUPO: RECURSOS_CONTROLLER
+- ROL: `POST_RECURSOS` (Crea un nuevo recurso - `POST /recursos`)
+- ROL: `DELETE_RECURSO_BY_ID` (Elimina un recurso por ID - `DELETE /recursos/{id}`)
+- ROL: `PATCH_RECURSO_BY_ID` (Actualiza un recurso por ID - `PATCH /recursos/{id}`)
+- ROL: `GET_RECURSO_BY_ID` (Obtiene un recurso por ID - `GET /recursos/{id}`)
+- ROL: `GET_RECURSOS` (Lista todos los recursos - `GET /recursos`)
+- ROL: `POST_SEARCH_RECURSOS` (Busca recursos con filtros - `POST /recursos/search`)
+- ROL: `POST_RECURSO_FOTO` (Sube una foto para un recurso - `POST /recursos/{id}/foto`)
+- ROL: `DELETE_RECURSO_FOTO` (Elimina la foto de un recurso - `DELETE /recursos/{id}/foto`)
+
+
+---
+
+## Grupos de Roles de Alto Nivel (Roles Compuestos)
+
+### ROL COMPUESTO: USUARIO_COMUN
+Un usuario estándar del sistema con permisos para ver recursos y gestionar sus propias reservas y perfil.
+- `GET_USER_BY_UUID` (limitado a su propio usuario)
+- `PUT_UPDATE_USER` (limitado a su propio usuario)
+- `GET_RECURSOS`
+- `GET_RECURSO_BY_ID`
+- `POST_SEARCH_RECURSOS`
+- `POST_CREATE_RESERVA`
+- `GET_RESERVAS_AGENDA`
+- `PATCH_CANCELAR_RESERVA` (limitado a sus propias reservas)
+
+### ROL COMPUESTO: ADMIN_RECURSOS
+Usuario con permisos para administrar completamente los recursos y las reservas asociadas.
+- Incluye todos los roles de `RECURSOS_CONTROLLER`.
+- Incluye todos los roles de `RESERVAS_CONTROLLER`.
+
+### ROL COMPUESTO: ADMIN_USUARIOS
+Usuario con permisos para administrar usuarios, roles y autenticación.
+- Incluye todos los roles de `AUTH_CONTROLLER`.
+- Incluye todos los roles de `USER_CONTROLLER`.
+
+### ROL COMPUESTO: SUPER_ADMIN
+Un superusuario con acceso total a todas las funcionalidades de ambos microservicios.
+- Incluye todos los roles de `BACKEND_SERVICE_ROLES`.
+- Incluye todos los roles de `RESOURCES_SERVICE_ROLES`.

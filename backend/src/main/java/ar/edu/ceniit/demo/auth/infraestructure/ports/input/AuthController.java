@@ -1,13 +1,5 @@
 package ar.edu.ceniit.demo.auth.infraestructure.ports.input;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
-
 import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.BadRequestOnRegisterUserException;
 import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.DuplicatedEmailException;
 import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.UserNameIsAlreadyInUse;
@@ -16,6 +8,18 @@ import ar.edu.ceniit.demo.auth.infraestructure.ports.input.dto.PutRolesOnUserReq
 import ar.edu.ceniit.demo.auth.infraestructure.ports.input.dto.PutRolesOnUserResponse;
 import ar.edu.ceniit.demo.auth.infraestructure.ports.input.dto.RegisterUserRequest;
 import ar.edu.ceniit.demo.auth.infraestructure.ports.input.mapper.AuthMapper;
+import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserBadRequestException;
+import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserNotFoundException;
+import ar.edu.ceniit.demo.user.aplication.ports.input.UserUseCases;
+import ar.edu.ceniit.demo.user.aplication.ports.input.dtos.GetUserByUUIDResponse;
+import ar.edu.ceniit.demo.user.infraestructure.input.dto.UserResponseDTO;
+import ar.edu.ceniit.demo.user.infraestructure.input.mapper.UserDTOMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,10 +35,14 @@ import java.util.UUID;
 public class AuthController {
     private final AuthUseCases authUseCases;
     private final AuthMapper authMapper;
+    private final UserUseCases userUseCases;
+    private final UserDTOMapper userDTOMapper;
 
-    public AuthController(AuthUseCases authUseCases) {
+    public AuthController(AuthUseCases authUseCases, UserUseCases userUseCases, UserDTOMapper userDTOMapper) {
         this.authMapper = new AuthMapper();
         this.authUseCases = authUseCases;
+        this.userUseCases = userUseCases;
+        this.userDTOMapper = userDTOMapper;
     }
 
     @Operation(
@@ -63,7 +71,7 @@ public class AuthController {
             description = "User not found in provider"
         )
     })
-    @PreAuthorize("hasRole('put-roles-on-user')")
+    @PreAuthorize("hasRole('PUT_AUTH_ROLES')")
     @PutMapping("/roles")
     public ResponseEntity<PutRolesOnUserResponse> setRolesOnUser(@Valid @RequestBody PutRolesOnUserRequest request) throws Exception{
         authUseCases.putRolesToUser(UUID.fromString(request.getUuid()), request.getRoles());
@@ -89,7 +97,7 @@ public class AuthController {
             description = "Forbidden - User lacks the required 'list-roles' role"
         )
     })
-    @PreAuthorize("hasRole('list-roles')")
+    @PreAuthorize("hasRole('GET_AUTH_ROLES')")
     @GetMapping("/roles")
     public ResponseEntity<Set<String>> getAllRoles() throws Exception {
             return ResponseEntity.ok(authUseCases.getAllRoles());
@@ -127,14 +135,19 @@ public class AuthController {
             description = "Conflict - User name or email already in use"
         )
     })
-    @PreAuthorize("hasRole('backend-admin')")
+    @PreAuthorize("hasRole('ADMIN_USUARIOS')")
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@Valid @RequestBody RegisterUserRequest request) throws BadRequestOnRegisterUserException,
+    public ResponseEntity<UserResponseDTO> register(@Valid @RequestBody RegisterUserRequest request) throws BadRequestOnRegisterUserException,
             UserNameIsAlreadyInUse,
-            DuplicatedEmailException {
+            DuplicatedEmailException,
+            UserNotFoundException,
+            UserBadRequestException {
 
-        authUseCases.register(authMapper.toDomain(request));
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        UUID newUuid = authUseCases.register(authMapper.toDomain(request));
+
+        GetUserByUUIDResponse response = userUseCases.getByUUID(newUuid);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(userDTOMapper.toResponse(response));
     }
 
 }

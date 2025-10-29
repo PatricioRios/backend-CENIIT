@@ -5,6 +5,9 @@ import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.AndReser
 import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.OrReservaCriteria;
 import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.ReservaCriteriaVisitor;
 import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.field.ReservaAprobadorOCanceladorCriteria;
+import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.field.ReservaFechaDesdeCriteria;
+import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.field.ReservaFechaHastaCriteria;
+import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.field.ReservaRecursoIdCriteria;
 import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.field.ReservaUsuarioSolicitanteCriteria;
 import ar.edu.ceniit.demo.reservas.infraestructure.output.schema.ReservaEntityTable;
 import jakarta.persistence.criteria.Predicate;
@@ -30,20 +33,60 @@ public class ReservaSpecificationVisitor implements ReservaCriteriaVisitor<Speci
 
     @Override
     public Specification<ReservaEntityTable> visit(ReservaUsuarioSolicitanteCriteria criteria) {
-        return (root, query, builder) -> 
+        return (root, query, builder) ->
             createComparablePredicate(builder, root.get("solicitanteId"), criteria.getOperator(), criteria.getUsuarioId());
     }
 
     @Override
     public Specification<ReservaEntityTable> visit(ReservaAprobadorOCanceladorCriteria criteria) {
-        return (root, query, builder) -> 
+        return (root, query, builder) ->
             createComparablePredicate(builder, root.get("aprobadorOCanceladorId"), criteria.getOperator(), criteria.getUsuarioId());
+    }
+
+    @Override
+    public Specification<ReservaEntityTable> visit(ReservaRecursoIdCriteria criteria) {
+        return (root, query, builder) ->
+                createComparablePredicate(builder, root.get("recursoSolicitadoId"), criteria.getOperator(), criteria.getValue());
+    }
+
+    @Override
+    public Specification<ReservaEntityTable> visit(ReservaFechaDesdeCriteria criteria) {
+        // This will be handled by the CriteriaSeparationHelper
+        return null;
+    }
+
+    @Override
+    public Specification<ReservaEntityTable> visit(ReservaFechaHastaCriteria criteria) {
+        // This will be handled by the CriteriaSeparationHelper
+        return null;
     }
 
     private Predicate createComparablePredicate(jakarta.persistence.criteria.CriteriaBuilder builder,
                                                 jakarta.persistence.criteria.Path<Integer> path,
                                                 ComparableOperator operator,
                                                 Integer value) {
+        switch (operator) {
+            case EQUAL:
+                return builder.equal(path, value);
+            case NOT_EQUAL:
+                return builder.notEqual(path, value);
+            case GREATER_THAN:
+                return builder.greaterThan(path, value);
+            case LESS_THAN:
+                return builder.lessThan(path, value);
+            case GREATER_THAN_OR_EQUAL:
+                return builder.greaterThanOrEqualTo(path, value);
+            case LESS_THAN_OR_EQUAL:
+                return builder.lessThanOrEqualTo(path, value);
+            default:
+                throw new IllegalArgumentException("Unsupported operator: " + operator);
+        }
+    }
+
+    private Predicate createComparablePredicate(jakarta.persistence.criteria.CriteriaBuilder builder,
+                                                jakarta.persistence.criteria.Path<Long> path,
+                                                ComparableOperator operator,
+                                                Long value) {
         switch (operator) {
             case EQUAL:
                 return builder.equal(path, value);

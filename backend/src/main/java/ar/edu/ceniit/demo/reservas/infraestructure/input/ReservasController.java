@@ -11,14 +11,21 @@ import ar.edu.ceniit.demo.reservas.domain.RecursoDisponibilidad;
 import ar.edu.ceniit.demo.reservas.infraestructure.input.dto.GetAllRecursosRequest;
 import ar.edu.ceniit.demo.reservas.infraestructure.input.dto.RecursoResponseDTO;
 import ar.edu.ceniit.demo.reservas.infraestructure.input.mapper.RecursoDTOMapper;
+import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserBadRequestException;
+import ar.edu.ceniit.demo.user.aplication.entitys.exceptions.UserNotFoundException;
+import ar.edu.ceniit.demo.user.aplication.ports.input.UserUseCases;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -41,35 +48,65 @@ import org.springframework.http.HttpStatus;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 
+
+import ar.edu.ceniit.demo.auth.aplication.entitys.exceptions.UserNotAuthenticatedException;
+import ar.edu.ceniit.demo.reservas.application.entitys.exceptions.ReservaNotFoundException;
+import ar.edu.ceniit.demo.reservas.application.entitys.exceptions.RecursoYaReservado;
+import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.field.ReservaFechaDesdeCriteria;
+import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.field.ReservaFechaHastaCriteria;
+import ar.edu.ceniit.demo.reservas.application.entitys.reserva_criteria.field.ReservaRecursoIdCriteria;
+
 @RestController
-@RequestMapping("/recursos")
+@RequestMapping("/reservas")
 public class ReservasController {
 
     private final ReservasUseCases reservasUseCases;
     private final RecursoDTOMapper recursoDTOMapper;
     private final ReservaDTOMapper reservaDTOMapper;
+    private final UserUseCases userUseCases;
 
-    public ReservasController(ReservasUseCases reservasUseCases, RecursoDTOMapper recursoDTOMapper, ReservaDTOMapper reservaDTOMapper) {
+    public ReservasController(ReservasUseCases reservasUseCases, RecursoDTOMapper recursoDTOMapper, ReservaDTOMapper reservaDTOMapper, UserUseCases userUseCases) {
         this.reservasUseCases = reservasUseCases;
         this.recursoDTOMapper = recursoDTOMapper;
         this.reservaDTOMapper = reservaDTOMapper;
+        this.userUseCases = userUseCases;
     }
 
-    @GetMapping("/{id}/agenda")
+    private Integer getUserIdFromToken() throws UserNotFoundException, UserBadRequestException, UserNotAuthenticatedException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt) {
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            String subject = jwt.getSubject();
+            return userUseCases.getByUUID(UUID.fromString(subject)).id().intValue();
+        }
+        throw new UserNotAuthenticatedException("User not authenticated");
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/agenda")
     public ResponseEntity<PagedResult<ReservaResponseDTO>> getAgenda(
-            @PathVariable Long id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaDesde,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaHasta,
+            @RequestParam(required = false) Long recursoId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaDesde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaHasta,
             @RequestParam(required = false) Integer solicitanteId,
             @RequestParam(required = false) Integer aprobadorId,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "10") int limit) throws RecursoBadRequestException {
 
-        if (fechaDesde.isAfter(fechaHasta)) {
+        if (fechaDesde != null && fechaHasta != null && fechaDesde.isAfter(fechaHasta)) {
             throw new RecursoBadRequestException("La fecha desde no puede ser posterior a la fecha hasta");
         }
 
         List<ReservaCriteria> criteriaList = new ArrayList<>();
+        if (recursoId != null) {
+            criteriaList.add(new ReservaRecursoIdCriteria(ComparableOperator.EQUAL, recursoId));
+        }
+        if (fechaDesde != null) {
+            criteriaList.add(new ReservaFechaDesdeCriteria(fechaDesde));
+        }
+        if (fechaHasta != null) {
+            criteriaList.add(new ReservaFechaHastaCriteria(fechaHasta));
+        }
         if (solicitanteId != null) {
             criteriaList.add(new ReservaUsuarioSolicitanteCriteria(ComparableOperator.EQUAL, solicitanteId));
         }
@@ -82,7 +119,7 @@ public class ReservasController {
             criteria = new AndReservaCriteria(criteriaList.toArray(new ReservaCriteria[0]));
         }
 
-        PagedResult<Reserva> pagedResult = reservasUseCases.getReservasForRecurso(id, fechaDesde, fechaHasta, criteria, limit, offset);
+        PagedResult<Reserva> pagedResult = reservasUseCases.searchReservas(criteria, limit, offset);
 
         List<ReservaResponseDTO> dtoList = pagedResult.getContent().stream()
                 .map(reservaDTOMapper::toDTO)
@@ -101,16 +138,14 @@ public class ReservasController {
 
         return ResponseEntity.ok(response);
     }
-
-    @PostMapping("/{recursoId}/reservas")
+    
+    @PostMapping("/{recursoId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReservaResponseDTO> createReserva(
             @PathVariable Long recursoId,
-            @Valid @RequestBody CreateReservaRequestDTO request) throws RecursoBadRequestException {
+            @Valid @RequestBody CreateReservaRequestDTO request) throws RecursoBadRequestException, UserNotFoundException, UserBadRequestException, UserNotAuthenticatedException, RecursoNotFoundException, RecursoYaReservado {
         
-        // TODO: Obtener ID del usuario autenticado del token
-        // Por ahora usaremos un ID temporal para que compile
-        Integer userId = 1; // TEMPORAL - debe venir del token JWT
+        Integer userId = getUserIdFromToken();
         
         Reserva reserva = new Reserva(
             null,
@@ -130,12 +165,11 @@ public class ReservasController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping("/reservas/{id}/aprobar")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ReservaResponseDTO> aprobarReserva(@PathVariable Integer id) {
+    @PatchMapping("/{id}/aprobar")
+    @PreAuthorize("hasRole('ADMIN_RECURSOS')")
+    public ResponseEntity<ReservaResponseDTO> aprobarReserva(@PathVariable Integer id) throws UserNotFoundException, UserBadRequestException, UserNotAuthenticatedException, ReservaNotFoundException {
         
-        // TODO: Obtener ID del aprobador del token
-        Integer approverId = 1; // TEMPORAL
+        Integer approverId = getUserIdFromToken();
         
         Reserva approved = reservasUseCases.aprovarReserva(id, approverId);
         ReservaResponseDTO response = reservaDTOMapper.toDTO(approved);
@@ -143,12 +177,11 @@ public class ReservasController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/reservas/{id}/cancelar")
+    @PatchMapping("/{id}/cancelar")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ReservaResponseDTO> cancelarReserva(@PathVariable Integer id) {
+    public ResponseEntity<ReservaResponseDTO> cancelarReserva(@PathVariable Integer id) throws UserNotFoundException, UserBadRequestException, UserNotAuthenticatedException, ReservaNotFoundException {
         
-        // TODO: Obtener ID del usuario del token y validar propiedad
-        Integer userId = 1; // TEMPORAL
+        Integer userId = getUserIdFromToken();
         
         Reserva cancelled = reservasUseCases.cancelarReserva(id, userId);
         ReservaResponseDTO response = reservaDTOMapper.toDTO(cancelled);

@@ -1,4 +1,547 @@
+basePath: /v1
+definitions:
+  criteria.Criteria:
+    properties:
+      filter_group:
+        $ref: '#/definitions/criteria.FilterGroup'
+      sort:
+        items:
+          $ref: '#/definitions/criteria.Sort'
+        type: array
+    type: object
+  criteria.Filter:
+    properties:
+      field:
+        type: string
+      operator:
+        $ref: '#/definitions/criteria.FilterOperator'
+      value: {}
+    type: object
+  criteria.FilterGroup:
+    properties:
+      filter_groups:
+        items:
+          $ref: '#/definitions/criteria.FilterGroup'
+        type: array
+      filters:
+        items:
+          $ref: '#/definitions/criteria.Filter'
+        type: array
+      operator:
+        $ref: '#/definitions/criteria.LogicalOperator'
+    type: object
+  criteria.FilterOperator:
+    enum:
+    - EQUALS
+    - NOT_EQUALS
+    - GREATER_THAN
+    - GREATER_EQUALS
+    - LESS_THAN
+    - LESS_EQUALS
+    - CONTAINS
+    - NOT_CONTAINS
+    - ISTARTS_WITH
+    - GTE
+    - LIKE
+    - ILIKE
+    type: string
+    x-enum-varnames:
+    - EQUALS
+    - NOT_EQUALS
+    - GREATER_THAN
+    - GREATER_EQUALS
+    - LESS_THAN
+    - LESS_EQUALS
+    - CONTAINS
+    - NOT_CONTAINS
+    - ISTARTS_WITH
+    - GTE
+    - LIKE
+    - ILIKE
+  criteria.LogicalOperator:
+    enum:
+    - AND
+    - OR
+    type: string
+    x-enum-varnames:
+    - AND
+    - OR
+  criteria.Sort:
+    properties:
+      direction:
+        $ref: '#/definitions/criteria.SortDirection'
+      field:
+        type: string
+    type: object
+  criteria.SortDirection:
+    enum:
+    - ASC
+    - DESC
+    type: string
+    x-enum-varnames:
+    - ASC
+    - DESC
+  entity.EstadoRecurso:
+    enum:
+    - ACTIVO
+    - MANTENIMIENTO
+    type: string
+    x-enum-varnames:
+    - Activo
+    - Mantenimiento
+  entity.Recurso:
+    properties:
+      created_at:
+        type: string
+      descripcion:
+        type: string
+      estado:
+        $ref: '#/definitions/entity.EstadoRecurso'
+      href_photo:
+        type: string
+      id:
+        type: integer
+      nombre:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  request.CreateResource:
+    properties:
+      descripcion:
+        type: string
+      estado:
+        allOf:
+        - $ref: '#/definitions/entity.EstadoRecurso'
+        enum:
+        - ACTIVO
+        - MANTENIMIENTO
+      href_photo:
+        type: string
+      nombre:
+        type: string
+    required:
+    - estado
+    - nombre
+    type: object
+  request.UpdateResource:
+    properties:
+      descripcion:
+        type: string
+      estado:
+        allOf:
+        - $ref: '#/definitions/entity.EstadoRecurso'
+        enum:
+        - ACTIVO
+        - MANTENIMIENTO
+      href_photo:
+        type: string
+      nombre:
+        type: string
+    type: object
+  response.EmbeddedRecursos:
+    properties:
+      recursos:
+        items:
+          $ref: '#/definitions/response.RecursoHATEOAS'
+        type: array
+    type: object
+  response.ErrorResponseDTO:
+    properties:
+      details:
+        description: Additional and structured data about the error. Can be nil.
+      error:
+        description: The HTTP status reason phrase (e.g., "Not Found").
+        type: string
+      message:
+        description: A descriptive and human-readable error message.
+        type: string
+      path:
+        description: The path of the endpoint that was invoked.
+        type: string
+      status:
+        description: The HTTP status code.
+        type: integer
+      timestamp:
+        description: The date and time the error occurred.
+        type: string
+    type: object
+  response.Link:
+    properties:
+      href:
+        type: string
+    type: object
+  response.Links:
+    properties:
+      next:
+        $ref: '#/definitions/response.Link'
+      prev:
+        $ref: '#/definitions/response.Link'
+      self:
+        $ref: '#/definitions/response.Link'
+    type: object
+  response.PageInfo:
+    properties:
+      number:
+        type: integer
+      size:
+        type: integer
+      totalElements:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  response.PaginatedResponse:
+    properties:
+      _embedded:
+        $ref: '#/definitions/response.EmbeddedRecursos'
+      _links:
+        $ref: '#/definitions/response.Links'
+      page:
+        $ref: '#/definitions/response.PageInfo'
+    type: object
+  response.RecursoHATEOAS:
+    properties:
+      _links:
+        properties:
+          self:
+            $ref: '#/definitions/response.Link'
+        type: object
+      created_at:
+        type: string
+      descripcion:
+        type: string
+      estado:
+        $ref: '#/definitions/entity.EstadoRecurso'
+      href_photo:
+        type: string
+      id:
+        type: integer
+      nombre:
+        type: string
+      updated_at:
+        type: string
+    type: object
 info:
   contact: {}
-paths: {}
+  description: API para gestión de recursos educativos
+  title: Resources Service API
+  version: "1.0"
+paths:
+  /recursos:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista paginada de recursos con filtros opcionales.
+        **Acceso:** Cualquier usuario autenticado
+      parameters:
+      - default: 10
+        description: Número de elementos por página
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Desplazamiento para paginación
+        in: query
+        name: offset
+        type: integer
+      - description: Filtrar por nombre
+        in: query
+        name: nombre
+        type: string
+      - description: Filtrar por estado (ACTIVO, MANTENIMIENTO)
+        in: query
+        name: estado
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Listar recursos
+      tags:
+      - recursos
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo recurso educativo. **Requiere rol:** ADMIN_RECURSOS
+      parameters:
+      - description: Datos del recurso a crear
+        in: body
+        name: recurso
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateResource'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entity.Recurso'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "403":
+          description: Forbidden - Usuario sin permisos suficientes
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Crear recurso
+      tags:
+      - recursos
+  /recursos/{id}:
+    delete:
+      description: Elimina un recurso por su ID. **Requiere rol:** ADMIN_RECURSOS
+      parameters:
+      - description: ID del recurso
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "403":
+          description: Forbidden - Usuario sin permisos suficientes
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Eliminar recurso
+      tags:
+      - recursos
+    get:
+      description: Obtiene los detalles de un recurso específico por su ID. **Acceso:**
+        Cualquier usuario autenticado
+      parameters:
+      - description: ID del recurso
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Recurso'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Obtener recurso por ID
+      tags:
+      - recursos
+    patch:
+      consumes:
+      - application/json
+      description: Actualiza parcialmente un recurso por su ID. **Requiere rol:**
+        ADMIN_RECURSOS
+      parameters:
+      - description: ID del recurso
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos del recurso a actualizar
+        in: body
+        name: recurso
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateResource'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Recurso'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "403":
+          description: Forbidden - Usuario sin permisos suficientes
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Actualizar recurso
+      tags:
+      - recursos
+  /recursos/{id}/foto:
+    delete:
+      description: Elimina la foto de un recurso específico. **Requiere rol:** ADMIN_RECURSOS
+      parameters:
+      - description: ID del recurso
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "403":
+          description: Forbidden - Usuario sin permisos suficientes
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Eliminar foto de recurso
+      tags:
+      - recursos
+    post:
+      consumes:
+      - multipart/form-data
+      description: Sube una foto para un recurso específico. **Requiere rol:** ADMIN_RECURSOS
+      parameters:
+      - description: ID del recurso
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Archivo de imagen
+        in: formData
+        name: foto
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.Recurso'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "403":
+          description: Forbidden - Usuario sin permisos suficientes
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Subir foto de recurso
+      tags:
+      - recursos
+  /recursos/search:
+    post:
+      consumes:
+      - application/json
+      description: Busca recursos con criterios avanzados mediante POST. **Acceso:**
+        Cualquier usuario autenticado
+      parameters:
+      - default: 10
+        description: Número de elementos por página
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Desplazamiento para paginación
+        in: query
+        name: offset
+        type: integer
+      - description: Criterios de búsqueda
+        in: body
+        name: criteria
+        required: true
+        schema:
+          $ref: '#/definitions/criteria.Criteria'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.PaginatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponseDTO'
+      security:
+      - BearerAuth: []
+      summary: Buscar recursos
+      tags:
+      - recursos
+securityDefinitions:
+  BearerAuth:
+    description: 'Token de autenticación JWT. Formato: "Bearer {token}"'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

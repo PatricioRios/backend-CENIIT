@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Service Test</title>
+</head>
+<body>
+  <h1>Testing Frontend Services</h1>
+  <p>Open the browser console (F12) to see the test results.</p>
+  <pre id="output"></pre>
+
+  <script type="module">
+    import { authService } from './src/services/authService.js';
+
+    const outputEl = document.getElementById('output');
+    const log = (message) => {
+      // Log to both console and screen
+      console.log(message);
+      if (typeof message === 'object') {
+        outputEl.textContent += JSON.stringify(message, null, 2) + '\n';
+      } else {
+        outputEl.textContent += message + '\n';
+      }
+    };
+
+    async function runAuthTest() {
+      log('--- Running Authentication Test ---');
+      try {
+        log('Attempting login with user \'patriciorios\'...');
+        const data = await authService.login('patriciorios', '1234');
+        log('✅ Login successful! Token received.');
+        
+        const tokenPayload = JSON.parse(atob(data.access_token.split('.')[1]));
+        log('\n--- Decoded Token Payload ---');
+        log(tokenPayload);
+        log('---------------------------\n');
+
+        const isBackendAdmin = tokenPayload.resource_access?.['ceniit-backend-develop']?.roles.includes('backend-admin') || false;
+        const isAdmin = tokenPayload.realm_access?.roles.includes('realm-admin') || isBackendAdmin;
+
+        log(`User 'name' from token: ${tokenPayload.name}`);
+        log(`Is frontend 'admin' role correctly assigned? ${isAdmin}`);
+        log('\n✅ Auth test PASSED.');
+        return data.access_token; // Return token for next test
+      } catch (error) {
+        log('\n❌ Auth test FAILED.');
+        log(error.response ? JSON.stringify(error.response.data) : error.message);
+        return null;
+      }
+    }
+
+    // Run the test
+    runAuthTest();
+  </script>
+</body>
+</html>

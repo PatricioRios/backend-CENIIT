@@ -14,17 +14,831 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/recursos": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Obtiene una lista paginada de recursos con filtros opcionales. **Acceso:** Cualquier usuario autenticado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recursos"
+                ],
+                "summary": "Listar recursos",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Número de elementos por página",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Desplazamiento para paginación",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtrar por nombre",
+                        "name": "nombre",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtrar por estado (ACTIVO, MANTENIMIENTO)",
+                        "name": "estado",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginatedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Crea un nuevo recurso educativo. **Requiere rol:** ADMIN_RECURSOS",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recursos"
+                ],
+                "summary": "Crear recurso",
+                "parameters": [
+                    {
+                        "description": "Datos del recurso a crear",
+                        "name": "recurso",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.CreateResource"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Recurso"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Usuario sin permisos suficientes",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/recursos/search": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Busca recursos con criterios avanzados mediante POST. **Acceso:** Cualquier usuario autenticado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recursos"
+                ],
+                "summary": "Buscar recursos",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Número de elementos por página",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Desplazamiento para paginación",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "description": "Criterios de búsqueda",
+                        "name": "criteria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/criteria.Criteria"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.PaginatedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/recursos/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Obtiene los detalles de un recurso específico por su ID. **Acceso:** Cualquier usuario autenticado",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recursos"
+                ],
+                "summary": "Obtener recurso por ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del recurso",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Recurso"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Elimina un recurso por su ID. **Requiere rol:** ADMIN_RECURSOS",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recursos"
+                ],
+                "summary": "Eliminar recurso",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del recurso",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Usuario sin permisos suficientes",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Actualiza parcialmente un recurso por su ID. **Requiere rol:** ADMIN_RECURSOS",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recursos"
+                ],
+                "summary": "Actualizar recurso",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del recurso",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Datos del recurso a actualizar",
+                        "name": "recurso",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdateResource"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Recurso"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Usuario sin permisos suficientes",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    }
+                }
+            }
+        },
+        "/recursos/{id}/foto": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sube una foto para un recurso específico. **Requiere rol:** ADMIN_RECURSOS",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recursos"
+                ],
+                "summary": "Subir foto de recurso",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del recurso",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Archivo de imagen",
+                        "name": "foto",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.Recurso"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Usuario sin permisos suficientes",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Elimina la foto de un recurso específico. **Requiere rol:** ADMIN_RECURSOS",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recursos"
+                ],
+                "summary": "Eliminar foto de recurso",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID del recurso",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Usuario sin permisos suficientes",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponseDTO"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "criteria.Criteria": {
+            "type": "object",
+            "properties": {
+                "filter_group": {
+                    "$ref": "#/definitions/criteria.FilterGroup"
+                },
+                "sort": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/criteria.Sort"
+                    }
+                }
+            }
+        },
+        "criteria.Filter": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "operator": {
+                    "$ref": "#/definitions/criteria.FilterOperator"
+                },
+                "value": {}
+            }
+        },
+        "criteria.FilterGroup": {
+            "type": "object",
+            "properties": {
+                "filter_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/criteria.FilterGroup"
+                    }
+                },
+                "filters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/criteria.Filter"
+                    }
+                },
+                "operator": {
+                    "$ref": "#/definitions/criteria.LogicalOperator"
+                }
+            }
+        },
+        "criteria.FilterOperator": {
+            "type": "string",
+            "enum": [
+                "EQUALS",
+                "NOT_EQUALS",
+                "GREATER_THAN",
+                "GREATER_EQUALS",
+                "LESS_THAN",
+                "LESS_EQUALS",
+                "CONTAINS",
+                "NOT_CONTAINS",
+                "ISTARTS_WITH",
+                "GTE",
+                "LIKE",
+                "ILIKE"
+            ],
+            "x-enum-varnames": [
+                "EQUALS",
+                "NOT_EQUALS",
+                "GREATER_THAN",
+                "GREATER_EQUALS",
+                "LESS_THAN",
+                "LESS_EQUALS",
+                "CONTAINS",
+                "NOT_CONTAINS",
+                "ISTARTS_WITH",
+                "GTE",
+                "LIKE",
+                "ILIKE"
+            ]
+        },
+        "criteria.LogicalOperator": {
+            "type": "string",
+            "enum": [
+                "AND",
+                "OR"
+            ],
+            "x-enum-varnames": [
+                "AND",
+                "OR"
+            ]
+        },
+        "criteria.Sort": {
+            "type": "object",
+            "properties": {
+                "direction": {
+                    "$ref": "#/definitions/criteria.SortDirection"
+                },
+                "field": {
+                    "type": "string"
+                }
+            }
+        },
+        "criteria.SortDirection": {
+            "type": "string",
+            "enum": [
+                "ASC",
+                "DESC"
+            ],
+            "x-enum-varnames": [
+                "ASC",
+                "DESC"
+            ]
+        },
+        "entity.EstadoRecurso": {
+            "type": "string",
+            "enum": [
+                "ACTIVO",
+                "MANTENIMIENTO"
+            ],
+            "x-enum-varnames": [
+                "Activo",
+                "Mantenimiento"
+            ]
+        },
+        "entity.Recurso": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "descripcion": {
+                    "type": "string"
+                },
+                "estado": {
+                    "$ref": "#/definitions/entity.EstadoRecurso"
+                },
+                "href_photo": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nombre": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.CreateResource": {
+            "type": "object",
+            "required": [
+                "estado",
+                "nombre"
+            ],
+            "properties": {
+                "descripcion": {
+                    "type": "string"
+                },
+                "estado": {
+                    "enum": [
+                        "ACTIVO",
+                        "MANTENIMIENTO"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/entity.EstadoRecurso"
+                        }
+                    ]
+                },
+                "href_photo": {
+                    "type": "string"
+                },
+                "nombre": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UpdateResource": {
+            "type": "object",
+            "properties": {
+                "descripcion": {
+                    "type": "string"
+                },
+                "estado": {
+                    "enum": [
+                        "ACTIVO",
+                        "MANTENIMIENTO"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/entity.EstadoRecurso"
+                        }
+                    ]
+                },
+                "href_photo": {
+                    "type": "string"
+                },
+                "nombre": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.EmbeddedRecursos": {
+            "type": "object",
+            "properties": {
+                "recursos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.RecursoHATEOAS"
+                    }
+                }
+            }
+        },
+        "response.ErrorResponseDTO": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "description": "Additional and structured data about the error. Can be nil."
+                },
+                "error": {
+                    "description": "The HTTP status reason phrase (e.g., \"Not Found\").",
+                    "type": "string"
+                },
+                "message": {
+                    "description": "A descriptive and human-readable error message.",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "The path of the endpoint that was invoked.",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "The HTTP status code.",
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "description": "The date and time the error occurred.",
+                    "type": "string"
+                }
+            }
+        },
+        "response.Link": {
+            "type": "object",
+            "properties": {
+                "href": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.Links": {
+            "type": "object",
+            "properties": {
+                "next": {
+                    "$ref": "#/definitions/response.Link"
+                },
+                "prev": {
+                    "$ref": "#/definitions/response.Link"
+                },
+                "self": {
+                    "$ref": "#/definitions/response.Link"
+                }
+            }
+        },
+        "response.PageInfo": {
+            "type": "object",
+            "properties": {
+                "number": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "totalElements": {
+                    "type": "integer"
+                },
+                "totalPages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "response.PaginatedResponse": {
+            "type": "object",
+            "properties": {
+                "_embedded": {
+                    "$ref": "#/definitions/response.EmbeddedRecursos"
+                },
+                "_links": {
+                    "$ref": "#/definitions/response.Links"
+                },
+                "page": {
+                    "$ref": "#/definitions/response.PageInfo"
+                }
+            }
+        },
+        "response.RecursoHATEOAS": {
+            "type": "object",
+            "properties": {
+                "_links": {
+                    "type": "object",
+                    "properties": {
+                        "self": {
+                            "$ref": "#/definitions/response.Link"
+                        }
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "descripcion": {
+                    "type": "string"
+                },
+                "estado": {
+                    "$ref": "#/definitions/entity.EstadoRecurso"
+                },
+                "href_photo": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nombre": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Token de autenticación JWT. Formato: \"Bearer {token}\"",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.0",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/v1",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Resources Service API",
+	Description:      "API para gestión de recursos educativos",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

@@ -22,7 +22,7 @@ public class AuthUseCasesImpl implements AuthUseCases {
         this.createUserOnDomainOutput = createUserOnDomainOutput;
     }
     @Override
-    public void register(RegisterUserCommand command) throws
+    public UUID register(RegisterUserCommand command) throws
             BadRequestOnRegisterUserException,
             UserNameIsAlreadyInUse,// ver que onda
             DuplicatedEmailException// ver que onda
@@ -55,6 +55,7 @@ public class AuthUseCasesImpl implements AuthUseCases {
             userToCreate.setPassword(null);
 
             createUserOnDomainOutput.createUser(userToCreate);
+            return createdAuthUser.getId();
         } catch (Exception e) {
             // Paso 3 (Compensación): Si falla la creación local, eliminar el usuario del IdP
             try {

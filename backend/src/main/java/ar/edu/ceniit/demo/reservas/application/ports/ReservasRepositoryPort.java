@@ -14,5 +14,5 @@ public interface    ReservasRepositoryPort {
     Reserva createReserva(Reserva reserva, Integer solicitanteId);
     Reserva updateReserva(Reserva reserva);
 
-    PagedResult<Reserva> findReservasByRecursoAndRange(Long recursoId, OffsetDateTime fechaDesde, OffsetDateTime fechaHasta, ReservaCriteria criteria, int limit, int offset);
+    PagedResult<Reserva> searchReservas(ReservaCriteria criteria, int limit, int offset);
 }

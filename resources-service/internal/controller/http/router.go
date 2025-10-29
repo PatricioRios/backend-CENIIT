@@ -18,6 +18,15 @@ import (
 	"github.com/swaggo/swag"
 )
 
+// @title Resources Service API
+// @version 1.0
+// @description API para gestión de recursos educativos
+// @BasePath /v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Token de autenticación JWT. Formato: "Bearer {token}"
+
 // NewRouter -.
 func NewRouter(app *fiber.App, cfg *config.Config, recursoUseCase recursosports.RecursoUseCase, photoUseCase recursosports.PhotoUseCase, logErrorUseCase errorlogports.LogErrorUseCase, l logger.Interface) {
 	// Options
@@ -33,9 +42,9 @@ func NewRouter(app *fiber.App, cfg *config.Config, recursoUseCase recursosports.
 
 	// Swagger
 	if cfg.Swagger.Enabled {
-		app.Get("/swagger/*", swagger.HandlerDefault)
+		app.Get("/api/resources/swagger/*", swagger.HandlerDefault)
 		// Endpoint explícito para doc.json, usando el nombre de la instancia de Swagger
-		app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
+		app.Get("/api/resources/swagger/doc.json", func(c *fiber.Ctx) error {
 			doc, err := swag.ReadDoc("swagger") // "swagger" es el InfoInstanceName en docs.go
 			if err != nil {
 				// Agregar log de depuración

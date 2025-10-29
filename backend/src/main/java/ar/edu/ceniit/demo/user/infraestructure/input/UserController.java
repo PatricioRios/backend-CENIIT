@@ -47,8 +47,7 @@ public class UserController extends UserExceptionHandler {
     }
 
     // Get user by UUID
-    @GetMapping("/{uuid}")
-    @PreAuthorize("#uuid.toString() == principal.getClaimAsString('sub') or hasRole('backend-admin')")
+    @PreAuthorize("#uuid.toString() == principal.getClaimAsString('sub') or hasRole('ADMIN_USUARIOS')")
     public ResponseEntity<UserResponseDTO> getUser(@PathVariable String uuid) throws UserNotFoundException, UserBadRequestException {
         GetUserByUUIDResponse userResponse = userUseCases.getByUUID(UUID.fromString(uuid));
         return ResponseEntity.ok(userDTOMapper.toResponse(userResponse));
@@ -56,7 +55,7 @@ public class UserController extends UserExceptionHandler {
 
     // Update user
     @PutMapping("/{uuid}")
-    @PreAuthorize("#uuid.toString() == principal.getClaimAsString('sub') or hasRole('backend-admin')")
+    @PreAuthorize("#uuid.toString() == principal.getClaimAsString('sub') or hasRole('ADMIN_USUARIOS')")
     public ResponseEntity<UserResponseDTO> updateUser(@PathVariable UUID uuid, @Valid @RequestBody UpdateUserRequest request)
             throws UserNotFoundException,
             BadRequestOnUpdateUserException,
@@ -67,15 +66,18 @@ public class UserController extends UserExceptionHandler {
 
         UpdateUserRequestDTO appUpdateDTO = userDTOMapper.toUpdateUserRequestDTO(uuid, request, SecurityContextHolder.getContext().getAuthentication());
 
-        UpdateUserResponseDTO user = userUseCases.updateUser(appUpdateDTO);
+        userUseCases.updateUser(appUpdateDTO);
 
-        UserResponseDTO userResponse = userDTOMapper.toResponse(user);
+        // Fetch the user again to get all fields, including the numeric ID
+        GetUserByUUIDResponse updatedUser = userUseCases.getByUUID(uuid);
+
+        UserResponseDTO userResponse = userDTOMapper.toResponse(updatedUser);
 
         return ResponseEntity.ok(userResponse);
     }
 
     // Delete user
-    @PreAuthorize("hasRole('delete-users')")
+    @PreAuthorize("hasRole('ADMIN_USUARIOS')")
     @DeleteMapping("/{uuid}")
     public ResponseEntity<Void> deleteUser(@PathVariable UUID uuid) throws UserNotFoundException, UserBadRequestException {
         userUseCases.deleteUser(uuid);
@@ -83,7 +85,7 @@ public class UserController extends UserExceptionHandler {
     }
 
 
-    @PreAuthorize("hasRole('backend-admin')")
+    @PreAuthorize("hasRole('ADMIN_USUARIOS')")
     @PostMapping("/search")
     @Operation(
             summary = "Search users with optional filtering, sorting, and pagination",

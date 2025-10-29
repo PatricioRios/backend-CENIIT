@@ -92,13 +92,8 @@ public class ReservasUseCasesImpl implements ReservasUseCases {
     }
 
     @Override
-    public PagedResult<Reserva> getReservasForRecurso(
-            Long recursoId,
-            OffsetDateTime fechaDesde,
-            OffsetDateTime fechaHasta,
-            ReservaCriteria criteria,
-            int limit, int offset) {
-        return reservasRepositoryPort.findReservasByRecursoAndRange(recursoId, fechaDesde, fechaHasta, criteria, limit, offset);
+    public PagedResult<Reserva> searchReservas(ReservaCriteria criteria, int limit, int offset) {
+        return reservasRepositoryPort.searchReservas(criteria, limit, offset);
     }
 
     private EstadoDisponibilidad calculateDisponibilidad(Recurso recurso, Optional<OffsetDateTime> availabilityDate) {

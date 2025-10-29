@@ -1,0 +1,1604 @@
+{
+openapi: "3.1.0",
+info: {
+title: "OpenAPI definition",
+version: "v0"
+},
+servers: [
+{
+url: "http://localhost/api/backend",
+description: "Generated server url"
+}
+],
+tags: [
+{
+name: "Authentication",
+description: "Endpoints for user authentication and authorization management"
+}
+],
+paths: {
+/users/{uuid}: {
+put: {
+tags: [
+"user-controller"
+],
+operationId: "updateUser",
+parameters: [
+{
+name: "uuid",
+in: "path",
+required: true,
+schema: {
+type: "string",
+format: "uuid"
+}
+}
+],
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/UpdateUserRequest"
+}
+}
+},
+required: true
+},
+responses: {
+200: {
+description: "OK",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/UserResponseDTO"
+}
+}
+}
+}
+}
+},
+delete: {
+tags: [
+"user-controller"
+],
+operationId: "deleteUser",
+parameters: [
+{
+name: "uuid",
+in: "path",
+required: true,
+schema: {
+type: "string",
+format: "uuid"
+}
+}
+],
+responses: {
+200: {
+description: "OK"
+}
+}
+}
+},
+/auth/roles: {
+get: {
+tags: [
+"Authentication"
+],
+summary: "Get all available roles",
+description: "Retrieves a list of all available roles in the system. Requires 'list-roles' role.",
+operationId: "getAllRoles",
+responses: {
+200: {
+description: "Roles successfully retrieved",
+content: {
+application/json: {
+schema: {
+type: "string"
+}
+}
+}
+},
+401: {
+description: "Unauthorized - User is not authenticated",
+content: {
+*/*: {
+schema: {
+type: "array",
+items: {
+type: "string"
+},
+uniqueItems: true
+}
+}
+}
+},
+403: {
+description: "Forbidden - User lacks the required 'list-roles' role",
+content: {
+*/*: {
+schema: {
+type: "array",
+items: {
+type: "string"
+},
+uniqueItems: true
+}
+}
+}
+}
+}
+},
+put: {
+tags: [
+"Authentication"
+],
+summary: "Assign roles to a user",
+description: "Assigns a set of roles to a specific user identified by UUID. Requires 'put-roles-on-user' role.",
+operationId: "setRolesOnUser",
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/PutRolesOnUserRequest"
+}
+}
+},
+required: true
+},
+responses: {
+201: {
+description: "Roles successfully assigned to the user",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/PutRolesOnUserResponse"
+}
+}
+}
+},
+400: {
+description: "Bad request - Invalid UUID format or other validation errors",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/PutRolesOnUserResponse"
+}
+}
+}
+},
+401: {
+description: "Unauthorized - User is not authenticated",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/PutRolesOnUserResponse"
+}
+}
+}
+},
+403: {
+description: "Forbidden - User lacks the required 'put-roles-on-user' role",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/PutRolesOnUserResponse"
+}
+}
+}
+},
+404: {
+description: "User not found in provider",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/PutRolesOnUserResponse"
+}
+}
+}
+}
+}
+}
+},
+/users/search: {
+post: {
+tags: [
+"user-controller"
+],
+summary: "Search users with optional filtering, sorting, and pagination",
+description: "Returns a list of users based on complex filter criteria.",
+operationId: "searchUsers",
+parameters: [
+{
+name: "offset",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32",
+default: 0
+}
+},
+{
+name: "limit",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32",
+default: 10
+}
+},
+{
+name: "sortBy",
+in: "query",
+required: false,
+schema: {
+type: "string",
+default: "USERNAME"
+}
+},
+{
+name: "sortOrder",
+in: "query",
+required: false,
+schema: {
+type: "string",
+default: "ASC"
+}
+}
+],
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/GetAllUsersRequest"
+}
+}
+}
+},
+responses: {
+200: {
+description: "OK",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/PagedModelEntityModelUserResponseDTO"
+}
+}
+}
+}
+}
+}
+},
+/reservas/{recursoId}: {
+post: {
+tags: [
+"reservas-controller"
+],
+operationId: "createReserva",
+parameters: [
+{
+name: "recursoId",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/CreateReservaRequestDTO"
+}
+}
+},
+required: true
+},
+responses: {
+200: {
+description: "OK",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/ReservaResponseDTO"
+}
+}
+}
+},
+400: {
+description: "Bad Request",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+401: {
+description: "Unauthorized",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+404: {
+description: "Not Found",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+409: {
+description: "Conflict",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+}
+}
+}
+},
+/reservas/search: {
+post: {
+tags: [
+"reservas-controller"
+],
+summary: "Search recursos with optional filtering, sorting, and pagination",
+description: "Returns a list of recursos based on complex filter criteria.",
+operationId: "searchRecursos",
+parameters: [
+{
+name: "offset",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32",
+default: 0
+}
+},
+{
+name: "limit",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32",
+default: 10
+}
+},
+{
+name: "sortBy",
+in: "query",
+required: false,
+schema: {
+type: "string",
+default: "NOMBRE"
+}
+},
+{
+name: "sortOrder",
+in: "query",
+required: false,
+schema: {
+type: "string",
+default: "ASC"
+}
+}
+],
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/GetAllRecursosRequest"
+}
+}
+}
+},
+responses: {
+200: {
+description: "OK",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/PagedModelEntityModelRecursoResponseDTO"
+}
+}
+}
+},
+400: {
+description: "Bad Request",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+404: {
+description: "Not Found",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+409: {
+description: "Conflict",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+}
+}
+}
+},
+/auth/register: {
+post: {
+tags: [
+"Authentication"
+],
+summary: "Register a new user",
+description: "Registers a new user in the system. Requires 'backend-admin' role.",
+operationId: "register",
+requestBody: {
+content: {
+application/json: {
+schema: {
+$ref: "#/components/schemas/RegisterUserRequest"
+}
+}
+},
+required: true
+},
+responses: {
+201: {
+description: "User registered successfully",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/UserResponseDTO"
+}
+}
+}
+},
+400: {
+description: "Bad request - Validation errors:
+- Invalid request data
+- User name is already in use
+- Email is already in use
+",
+content: {
+application/json: {
+schema: {
+type: "string"
+}
+}
+}
+},
+401: {
+description: "Unauthorized - User is not authenticated",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/UserResponseDTO"
+}
+}
+}
+},
+403: {
+description: "Forbidden - User lacks the required 'backend-admin' role",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/UserResponseDTO"
+}
+}
+}
+},
+409: {
+description: "Conflict - User name or email already in use",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/UserResponseDTO"
+}
+}
+}
+}
+}
+}
+},
+/reservas/{id}/cancelar: {
+patch: {
+tags: [
+"reservas-controller"
+],
+operationId: "cancelarReserva",
+parameters: [
+{
+name: "id",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int32"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/ReservaResponseDTO"
+}
+}
+}
+},
+400: {
+description: "Bad Request",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+401: {
+description: "Unauthorized",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+404: {
+description: "Not Found",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+409: {
+description: "Conflict",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+}
+}
+}
+},
+/reservas/{id}/aprobar: {
+patch: {
+tags: [
+"reservas-controller"
+],
+operationId: "aprobarReserva",
+parameters: [
+{
+name: "id",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int32"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/ReservaResponseDTO"
+}
+}
+}
+},
+400: {
+description: "Bad Request",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+401: {
+description: "Unauthorized",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+404: {
+description: "Not Found",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+409: {
+description: "Conflict",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+}
+}
+}
+},
+/reservas/{id}: {
+get: {
+tags: [
+"reservas-controller"
+],
+operationId: "getRecursoById",
+parameters: [
+{
+name: "id",
+in: "path",
+required: true,
+schema: {
+type: "integer",
+format: "int64"
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/RecursoResponseDTO"
+}
+}
+}
+},
+404: {
+description: "Not Found",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+409: {
+description: "Conflict",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+}
+}
+}
+},
+/reservas/agenda: {
+get: {
+tags: [
+"reservas-controller"
+],
+operationId: "getAgenda",
+parameters: [
+{
+name: "recursoId",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int64"
+}
+},
+{
+name: "fechaDesde",
+in: "query",
+required: false,
+schema: {
+type: "string",
+format: "date-time"
+}
+},
+{
+name: "fechaHasta",
+in: "query",
+required: false,
+schema: {
+type: "string",
+format: "date-time"
+}
+},
+{
+name: "solicitanteId",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32"
+}
+},
+{
+name: "aprobadorId",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32"
+}
+},
+{
+name: "offset",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32",
+default: 0
+}
+},
+{
+name: "limit",
+in: "query",
+required: false,
+schema: {
+type: "integer",
+format: "int32",
+default: 10
+}
+}
+],
+responses: {
+200: {
+description: "OK",
+content: {
+*/*: {
+schema: {
+$ref: "#/components/schemas/PagedResultReservaResponseDTO"
+}
+}
+}
+},
+400: {
+description: "Bad Request",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+404: {
+description: "Not Found",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+},
+409: {
+description: "Conflict",
+content: {
+*/*: {
+schema: {
+type: "object",
+additionalProperties: {
+type: "string"
+}
+}
+}
+}
+}
+}
+}
+}
+},
+components: {
+schemas: {
+UpdateUserRequest: {
+type: "object",
+properties: {
+email: {
+type: "string"
+},
+firstName: {
+type: "string"
+},
+secondName: {
+type: "string"
+},
+surname: {
+type: "string"
+},
+secondSurname: {
+type: "string"
+},
+dni: {
+type: "integer",
+format: "int32"
+}
+}
+},
+UserResponseDTO: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int64"
+},
+uuid: {
+type: "string",
+format: "uuid"
+},
+username: {
+type: "string"
+},
+email: {
+type: "string"
+},
+firstName: {
+type: "string"
+},
+secondName: {
+type: "string"
+},
+surname: {
+type: "string"
+},
+secondSurname: {
+type: "string"
+},
+dni: {
+type: "integer",
+format: "int32"
+}
+}
+},
+PutRolesOnUserRequest: {
+type: "object",
+properties: {
+uuid: {
+type: "string"
+},
+roles: {
+type: "array",
+items: {
+type: "string"
+},
+uniqueItems: true
+}
+}
+},
+PutRolesOnUserResponse: {
+type: "object",
+properties: {
+roles: {
+type: "array",
+items: {
+type: "string"
+},
+uniqueItems: true
+}
+}
+},
+AndFilterDTO: {
+allOf: [
+{
+$ref: "#/components/schemas/FilterDTO"
+},
+{
+type: "object",
+properties: {
+filters: {
+type: "array",
+items: { }
+}
+}
+}
+]
+},
+FilterDTO: {
+discriminator: {
+propertyName: "type"
+},
+properties: {
+type: {
+type: "string"
+}
+},
+required: [
+"type"
+]
+},
+GetAllUsersRequest: {
+type: "object",
+properties: {
+filter: {
+oneOf: [
+{
+$ref: "#/components/schemas/AndFilterDTO"
+},
+{
+$ref: "#/components/schemas/NumericComarableFieldFilterDTO"
+},
+{
+$ref: "#/components/schemas/OrFilterDTO"
+},
+{
+$ref: "#/components/schemas/StringComparationFieldFilterDTO"
+}
+]
+}
+}
+},
+NumericComarableFieldFilterDTO: {
+allOf: [
+{
+$ref: "#/components/schemas/FilterDTO"
+},
+{
+type: "object",
+properties: {
+field: {
+type: "string",
+description: "Field to filter by.",
+enum: [
+"UUID",
+"USERNAME",
+"EMAIL",
+"FIRST_NAME",
+"LAST_NAME",
+"DNI"
+],
+example: "USERNAME"
+},
+operator: {
+type: "string",
+description: "Operator for the filter. Depends on the field type (String or Comparable).",
+enum: [
+"EQUAL",
+"NOT_EQUAL",
+"GREATER_THAN",
+"LESS_THAN",
+"GREATER_THAN_OR_EQUAL",
+"LESS_THAN_OR_EQUAL"
+],
+example: "CONTAINS"
+},
+value: {
+type: "string",
+description: "Value to filter by. For date fields, use ISO 8601 format (e.g., '2025-09-09T10:00:00Z').",
+example: "john.doe"
+}
+}
+},
+{
+type: "object",
+properties: {
+field: {
+type: "string",
+description: "Field to filter by.",
+enum: [
+"ID",
+"ESTADO",
+"CREATED_AT",
+"UPDATED_AT"
+],
+example: "ID"
+},
+operator: {
+type: "string",
+description: "Operator for the filter. Depends on the field type (String or Comparable).",
+enum: [
+"EQUAL",
+"NOT_EQUAL",
+"GREATER_THAN",
+"LESS_THAN",
+"GREATER_THAN_OR_EQUAL",
+"LESS_THAN_OR_EQUAL"
+],
+example: "EQUAL"
+},
+value: {
+type: "string",
+description: "Value to filter by. For date fields, use ISO 8601 format (e.g., '2025-09-09T10:00:00Z').",
+example: 1
+}
+}
+}
+]
+},
+OrFilterDTO: {
+allOf: [
+{
+$ref: "#/components/schemas/FilterDTO"
+},
+{
+type: "object",
+properties: {
+filters: {
+type: "array",
+items: { }
+}
+}
+}
+]
+},
+StringComparationFieldFilterDTO: {
+allOf: [
+{
+$ref: "#/components/schemas/FilterDTO"
+},
+{
+type: "object",
+properties: {
+field: {
+type: "string",
+description: "Field to filter by.",
+enum: [
+"CREATED_AT",
+"UPDATED_AT"
+],
+example: "CREATED_AT"
+},
+operator: {
+type: "string",
+description: "Operator for the filter. Depends on the field type (String or Comparable).",
+enum: [
+"EQUAL",
+"NOT_EQUAL",
+"LIKE",
+"STARTS_WITH",
+"CONTAINS"
+],
+example: "CONTAINS"
+},
+value: {
+type: "string",
+description: "Value to filter by. For date fields, use ISO 8601 format (e.g., '2025-09-09T10:00:00Z').",
+example: "john.doe"
+}
+}
+},
+{
+type: "object",
+properties: {
+field: {
+type: "string",
+description: "Field to filter by.",
+enum: [
+"NOMBRE",
+"DESCRIPCION",
+"HREF_PHOTO"
+],
+example: "NOMBRE"
+},
+operator: {
+type: "string",
+description: "Operator for the filter. Depends on the field type (String or Comparable).",
+enum: [
+"EQUAL",
+"NOT_EQUAL",
+"LIKE",
+"STARTS_WITH",
+"CONTAINS"
+],
+example: "CONTAINS"
+},
+value: {
+type: "string",
+description: "Value to filter by.",
+example: "proyector"
+}
+}
+}
+]
+},
+EntityModelUserResponseDTO: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int64"
+},
+uuid: {
+type: "string",
+format: "uuid"
+},
+username: {
+type: "string"
+},
+email: {
+type: "string"
+},
+firstName: {
+type: "string"
+},
+secondName: {
+type: "string"
+},
+surname: {
+type: "string"
+},
+secondSurname: {
+type: "string"
+},
+dni: {
+type: "integer",
+format: "int32"
+},
+_links: {
+$ref: "#/components/schemas/Links"
+}
+}
+},
+PageMetadata: {
+type: "object",
+properties: {
+size: {
+type: "integer",
+format: "int64"
+},
+totalElements: {
+type: "integer",
+format: "int64"
+},
+totalPages: {
+type: "integer",
+format: "int64"
+},
+number: {
+type: "integer",
+format: "int64"
+}
+}
+},
+PagedModelEntityModelUserResponseDTO: {
+type: "object",
+properties: {
+_embedded: {
+type: "object",
+properties: {
+users: {
+type: "array",
+items: {
+$ref: "#/components/schemas/EntityModelUserResponseDTO"
+}
+}
+}
+},
+_links: {
+$ref: "#/components/schemas/Links"
+},
+page: {
+$ref: "#/components/schemas/PageMetadata"
+}
+}
+},
+CreateReservaRequestDTO: {
+type: "object",
+properties: {
+nombre: {
+type: "string",
+maxLength: 200,
+minLength: 0
+},
+descripcion: {
+type: "string",
+maxLength: 500,
+minLength: 0
+},
+fechaHoraInicio: {
+type: "string",
+format: "date-time"
+},
+fechaHoraFin: {
+type: "string",
+format: "date-time"
+},
+fechaInicioAntesDeFin: {
+type: "boolean"
+}
+},
+required: [
+"fechaHoraFin",
+"fechaHoraInicio",
+"nombre"
+]
+},
+ReservaResponseDTO: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int32"
+},
+nombre: {
+type: "string"
+},
+descripcion: {
+type: "string"
+},
+fechaHoraInicio: {
+type: "string",
+format: "date-time"
+},
+fechaHoraFin: {
+type: "string",
+format: "date-time"
+},
+estado: {
+type: "string",
+enum: [
+"PENDIENTE",
+"CONFIRMADA",
+"CANCELADA",
+"COMPLETADA"
+]
+},
+recursoSolicitadoId: {
+type: "integer",
+format: "int32"
+},
+usuarioSolicitanteId: {
+type: "integer",
+format: "int32"
+}
+}
+},
+DisponibilidadFilterDTO: {
+allOf: [
+{
+$ref: "#/components/schemas/FilterDTO"
+},
+{
+type: "object",
+properties: {
+fechaHora: {
+type: "string",
+format: "date-time"
+}
+}
+}
+]
+},
+GetAllRecursosRequest: {
+type: "object",
+properties: {
+filter: {
+oneOf: [
+{
+$ref: "#/components/schemas/AndFilterDTO"
+},
+{
+$ref: "#/components/schemas/DisponibilidadFilterDTO"
+},
+{
+$ref: "#/components/schemas/NumericComarableFieldFilterDTO"
+},
+{
+$ref: "#/components/schemas/OrFilterDTO"
+},
+{
+$ref: "#/components/schemas/StringComparationFieldFilterDTO"
+}
+]
+}
+}
+},
+EntityModelRecursoResponseDTO: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int32"
+},
+nombre: {
+type: "string"
+},
+descripcion: {
+type: "string"
+},
+hrefPhoto: {
+type: "string"
+},
+estado: {
+type: "string",
+enum: [
+"ACTIVO",
+"INACTIVO",
+"PENDIENTE",
+"EN_REVISION"
+]
+},
+disponibilidad: {
+type: "string",
+enum: [
+"DISPONIBLE",
+"RESERVADO",
+"NO_DISPONIBLE"
+]
+},
+createdAt: {
+type: "string",
+format: "date-time"
+},
+updatedAt: {
+type: "string",
+format: "date-time"
+},
+_links: {
+$ref: "#/components/schemas/Links"
+}
+}
+},
+PagedModelEntityModelRecursoResponseDTO: {
+type: "object",
+properties: {
+_embedded: {
+type: "object",
+properties: {
+recursos: {
+type: "array",
+items: {
+$ref: "#/components/schemas/EntityModelRecursoResponseDTO"
+}
+}
+}
+},
+_links: {
+$ref: "#/components/schemas/Links"
+},
+page: {
+$ref: "#/components/schemas/PageMetadata"
+}
+}
+},
+RecursoResponseDTO: {
+type: "object",
+properties: {
+id: {
+type: "integer",
+format: "int32"
+},
+nombre: {
+type: "string"
+},
+descripcion: {
+type: "string"
+},
+hrefPhoto: {
+type: "string"
+},
+estado: {
+type: "string",
+enum: [
+"ACTIVO",
+"INACTIVO",
+"PENDIENTE",
+"EN_REVISION"
+]
+},
+disponibilidad: {
+type: "string",
+enum: [
+"DISPONIBLE",
+"RESERVADO",
+"NO_DISPONIBLE"
+]
+},
+createdAt: {
+type: "string",
+format: "date-time"
+},
+updatedAt: {
+type: "string",
+format: "date-time"
+}
+}
+},
+RegisterUserRequest: {
+type: "object",
+properties: {
+username: {
+type: "string"
+},
+password: {
+type: "string"
+},
+email: {
+type: "string"
+},
+firstName: {
+type: "string"
+},
+lastName: {
+type: "string"
+}
+}
+},
+PagedResultReservaResponseDTO: {
+type: "object",
+properties: {
+content: {
+type: "array",
+items: {
+$ref: "#/components/schemas/ReservaResponseDTO"
+}
+},
+totalElements: {
+type: "integer",
+format: "int64"
+},
+totalPages: {
+type: "integer",
+format: "int32"
+},
+number: {
+type: "integer",
+format: "int32"
+},
+size: {
+type: "integer",
+format: "int32"
+},
+numberOfElements: {
+type: "integer",
+format: "int32"
+},
+first: {
+type: "boolean"
+},
+last: {
+type: "boolean"
+},
+empty: {
+type: "boolean"
+}
+}
+},
+Link: {
+type: "object",
+properties: {
+href: {
+type: "string"
+},
+hreflang: {
+type: "string"
+},
+title: {
+type: "string"
+},
+type: {
+type: "string"
+},
+deprecation: {
+type: "string"
+},
+profile: {
+type: "string"
+},
+name: {
+type: "string"
+},
+templated: {
+type: "boolean"
+}
+}
+},
+Links: {
+type: "object",
+additionalProperties: {
+$ref: "#/components/schemas/Link"
+}
+}
+}
+}
+}

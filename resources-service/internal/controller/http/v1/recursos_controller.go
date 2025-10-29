@@ -19,6 +19,7 @@ import (
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/DTOs"
 	"github.com/evrone/go-clean-template/internal/usecase/recursos/ports/criteria"
 	"github.com/evrone/go-clean-template/pkg/logger"
+	"github.com/evrone/go-clean-template/pkg/roles"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -33,21 +34,35 @@ func NewRecursoRoutes(router fiber.Router, uc recursosports.RecursoUseCase, phot
 	r := &RecursoRoutes{uc: uc, photoUseCase: photoUC, logErrorUseCase: logErrorUC, logger: l}
 	h := router.Group("/recursos")
 	{
-		h.Post("/", middleware.RequireRole("CREAR-RECURSO"), r.createResource)
-		h.Delete("/:id", middleware.RequireRole("CREAR-RECURSO"), r.deleteResource)
-		h.Patch("/:id", middleware.RequireRole("CREAR-RECURSO"), r.updateResource)
-		h.Get("/:id", middleware.RequireRole("CREAR-RECURSO"), r.getResourceByID)
-		h.Get("/", middleware.RequireRole("CREAR-RECURSO"), r.listResources)
-		h.Post("/search", middleware.RequireRole("CREAR-RECURSO"), r.searchResources)
+		// Endpoints for resource administration (write operations)
+		h.Post("/", middleware.RequireRole(roles.ADMIN_RECURSOS), r.createResource)
+		h.Delete("/:id", middleware.RequireRole(roles.ADMIN_RECURSOS), r.deleteResource)
+		h.Patch("/:id", middleware.RequireRole(roles.ADMIN_RECURSOS), r.updateResource)
+		h.Post("/:id/foto", middleware.RequireRole(roles.ADMIN_RECURSOS), r.uploadPhoto)
+		h.Delete("/:id/foto", middleware.RequireRole(roles.ADMIN_RECURSOS), r.deletePhoto)
 
-		// Photo management routes
-		h.Post("/:id/foto", middleware.RequireRole("CREAR-RECURSO"), r.uploadPhoto)
-		h.Delete("/:id/foto", middleware.RequireRole("CREAR-RECURSO"), r.deletePhoto)
+		// Endpoints for general access (read operations)
+		h.Get("/:id", r.getResourceByID)
+		h.Get("/", r.listResources)
+		h.Post("/search", r.searchResources)
 	}
 }
 
 // --- Photo Handlers ---
 
+// @Summary Subir foto de recurso
+// @Description Sube una foto para un recurso específico. **Requiere rol:** ADMIN_RECURSOS
+// @Tags recursos
+// @Accept multipart/form-data
+// @Produce json
+// @Param id path int true "ID del recurso"
+// @Param foto formData file true "Archivo de imagen"
+// @Success 200 {object} entity.Recurso
+// @Failure 400 {object} response.ErrorResponseDTO
+// @Failure 403 {object} response.ErrorResponseDTO "Forbidden - Usuario sin permisos suficientes"
+// @Failure 500 {object} response.ErrorResponseDTO
+// @Router /recursos/{id}/foto [post]
+// @Security BearerAuth
 func (r *RecursoRoutes) uploadPhoto(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
@@ -74,6 +89,18 @@ func (r *RecursoRoutes) uploadPhoto(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(recurso)
 }
 
+// @Summary Eliminar foto de recurso
+// @Description Elimina la foto de un recurso específico. **Requiere rol:** ADMIN_RECURSOS
+// @Tags recursos
+// @Produce json
+// @Param id path int true "ID del recurso"
+// @Success 204 "No Content"
+// @Failure 400 {object} response.ErrorResponseDTO
+// @Failure 403 {object} response.ErrorResponseDTO "Forbidden - Usuario sin permisos suficientes"
+// @Failure 404 {object} response.ErrorResponseDTO
+// @Failure 500 {object} response.ErrorResponseDTO
+// @Router /recursos/{id}/foto [delete]
+// @Security BearerAuth
 func (r *RecursoRoutes) deletePhoto(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
@@ -91,6 +118,20 @@ func (r *RecursoRoutes) deletePhoto(c *fiber.Ctx) error {
 
 // --- Handlers ---
 
+// @Summary Listar recursos
+// @Description Obtiene una lista paginada de recursos con filtros opcionales. **Acceso:** Cualquier usuario autenticado
+// @Tags recursos
+// @Accept json
+// @Produce json
+// @Param limit query int false "Número de elementos por página" default(10)
+// @Param offset query int false "Desplazamiento para paginación" default(0)
+// @Param nombre query string false "Filtrar por nombre"
+// @Param estado query string false "Filtrar por estado (ACTIVO, MANTENIMIENTO)"
+// @Success 200 {object} response.PaginatedResponse
+// @Failure 400 {object} response.ErrorResponseDTO
+// @Failure 500 {object} response.ErrorResponseDTO
+// @Router /recursos [get]
+// @Security BearerAuth
 func (r *RecursoRoutes) listResources(c *fiber.Ctx) error {
 	criteria, err := buildCriteriaFromQuery(c)
 	if err != nil {
@@ -107,6 +148,19 @@ func (r *RecursoRoutes) listResources(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// @Summary Buscar recursos
+// @Description Busca recursos con criterios avanzados mediante POST. **Acceso:** Cualquier usuario autenticado
+// @Tags recursos
+// @Accept json
+// @Produce json
+// @Param limit query int false "Número de elementos por página" default(10)
+// @Param offset query int false "Desplazamiento para paginación" default(0)
+// @Param criteria body criteria.Criteria true "Criterios de búsqueda"
+// @Success 200 {object} response.PaginatedResponse
+// @Failure 400 {object} response.ErrorResponseDTO
+// @Failure 500 {object} response.ErrorResponseDTO
+// @Router /recursos/search [post]
+// @Security BearerAuth
 func (r *RecursoRoutes) searchResources(c *fiber.Ctx) error {
 	var crit criteria.Criteria
 	if err := c.BodyParser(&crit); err != nil {
@@ -131,6 +185,18 @@ func (r *RecursoRoutes) searchResources(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+// @Summary Crear recurso
+// @Description Crea un nuevo recurso educativo. **Requiere rol:** ADMIN_RECURSOS
+// @Tags recursos
+// @Accept json
+// @Produce json
+// @Param recurso body request.CreateResource true "Datos del recurso a crear"
+// @Success 201 {object} entity.Recurso
+// @Failure 400 {object} response.ErrorResponseDTO
+// @Failure 403 {object} response.ErrorResponseDTO "Forbidden - Usuario sin permisos suficientes"
+// @Failure 500 {object} response.ErrorResponseDTO
+// @Router /recursos [post]
+// @Security BearerAuth
 func (r *RecursoRoutes) createResource(c *fiber.Ctx) error {
 	var req request.CreateResource
 	if err := c.BodyParser(&req); err != nil {
@@ -147,6 +213,18 @@ func (r *RecursoRoutes) createResource(c *fiber.Ctx) error {
 	return c.Status(http.StatusCreated).JSON(recurso)
 }
 
+// @Summary Eliminar recurso
+// @Description Elimina un recurso por su ID. **Requiere rol:** ADMIN_RECURSOS
+// @Tags recursos
+// @Produce json
+// @Param id path int true "ID del recurso"
+// @Success 204 "No Content"
+// @Failure 400 {object} response.ErrorResponseDTO
+// @Failure 403 {object} response.ErrorResponseDTO "Forbidden - Usuario sin permisos suficientes"
+// @Failure 404 {object} response.ErrorResponseDTO
+// @Failure 500 {object} response.ErrorResponseDTO
+// @Router /recursos/{id} [delete]
+// @Security BearerAuth
 func (r *RecursoRoutes) deleteResource(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
@@ -161,6 +239,20 @@ func (r *RecursoRoutes) deleteResource(c *fiber.Ctx) error {
 	return c.SendStatus(http.StatusNoContent)
 }
 
+// @Summary Actualizar recurso
+// @Description Actualiza parcialmente un recurso por su ID. **Requiere rol:** ADMIN_RECURSOS
+// @Tags recursos
+// @Accept json
+// @Produce json
+// @Param id path int true "ID del recurso"
+// @Param recurso body request.UpdateResource true "Datos del recurso a actualizar"
+// @Success 200 {object} entity.Recurso
+// @Failure 400 {object} response.ErrorResponseDTO
+// @Failure 403 {object} response.ErrorResponseDTO "Forbidden - Usuario sin permisos suficientes"
+// @Failure 404 {object} response.ErrorResponseDTO
+// @Failure 500 {object} response.ErrorResponseDTO
+// @Router /recursos/{id} [patch]
+// @Security BearerAuth
 func (r *RecursoRoutes) updateResource(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {
@@ -182,6 +274,17 @@ func (r *RecursoRoutes) updateResource(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(recurso)
 }
 
+// @Summary Obtener recurso por ID
+// @Description Obtiene los detalles de un recurso específico por su ID. **Acceso:** Cualquier usuario autenticado
+// @Tags recursos
+// @Produce json
+// @Param id path int true "ID del recurso"
+// @Success 200 {object} entity.Recurso
+// @Failure 400 {object} response.ErrorResponseDTO
+// @Failure 404 {object} response.ErrorResponseDTO
+// @Failure 500 {object} response.ErrorResponseDTO
+// @Router /recursos/{id} [get]
+// @Security BearerAuth
 func (r *RecursoRoutes) getResourceByID(c *fiber.Ctx) error {
 	id, err := c.ParamsInt("id")
 	if err != nil {

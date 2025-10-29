@@ -1,0 +1,125 @@
+# Plan de Adaptación del Frontend
+
+## Resumen
+Este documento detalla el plan para adaptar la aplicación frontend de React (`app-ceniit/ceniit-frontend`) para que funcione con los servicios de backend del `trabajo_final` (Spring Boot y Go), reemplazando el backend original de Node.js.
+
+---
+
+### Fase 0: Reorganización del Proyecto - ✅ COMPLETADA
+**Objetivo:** Consolidar todos los componentes del proyecto en una única carpeta `trabajo_final`.
+
+1.  **Acción:** Mover el directorio del frontend.
+    *   **Comando:** `mv /home/patriciorios/Proyectos/Universidad/app-ceniit/ceniit-frontend /home/patriciorios/Proyectos/Universidad/trabajo_final/frontend`
+    *   **Resultado:** Todo el código fuente del frontend estará ahora en `trabajo_final/frontend`.
+
+---
+
+### Fase 1: Configuración del Entorno de Desarrollo - ✅ COMPLETADA
+**Objetivo:** Configurar el servidor de desarrollo de Vite para que redirija las llamadas a las APIs a los servicios de backend correspondientes, simulando la configuración de Nginx en producción.
+
+1.  **Archivo a Modificar:** `trabajo_final/frontend/vite.config.js`
+2.  **Acción:** Reemplazar la configuración del `proxy` existente.
+3.  **Detalles de la Configuración:**
+    *   Se modificaron las reglas del proxy para que todas las peticiones (`/realms`, `/api/backend`, `/api/resources`) apunten a un único `target`: `http://localhost`.
+    *   Esto asegura que el servidor de Vite envíe las peticiones al reverse proxy de Nginx (que corre en el puerto 80), el cual se encarga de enrutar cada petición al microservicio correspondiente dentro de la red de Docker.
+    *   Este enfoque unifica el comportamiento de los entornos de desarrollo y producción.
+    *   **Código Final en `vite.config.js`:**
+        ```javascript
+        server: {
+          port: 3000,
+          proxy: {
+            // Redirigir todo a Nginx en localhost (puerto 80)
+            '/realms': {
+              target: 'http://localhost',
+              changeOrigin: true,
+            },
+            '/api/backend': {
+              target: 'http://localhost',
+              changeOrigin: true,
+            },
+            '/api/resources': {
+              target: 'http://localhost',
+              changeOrigin: true,
+            }
+          }
+        }
+        ```
+
+---
+
+### Fase 2: Implementación de la Autenticación Simplificada (Password Grant) - ✅ COMPLETADA
+**Objetivo:** Reemplazar el flujo de login actual por una llamada directa al endpoint de token de Keycloak.
+
+1.  **Modificar el Servicio de Autenticación:**
+    *   **Archivo:** `trabajo_final/frontend/src/services/authService.js`
+    *   **Acción:** Reescribir la función `login`.
+    *   **Detalles:**
+        *   Importar `axios` directamente.
+        *   La función `login` construirá un cuerpo `x-www-form-urlencoded` con los datos de `login_example.txt` (`client_id`, `grant_type`, `username`, `password`, `client_secret`).
+        *   Hará una petición `POST` a la ruta `/realms/develop-spring-realm/protocol/openid-connect/token`.
+
+2.  **Modificar el Contexto de Autenticación:**
+    *   **Archivo:** `trabajo_final/frontend/src/context/AuthContext.jsx`
+    *   **Acción:** Actualizar la función `login` dentro del `AuthProvider`.
+    *   **Detalles:**
+        *   Llamará al nuevo `authService.login`.
+        *   De la respuesta, extraerá el `access_token` y lo guardará en `localStorage`.
+        *   Decodificará el payload del JWT (usando `atob` y `JSON.parse`) para obtener los datos del usuario (nombre, email, roles).
+        *   Creará un objeto `user` simplificado y lo guardará en el estado de React y en `localStorage`.
+        *   El mapeo de roles se basa en los roles del token (`backend-admin` o `realm-admin`) para asignar el rol `admin` en el frontend.
+
+3.  **Mejoras a Futuro (TODO):**
+    *   **Manejo de Refresh Token:** La implementación actual no utiliza el `refresh_token` proporcionado por Keycloak. Se debería añadir lógica para interceptar errores de API debidos a un token expirado (ej. 401 Unauthorized) y usar el `refresh_token` para obtener un nuevo `access_token` de forma silenciosa, mejorando la experiencia del usuario al evitar un cierre de sesión abrupto.
+
+---
+
+### Fase 3: Adaptación de los Servicios de la API
+**Objetivo:** Actualizar todos los servicios de datos para que apunten a los nuevos endpoints y manejen los nuevos formatos de datos.
+
+1.  **Modificar `api.js`:**
+    *   **Archivo:** `trabajo_final/frontend/src/services/api.js`
+    *   **Acción:** Eliminar la `baseURL` fija.
+    *   **Detalles:** El interceptor que añade el token de autorización se mantendrá, pero las llamadas en los servicios individuales deberán incluir la ruta completa del endpoint (ej. `/api/backend/users`).
+
+2.  **Modificar `resourceService.js`:**
+    *   **Archivo:** `trabajo_final/frontend/src/services/resourceService.js`
+    *   **Acción:** Apuntar al backend de Go y adaptar la lógica.
+    *   **Detalles:**
+        *   Las rutas se cambiarán a `/api/resources/v1/recursos/...`.
+        *   El método `getAll` deberá procesar la respuesta paginada en formato HATEOAS, extrayendo la lista de recursos desde el campo `_embedded.recursos`.
+
+3.  **Modificar `userService.js`:**
+    *   **Archivo:** `trabajo_final/frontend/src/services/userService.js`
+    *   **Acción:** Apuntar al backend de Spring.
+    *   **Detalles:**
+        *   Las rutas se cambiarán a `/api/backend/users/...`.
+        *   El método `getAll` se modificará para realizar una petición `POST` a `/api/backend/users/search`, enviando los criterios de búsqueda en el cuerpo.
+
+4.  **Modificar `reservationService.js`:**
+    *   **Archivo:** `trabajo_final/frontend/src/services/reservationService.js`
+    *   **Acción:** Apuntar al backend de Spring.
+    *   **Detalles:**
+        *   Las rutas se cambiarán a `/api/backend/reservas/...`.
+        *   El método `create` se adaptará para llamar a `POST /api/backend/reservas/{recursoId}`.
+
+---
+
+### Fase 4: Funcionalidad Faltante ("Proyectos")
+**Objetivo:** Tomar una decisión sobre la sección de "Proyectos" del frontend.
+
+1.  **Análisis:** La funcionalidad de Proyectos no tiene contraparte en los nuevos backends.
+2.  **Acción Propuesta:** Se consultará al usuario para elegir una de las siguientes opciones:
+    *   **Opción A (Recomendada para avanzar):** Deshabilitar la sección de Proyectos en el frontend. Esto implica comentar la ruta, el enlace en el `Sidebar` y los componentes relacionados (`ProjectList`, `ProjectForm`).
+    *   **Opción B (A futuro):** Planificar la implementación de los endpoints de Proyectos en el backend de Spring.
+
+---
+
+### Fase 5: Verificación y Pruebas
+**Objetivo:** Asegurar que la aplicación funciona correctamente después de la adaptación.
+
+1.  **Acción:** Una vez completadas las fases anteriores, se realizarán pruebas manuales del flujo completo:
+    *   Inicio de sesión.
+    *   Visualización y filtrado de recursos.
+    *   Creación y visualización de reservas.
+    *   Visualización de usuarios.
+    *   Cierre de sesión.

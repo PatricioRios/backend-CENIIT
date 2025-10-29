@@ -40,6 +40,7 @@ public class UserDTOMapper {
 
     public UserResponseDTO toResponse(GetUserByUUIDResponse userRecord) {
         UserResponseDTO dto = new UserResponseDTO();
+        dto.setId(userRecord.id());
         dto.setUuid(userRecord.uuid());
         dto.setUsername(userRecord.username());
         dto.setEmail(userRecord.email());

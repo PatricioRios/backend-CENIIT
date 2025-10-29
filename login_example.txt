@@ -1,0 +1,80 @@
+curl --location --request POST 'http://localhost/realms/develop-spring-realm/protocol/openid-connect/token' \
+--header 'Content-Type: application/x-www-form-urlencoded' \
+--data-urlencode 'client_id=ceniit-backend-develop' \
+--data-urlencode 'grant_type=password' \
+--data-urlencode 'username=patriciorios' \
+--data-urlencode 'password=1234' \
+--data-urlencode 'client_secret=Oe8hlZYGa0xJwksIZqGCGJQTpGiou4Iy'
+
+json example:
+{
+    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI5MlFsSjZFa3U0bkYxZGZGMTJsV25FX2pGRTlrNXVSODFaWk0wQjR2UGdnIn0.eyJleHAiOjE3NjE3NjYyNDAsImlhdCI6MTc2MTc2NTk0MCwianRpIjoib25ydHJvOjEzOTBhYjJlLWYzYTQtZTY5NC00MGNmLTczZDQ4Y2UyY2IxYSIsImlzcyI6Imh0dHA6Ly9rZXljbG9hay5sb2NhbDozMDMwL3JlYWxtcy9kZXZlbG9wLXNwcmluZy1yZWFsbSIsImF1ZCI6WyJiYWNrZW5kLXJlY3Vyc29zIiwiYWNjb3VudCJdLCJzdWIiOiI0MWMwYTViZC1hYzZlLTQzZjMtOGQ0My02YmJhZWUyMmFmMjUiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJjZW5paXQtYmFja2VuZC1kZXZlbG9wIiwic2lkIjoiYzJiNmJmNWMtZDQwNC01MjNkLTJhY2UtYzU4OGRlZGYyOTU3IiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIqIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJyZWFsbS11c2VyIiwicmVhbG0tYWRtaW4iLCJsaXN0LXJvbGVzIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiIsInB1dC1yb2xlcy1vbi11c2VyIiwiZGVmYXVsdC1yb2xlcy1kZXZlbG9wLXNwcmluZy1yZWFsbSJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImJhY2tlbmQtcmVjdXJzb3MiOnsicm9sZXMiOlsiRUxJTUlOQVItUkVDVVJTTyIsIkNSRUFSLVJFQ1VSU08iXX0sImNlbmlpdC1iYWNrZW5kLWRldmVsb3AiOnsicm9sZXMiOlsiYmFja2VuZC11c2VyIiwibGlzdC1yb2xlcyIsImJhY2tlbmQtYWRtaW4iLCJwdXQtcm9sZXMtb24tdXNlciJdfSwiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJlbWFpbCBwcm9maWxlIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJwYXRyaWNpbyByaW9zIiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGF0cmljaW9yaW9zIiwiZ2l2ZW5fbmFtZSI6InBhdHJpY2lvIiwiZmFtaWx5X25hbWUiOiJyaW9zIiwiZW1haWwiOiJwYXRyaW9jaW9yaW9zQGdtYWlsLmNvbSJ9.ru6DY0-rROXTvWgj2vrAMJTqxffwLy1e3k4Dy00LccSMFZuN-mhSU07UCwlGksyR_5ljH6WJX9wGGBKSlIE-gqxYeI_g8IvkibDIKV2SIrnKWU-3E4w5uX6R1cAYBSQT4M7Jhba1T0H7xVneEMSWrlqpZHqaiVEf1-pDGn6pi_5NCSHaeGIpP3ztYytfyTpbt9iUjyI58IOFBSkB_c_FogTDb9YX_F2SR7VkLmDxB4yovidp7LoEaxaSYT7Nplzx4rn1lEvfPzTRAPkQJpHMQzz2SwQovDOpG_7um3j4x7OSSYcPpPAY7zokon50KKt-M8JrMvxmzLh8uG5BNr6eQA",
+    "expires_in": 300,
+    "refresh_expires_in": 1800,
+    "refresh_token": "eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICI1YmVmMDJlNy0wOGMwLTRlMGMtYjg1Ny0zMDhjMmZmYWEzYjkifQ.eyJleHAiOjE3NjE3Njc3NDAsImlhdCI6MTc2MTc2NTk0MCwianRpIjoiN2I2MzY1MjgtN2EyZi1iMWZkLTFmMjUtOWRiMDQ1MzA2OWZmIiwiaXNzIjoiaHR0cDovL2tleWNsb2FrLmxvY2FsOjMwMzAvcmVhbG1zL2RldmVsb3Atc3ByaW5nLXJlYWxtIiwiYXVkIjoiaHR0cDovL2tleWNsb2FrLmxvY2FsOjMwMzAvcmVhbG1zL2RldmVsb3Atc3ByaW5nLXJlYWxtIiwic3ViIjoiNDFjMGE1YmQtYWM2ZS00M2YzLThkNDMtNmJiYWVlMjJhZjI1IiwidHlwIjoiUmVmcmVzaCIsImF6cCI6ImNlbmlpdC1iYWNrZW5kLWRldmVsb3AiLCJzaWQiOiJjMmI2YmY1Yy1kNDA0LTUyM2QtMmFjZS1jNTg4ZGVkZjI5NTciLCJzY29wZSI6InJvbGVzIGJhc2ljIGFjciBlbWFpbCB3ZWItb3JpZ2lucyBwcm9maWxlIHNlcnZpY2VfYWNjb3VudCJ9.lWbHuYBSpkfoEHYsmaLD6hyiosh6GhlkaukpbM_RH2QnWvIiLd9F6zcqJa5QRFovHsfpje8MZkOqErfXmDMqKg",
+    "token_type": "Bearer",
+    "not-before-policy": 0,
+    "session_state": "c2b6bf5c-d404-523d-2ace-c588dedf2957",
+    "scope": "email profile"
+}
+
+decoded jwt:payload example
+{
+  "exp": 1761766240,
+  "iat": 1761765940,
+  "jti": "onrtro:1390ab2e-f3a4-e694-40cf-73d48ce2cb1a",
+  "iss": "http://keycloak.local:3030/realms/develop-spring-realm",
+  "aud": [
+    "backend-recursos",
+    "account"
+  ],
+  "sub": "41c0a5bd-ac6e-43f3-8d43-6bbaee22af25",
+  "typ": "Bearer",
+  "azp": "ceniit-backend-develop",
+  "sid": "c2b6bf5c-d404-523d-2ace-c588dedf2957",
+  "acr": "1",
+  "allowed-origins": [
+    "*"
+  ],
+  "realm_access": {
+    "roles": [
+      "realm-user",
+      "realm-admin",
+      "list-roles",
+      "offline_access",
+      "uma_authorization",
+      "put-roles-on-user",
+      "default-roles-develop-spring-realm"
+    ]
+  },
+  "resource_access": {
+    "backend-recursos": {
+      "roles": [
+        "ELIMINAR-RECURSO",
+        "CREAR-RECURSO"
+      ]
+    },
+    "ceniit-backend-develop": {
+      "roles": [
+        "backend-user",
+        "list-roles",
+        "backend-admin",
+        "put-roles-on-user"
+      ]
+    },
+    "account": {
+      "roles": [
+        "manage-account",
+        "manage-account-links",
+        "view-profile"
+      ]
+    }
+  },
+  "scope": "email profile",
+  "email_verified": true,
+  "name": "patricio rios",
+  "preferred_username": "patriciorios",
+  "given_name": "patricio",
+  "family_name": "rios",
+  "email": "patriociorios@gmail.com"
+}
